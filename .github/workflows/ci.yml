@@ -30,5 +30,8 @@ jobs:
       - name: Type check
         run: uv run mypy packages services apps/api apps/worker || true
 
+      - name: API contract is not stale
+        run: uv run python scripts/export_openapi.py --check
+
       - name: Test
         run: uv run pytest -q

@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev test lint fmt typecheck bench mock migrate render clean
+.PHONY: help dev test lint fmt typecheck openapi bench mock migrate render clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -20,6 +20,9 @@ fmt:  ## Auto-format
 
 typecheck:  ## Static type check
 	uv run mypy packages services apps/api apps/worker
+
+openapi:  ## Regenerate the frozen API contract
+	uv run python scripts/export_openapi.py
 
 bench:  ## Run the evaluation harness and emit a benchmark report
 	uv run python scripts/evaluation/run_benchmark.py
