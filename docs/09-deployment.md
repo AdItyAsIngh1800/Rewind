@@ -107,10 +107,61 @@ result into §7 below with the date.
 
 ## 7. Measured envelope
 
-> Populated by the first run of `smoke_accel.py`. An empty table here means PS-2 is
-> not actually finished, regardless of what the checklist says.
+Measured **2026-09-09**, `yolo11n.pt`, float32, MPS, `PYTORCH_ENABLE_MPS_FALLBACK=1`.
+Five repetitions per configuration, synthetic 720p frames.
 
-_(pending first run)_
+| Host | |
+|---|---|
+| Platform | Darwin 25.6.0 (arm64) |
+| Chip | Apple M4, 10 cores |
+| Unified memory | 16 GB |
+| `torch` | 2.14.0 |
+| `ultralytics` | 8.4.144 |
+| **MPS recommended max working set** | **11.8 GB** |
+
+| Resolution | Batch | ms/frame | FPS | Driver peak (GB) |
+|---|---|---|---|---|
+| 1280x720 | 1 | 29.7 | 33.6 | 0.06 |
+| 1280x720 | 2 | 15.1 | 66.4 | 0.09 |
+| 1280x720 | 4 | 9.4 | 106.5 | 1.06 |
+| 1280x720 | 8 | 6.5 | 153.2 | 1.06 |
+
+### What this actually means
+
+**Detection is not the bottleneck, and was never going to be on this machine.**
+
+- The dataset runs at **10 FPS**. Batch 1 alone delivers 33.6 FPS — a **3.4x margin**
+  before any batching. At batch 4 it is more than 10x.
+- Running the detector over the **entire 8,100-frame dataset takes roughly 80 seconds**
+  at batch 4. The specification's hardware-conscious guidance — sample frames to control
+  GPU load, run streams sequentially, avoid reprocessing video — was written for a 6 GB
+  CUDA laptop and is largely moot here.
+- Peak driver allocation is **1.06 GB against an 11.8 GB ceiling**: under 10% utilised.
+  Risk R1 (memory pressure) is downgraded from High to Low likelihood.
+
+**Three consequences for the plan.**
+
+1. **Deterministic frame sampling stays** — but its justification changes. It is now
+   about *reproducibility*, not GPU budget. Same input must always yield the same
+   frames so a run can be replayed. That reason is unaffected by having a fast machine.
+2. **A larger detector is affordable.** If the Gate 1 recall floor (≥ 0.90) is missed
+   with `yolo11n`, moving to `yolo11s` or `yolo11m` costs throughput we demonstrably
+   have. Do not do this pre-emptively — measure `yolo11n` on real rendered frames
+   first, as an experiment record.
+3. **Expect the bottleneck elsewhere.** Cross-camera identity association, evidence
+   graph construction and the browser rendering three synchronized video streams are
+   now the likely constraints. E9.3 profiling should look there first.
+
+### Measurement caveats
+
+- **Run-to-run variance is roughly 15–20%** at batch 1 (33.6 and 40.4 FPS on two
+  consecutive runs). Thermal state and background load dominate at this speed. Any
+  benchmark that matters must be repeated, and the median reported.
+- Frames here are **synthetic noise**, which yields near-zero detections and therefore
+  understates NMS cost. Real rendered frames with 3–6 entities will be slower. Re-run
+  this against `C01` once E1.2 has produced actual video, and replace this table.
+- These numbers are **MPS-specific**. The CI runner is CPU-only x86. Golden-benchmark
+  comparisons must never be made across devices.
 
 ## 8. Runtime topology
 

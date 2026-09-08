@@ -59,9 +59,15 @@ def pick_device(torch) -> str:  # type: ignore[no-untyped-def]
     return "cpu"
 
 
-def mps_allocated_gb(torch) -> float:  # type: ignore[no-untyped-def]
+def mps_driver_gb(torch) -> float:  # type: ignore[no-untyped-def]
+    """Total memory Metal has taken from the unified pool.
+
+    `current_allocated_memory` only counts live tensors and reads ~0 between
+    inference calls, which is useless for capacity planning. The driver figure is
+    what actually competes with the OS, Docker and the browser for the 16 GB.
+    """
     try:
-        return float(torch.mps.current_allocated_memory()) / 1024**3
+        return float(torch.mps.driver_allocated_memory()) / 1024**3
     except Exception:
         return float("nan")
 
@@ -87,15 +93,16 @@ def bench_detector(torch, device: str, model_name: str) -> list[dict[str, object
                 torch.mps.synchronize()
                 torch.mps.empty_cache()
 
-            before = mps_allocated_gb(torch) if device == "mps" else 0.0
             t0 = time.perf_counter()
             reps = 5
+            peak = 0.0
             for _ in range(reps):
                 model.predict(frames, device=device, verbose=False)
+                if device == "mps":
+                    peak = max(peak, mps_driver_gb(torch))
             if device == "mps":
                 torch.mps.synchronize()
             elapsed = time.perf_counter() - t0
-            peak = mps_allocated_gb(torch) if device == "mps" else 0.0
 
             rows.append(
                 {
@@ -103,7 +110,7 @@ def bench_detector(torch, device: str, model_name: str) -> list[dict[str, object
                     "batch": batch,
                     "ms_per_frame": round(elapsed / (reps * batch) * 1000, 1),
                     "fps": round(reps * batch / elapsed, 1),
-                    "mem_delta_gb": round(peak - before, 2),
+                    "driver_peak_gb": round(peak, 2),
                 }
             )
             print(f"  {w}x{h} batch={batch}: {rows[-1]['fps']} FPS, {rows[-1]['ms_per_frame']} ms/frame")
@@ -135,12 +142,12 @@ def main() -> int:
     rows = bench_detector(torch, device, args.model)
 
     if rows:
-        print("\n| Resolution | Batch | ms/frame | FPS | Mem delta (GB) |")
+        print("\n| Resolution | Batch | ms/frame | FPS | Driver peak (GB) |")
         print("|---|---|---|---|---|")
         for r in rows:
             print(
                 f"| {r['resolution']} | {r['batch']} | {r['ms_per_frame']} | "
-                f"{r['fps']} | {r['mem_delta_gb']} |"
+                f"{r['fps']} | {r['driver_peak_gb']} |"
             )
         print("\nPaste this table into docs/09-deployment.md and record the date.")
 

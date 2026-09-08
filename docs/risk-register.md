@@ -8,7 +8,7 @@ Not "soon".
 
 | # | Risk | Likelihood | Impact | Early-warning signal | Mitigation | Escalation trigger |
 |---|---|---|---|---|---|---|
-| R1 | Unified-memory pressure | Medium | High | Sudden throughput collapse — Metal pages to disk rather than raising OOM | Compact models, batch 1, one heavy workload at a time, `empty_cache()` between runs | Inference throughput drops more than 5x between identical runs |
+| R1 | Unified-memory pressure | **Low** (measured) | High | Sudden throughput collapse — Metal pages to disk rather than raising OOM | Compact models, batch 1, one heavy workload at a time, `empty_cache()` between runs | Inference throughput drops more than 5x between identical runs. Measured 2026-09-09: 1.06 GB peak against an 11.8 GB ceiling |
 | R2 | Limited real incident data | Resolved | — | — | Simulated dataset with exact ground truth | Public-footage check (stretch 1) fails to generalise |
 | R3 | Cross-camera ID switches | High | High | False-link rate rising while recall improves | Appearance + time + geometry; conservative threshold; explicit UNKNOWN | False-link rate > 0.05 at Gate 3 |
 | R4 | Camera synchronization drift | Medium | High | Sync test fails on injected offset | Timestamp normalization, per-camera offset config, injected-offset test | Event ordering wrong across cameras |
