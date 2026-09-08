@@ -63,6 +63,19 @@ system — see [`ADR-0001`](docs/adr/ADR-0001-modular-monolith.md).
   disciplinary, legal or safety adjudicator.
 - Every generated report states its own evidence limitations and uncertainty.
 
+## Licence and attribution
+
+REWIND is licensed **AGPL-3.0** — see [`LICENSE`](LICENSE).
+
+This is inherited deliberately. Object detection and tracking use
+[Ultralytics](https://github.com/ultralytics/ultralytics) (YOLO + ByteTrack), which is
+AGPL-3.0, so this project adopts the same licence rather than pretending the obligation
+away. The reasoning is recorded in
+[`ADR-0002`](docs/adr/ADR-0002-licence-detector-hosting.md).
+
+Practically: you may use, modify and self-host this freely. If you run a modified
+version as a network service, you must offer your users its source.
+
 ## Repository layout
 
 Every directory carries a `README.md` explaining what belongs in it. Start with
