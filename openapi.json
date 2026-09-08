@@ -1,0 +1,589 @@
+{
+  "components": {
+    "schemas": {
+      "CreateCaseRequest": {
+        "properties": {
+          "case_ref": {
+            "description": "Which rendered case or media set to process",
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "config_version": {
+            "default": "v0.1.0",
+            "title": "Config Version",
+            "type": "string"
+          },
+          "dataset_version": {
+            "title": "Dataset Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_version",
+          "case_ref"
+        ],
+        "title": "CreateCaseRequest",
+        "type": "object"
+      },
+      "CreateCaseResponse": {
+        "properties": {
+          "incident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "status"
+        ],
+        "title": "CreateCaseResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Health": {
+        "properties": {
+          "api_version": {
+            "default": "0.1.0",
+            "title": "Api Version",
+            "type": "string"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "checked_at"
+        ],
+        "title": "Health",
+        "type": "object"
+      },
+      "Metrics": {
+        "description": "The metric set from specification \u00a7N.\n\nZeroed until the pipeline runs. The shape is fixed now so the System Health\nscreen can be built against it.",
+        "properties": {
+          "api_error_rate": {
+            "default": 0.0,
+            "title": "Api Error Rate",
+            "type": "number"
+          },
+          "dead_letter_jobs": {
+            "default": 0,
+            "title": "Dead Letter Jobs",
+            "type": "integer"
+          },
+          "event_generation_rate": {
+            "default": 0.0,
+            "title": "Event Generation Rate",
+            "type": "number"
+          },
+          "evidence_coverage": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Evidence Coverage",
+            "type": "number"
+          },
+          "frames_per_second": {
+            "default": 0.0,
+            "title": "Frames Per Second",
+            "type": "number"
+          },
+          "incident_detection_rate": {
+            "default": 0.0,
+            "title": "Incident Detection Rate",
+            "type": "number"
+          },
+          "queue_depth": {
+            "default": 0,
+            "title": "Queue Depth",
+            "type": "integer"
+          },
+          "queue_oldest_age_s": {
+            "default": 0.0,
+            "title": "Queue Oldest Age S",
+            "type": "number"
+          },
+          "report_generation_latency_s": {
+            "default": 0.0,
+            "title": "Report Generation Latency S",
+            "type": "number"
+          },
+          "tracking_id_switch_rate": {
+            "default": 0.0,
+            "title": "Tracking Id Switch Rate",
+            "type": "number"
+          },
+          "unsupported_claim_rate": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Unsupported Claim Rate",
+            "type": "number"
+          },
+          "worker_retries": {
+            "default": 0,
+            "title": "Worker Retries",
+            "type": "integer"
+          }
+        },
+        "title": "Metrics",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Endpoints marked **not yet implemented** return 501 with the correct response shape already defined. The frontend is built against this contract from Week 4; the pipeline fills it in behind.",
+    "summary": "Evidence-backed AI incident reconstruction engine for multi-camera video",
+    "title": "REWIND",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/cases": {
+      "post": {
+        "description": "Create a processing run and queue the pipeline. **Not yet implemented.**",
+        "operationId": "create_case_api_v1_cases_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCaseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Case",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}": {
+      "get": {
+        "description": "Case summary. **Not yet implemented.**",
+        "operationId": "get_case_api_v1_cases__case_id__get",
+        "parameters": [
+          {
+            "description": "Case (incident) identifier",
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "description": "Case (incident) identifier",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Case Api V1 Cases  Case Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Case",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/evidence": {
+      "get": {
+        "description": "Evidence graph with provenance. **Not yet implemented.**",
+        "operationId": "get_evidence_api_v1_cases__case_id__evidence_get",
+        "parameters": [
+          {
+            "description": "Case (incident) identifier",
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "description": "Case (incident) identifier",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Evidence Api V1 Cases  Case Id  Evidence Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Evidence",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/replay": {
+      "get": {
+        "description": "Synchronized replay metadata: clips, offsets, shared timebase. **Not yet implemented.**",
+        "operationId": "get_replay_api_v1_cases__case_id__replay_get",
+        "parameters": [
+          {
+            "description": "Case (incident) identifier",
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "description": "Case (incident) identifier",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Replay Api V1 Cases  Case Id  Replay Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Replay",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/report": {
+      "get": {
+        "description": "Evidence-grounded report. **Not yet implemented.**",
+        "operationId": "get_report_api_v1_cases__case_id__report_get",
+        "parameters": [
+          {
+            "description": "Case (incident) identifier",
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "description": "Case (incident) identifier",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Report Api V1 Cases  Case Id  Report Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Report",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/reprocess": {
+      "post": {
+        "description": "Re-run a case with a different model or config version. **Not yet implemented.**",
+        "operationId": "reprocess_case_api_v1_cases__case_id__reprocess_post",
+        "parameters": [
+          {
+            "description": "Case (incident) identifier",
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "description": "Case (incident) identifier",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Reprocess Case Api V1 Cases  Case Id  Reprocess Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reprocess Case",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/cases/{case_id}/timeline": {
+      "get": {
+        "description": "Cross-camera semantic event timeline. **Not yet implemented.**",
+        "operationId": "get_timeline_api_v1_cases__case_id__timeline_get",
+        "parameters": [
+          {
+            "description": "Case (incident) identifier",
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "description": "Case (incident) identifier",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Timeline Api V1 Cases  Case Id  Timeline Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Timeline",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "description": "Liveness probe. Used by Docker healthchecks and the System Health screen.",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "description": "Operational metrics. Real values arrive with the worker in E10.2.",
+        "operationId": "metrics_api_v1_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metrics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Metrics",
+        "tags": [
+          "operations"
+        ]
+      }
+    }
+  }
+}
