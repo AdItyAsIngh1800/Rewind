@@ -86,7 +86,9 @@ def bench_detector(torch, device: str, model_name: str) -> list[dict[str, object
 
     for w, h in RESOLUTIONS:
         for batch in BATCHES:
-            frames = [torch.randint(0, 255, (h, w, 3), dtype=torch.uint8).numpy() for _ in range(batch)]
+            frames = [
+                torch.randint(0, 255, (h, w, 3), dtype=torch.uint8).numpy() for _ in range(batch)
+            ]
 
             model.predict(frames, device=device, verbose=False)  # warm up
             if device == "mps":
@@ -113,7 +115,8 @@ def bench_detector(torch, device: str, model_name: str) -> list[dict[str, object
                     "driver_peak_gb": round(peak, 2),
                 }
             )
-            print(f"  {w}x{h} batch={batch}: {rows[-1]['fps']} FPS, {rows[-1]['ms_per_frame']} ms/frame")
+            last = rows[-1]
+            print(f"  {w}x{h} batch={batch}: {last['fps']} FPS, {last['ms_per_frame']} ms/frame")
 
     return rows
 
