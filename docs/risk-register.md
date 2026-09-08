@@ -8,7 +8,7 @@ Not "soon".
 
 | # | Risk | Likelihood | Impact | Early-warning signal | Mitigation | Escalation trigger |
 |---|---|---|---|---|---|---|
-| R1 | GPU memory ceiling | High | High | Peak VRAM within 15% of limit at batch 1 | Compact models, reduced FPS/resolution, mixed precision, cache aggressively | OOM at the documented operating envelope |
+| R1 | Unified-memory pressure | Medium | High | Sudden throughput collapse — Metal pages to disk rather than raising OOM | Compact models, batch 1, one heavy workload at a time, `empty_cache()` between runs | Inference throughput drops more than 5x between identical runs |
 | R2 | Limited real incident data | Resolved | — | — | Simulated dataset with exact ground truth | Public-footage check (stretch 1) fails to generalise |
 | R3 | Cross-camera ID switches | High | High | False-link rate rising while recall improves | Appearance + time + geometry; conservative threshold; explicit UNKNOWN | False-link rate > 0.05 at Gate 3 |
 | R4 | Camera synchronization drift | Medium | High | Sync test fails on injected offset | Timestamp normalization, per-camera offset config, injected-offset test | Event ordering wrong across cameras |
@@ -24,7 +24,9 @@ Not "soon".
 | R14 | Scope creep | **High** | High | Ideas arriving without a ledger row | Strict charter §4; post-MVP backlog | Any week where a non-goal gets built |
 | R15 | Frontend time sink | High | Medium | UI day/week consistently overrunning | Replay and timeline first; graph polish last | UI eats a phase that is not E8 |
 | R16 | Cloud cost | Resolved | — | — | Local-first; cloud is stretch only | Any recurring charge appears |
-| R17 | **Hardware mismatch** | **Open** | **High** | Spec plans an RTX 4050; build machine is Apple silicon | Pending PS-2 decision | Unresolved past Week 1 |
+| R17 | Hardware mismatch | Resolved | — | — | Retargeted to Apple Silicon / MPS in PS-2; spec §H superseded | An MPS operator gap blocks a required op with no CPU fallback |
+| R19 | **Disk headroom** | **High** | High | 32 GB free against a spec assuming 200 GB | Blender passes consumed in-process, never persisted; prune Docker cache; compact derived observations | Free space below 15 GB |
+| R20 | Docker has no Metal access | Certain | Medium | — | Worker runs on the host in development; container image is CPU-only for CI and the Gate 6 clone test | Gate 6 requires GPU parity inside the container |
 | R18 | **Blender authoring effort** | Medium | High | Scene build running past Week 2 | Use CC0 assets; never model an asset by hand | E1.1 not done by end of Week 2 |
 
 ## Gate calendar

@@ -243,8 +243,9 @@ observation_id, run_id="GT", camera_id, frame_index, timestamp_s,
 class, entity_id, bbox_xyxy, world_xyz, visibility, confidence=1.0
 ```
 
-`visibility` is the fraction of the entity's silhouette not occluded, computed in
-Blender from the object index and depth passes. **`visibility < 0.15` means the entity
+`visibility` is the fraction of the entity's silhouette not occluded, computed inside
+the Blender render loop from the object-index and depth passes **without persisting
+them** (see §8). **`visibility < 0.15` means the entity
 is not emitted at all** — ground truth must not claim to see what a camera cannot,
 otherwise the occlusion cases score as detector failures rather than as the evidence
 gaps they are.
@@ -266,7 +267,7 @@ Alongside the per-frame observations, each case exports:
 | Resolution | 1280 x 720 | Matches the documented operating envelope. |
 | Frame rate | 10 FPS | Enough temporal resolution for 1.5 m/s motion; a quarter of the frames of 40 FPS. |
 | Duration | 45 s (450 frames) | Long enough for a 20 s dwell threshold plus a rewind window either side. |
-| Output | H.264 MP4, plus per-frame object-index and depth passes for ground truth | Video for replay, passes for ground truth. |
+| Output | H.264 MP4 only. Object-index and depth passes are **consumed in-process and never written to disk** | Persisting 8,100 frames of passes would cost roughly 10 GB against 32 GB free. Bounding boxes and visibility are computed inside the render loop and emitted straight to JSON. |
 | Lighting | Fixed overhead area lights, no variation between cases | Lighting variation is not a variable under study; keeping it constant means detector failures are attributable. |
 
 Total render: 6 cases x 3 cameras x 450 frames = **8,100 frames**.
