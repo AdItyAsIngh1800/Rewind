@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Environment
+.env
+.env.local
+
+# Data — the manifest is the committed record, not the media
+data/samples/**
+!data/samples/README.md
+data/**/*.mp4
+data/**/*.mkv
+data/**/*.png
+data/**/*.jpg
+*.blend1
+
+# Model weights are never committed
+ml/models/**/*.pt
+ml/models/**/*.pth
+ml/models/**/*.onnx
+
+# Build / runtime artifacts
+artifacts/demo-assets/**
+!artifacts/demo-assets/README.md
+node_modules/
+dist/
+.DS_Store
+
+# Local tooling
+mlruns/
+.coverage
+htmlcov/
