@@ -1,0 +1,71 @@
+[project]
+name = "rewind"
+version = "0.1.0"
+description = "Evidence-backed AI incident reconstruction engine for multi-camera video"
+requires-python = ">=3.12"
+
+dependencies = [
+    # API
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    # Persistence
+    "sqlalchemy>=2.0",
+    "alembic>=1.14",
+    "psycopg[binary]>=3.2",
+    # Queue and cache
+    "redis>=5.2",
+    "arq>=0.26",
+    # Geometry — correct on the vertex and edge cases a hand-rolled
+    # point-in-polygon gets wrong, and zone logic is load-bearing here.
+    "shapely>=2.0",
+    "numpy>=2.1",
+    # Config and logging
+    "pyyaml>=6.0",
+    "structlog>=24.4",
+]
+
+[project.optional-dependencies]
+# Vision and ML. Split out because the accelerator backend is
+# hardware-dependent and pinned in PS-2 — see docs/09-deployment.md.
+ml = [
+    "opencv-python-headless>=4.10",
+    "supervision>=0.25",
+    "motmetrics>=1.4",
+]
+
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.28",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "--strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["ml/notebooks", "apps/web"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+exclude = ["ml/notebooks", "apps/web"]
+
+[[tool.mypy.overrides]]
+module = ["supervision.*", "motmetrics.*", "cv2.*", "shapely.*"]
+ignore_missing_imports = true
