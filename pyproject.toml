@@ -27,9 +27,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Vision and ML. Split out because the accelerator backend is
-# hardware-dependent and pinned in PS-2 — see docs/09-deployment.md.
+# Vision and ML. Backend pinned in PS-2: Apple Silicon / Metal (MPS).
+# The default macOS arm64 torch wheel ships MPS support — no index URL,
+# no CUDA variant. See docs/09-deployment.md.
 ml = [
+    "torch>=2.5",
+    "torchvision>=0.20",
+    "ultralytics>=8.3",          # AGPL-3.0 — see LICENSE and ADR-0002
     "opencv-python-headless>=4.10",
     "supervision>=0.25",
     "motmetrics>=1.4",
