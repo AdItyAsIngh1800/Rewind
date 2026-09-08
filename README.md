@@ -28,10 +28,21 @@ Pre-start phase (Weeks 0–1). The pipeline does not run yet.
 
 ```bash
 make dev      # build the environment from the lockfile
+make up       # start postgres (5433) and redis
+make migrate  # apply database migrations
 make test     # run the suite
-make lint     # ruff check + format check
 make help     # list every target
 ```
+
+The API contract is browsable without any of the above:
+
+```bash
+uv run uvicorn apps.api.main:app --reload
+# http://localhost:8000/docs
+```
+
+Endpoints whose phase has not landed return **501**, not 404 — the shape is frozen,
+the implementation is pending.
 
 Requires [uv](https://docs.astral.sh/uv/) and Python 3.12. `make dev` installs
 everything else.

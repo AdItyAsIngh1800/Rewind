@@ -1,0 +1,43 @@
+# Development backing services only — no application containers.
+#
+# The app runs on the host during development because Docker on Apple silicon has
+# no Metal passthrough, so a containerised worker cannot reach the GPU. See
+# docs/09-deployment.md §8. The full stack lives in docker-compose.yml (E10.1).
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Postgres is on 5433, not 5432: a system PostgreSQL is commonly already bound to
+# 5432 and wins the localhost race, which surfaces as a confusing
+# "role does not exist" error rather than a port conflict.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rewind-pg
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rewind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rewind}
+      POSTGRES_DB: ${POSTGRES_DB:-rewind}
+    ports:
+      - "5433:5432"
+    volumes:
+      - rewind_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rewind}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: rewind-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  rewind_pgdata:
