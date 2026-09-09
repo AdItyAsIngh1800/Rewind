@@ -20,10 +20,11 @@ data/**/*.png
 data/**/*.jpg
 *.blend1
 
-# Model weights are never committed
-ml/models/**/*.pt
-ml/models/**/*.pth
-ml/models/**/*.onnx
+# Model weights are never committed — including checkpoints that tooling
+# downloads into the working directory rather than into ml/models/.
+*.pt
+*.pth
+*.onnx
 
 # Build / runtime artifacts
 artifacts/demo-assets/**
