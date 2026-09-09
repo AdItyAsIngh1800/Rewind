@@ -1,0 +1,539 @@
+{
+  "_comment": [
+    "Actor scripts for the six rendered cases, transcribed from",
+    "docs/dataset/scene-spec.md section 6. Positions are world metres; entities move",
+    "by linear interpolation between waypoints, which is enough for 10 FPS at walking",
+    "speed and keeps the ground truth exactly reproducible.",
+    "",
+    "'state' on a robot waypoint writes its telemetry channel. The ESTOP is read from",
+    "this channel, never inferred from motion: a real robot reports its own stop, and",
+    "inferring it from velocity would make the incident trigger depend on the tracker."
+  ],
+  "version": "cases_v1",
+  "duration_s": 45.0,
+  "fps": 10,
+  "cases": [
+    {
+      "id": "case_01",
+      "name": "ESTOP_CLEAN",
+      "incident_class": "robot_estop_human_incursion",
+      "split": "tune",
+      "summary": "Worker enters the robot lane at the intersection; robot emergency stops.",
+      "actors": [
+        {
+          "entity_id": "R12",
+          "class": "robot",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 2.0,
+              "y": 8.0,
+              "state": "moving"
+            },
+            {
+              "t": 11.4,
+              "x": 13.4,
+              "y": 8.0,
+              "state": "moving"
+            },
+            {
+              "t": 13.4,
+              "x": 13.6,
+              "y": 8.0,
+              "state": "estop"
+            },
+            {
+              "t": 24.0,
+              "x": 13.6,
+              "y": 8.0,
+              "state": "idle"
+            },
+            {
+              "t": 45.0,
+              "x": 13.6,
+              "y": 8.0,
+              "state": "idle"
+            }
+          ]
+        },
+        {
+          "entity_id": "P01",
+          "class": "person",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 18.0,
+              "y": 15.0
+            },
+            {
+              "t": 6.0,
+              "x": 12.0,
+              "y": 15.0
+            },
+            {
+              "t": 11.5,
+              "x": 12.0,
+              "y": 10.0
+            },
+            {
+              "t": 12.8,
+              "x": 12.0,
+              "y": 9.5
+            },
+            {
+              "t": 14.0,
+              "x": 12.0,
+              "y": 8.6
+            },
+            {
+              "t": 18.0,
+              "x": 12.0,
+              "y": 8.6
+            },
+            {
+              "t": 22.0,
+              "x": 12.0,
+              "y": 11.0
+            },
+            {
+              "t": 45.0,
+              "x": 12.0,
+              "y": 11.0
+            }
+          ]
+        }
+      ],
+      "cause_gt": "P01 entered Z1 at 12.8 s while R12 was approaching"
+    },
+    {
+      "id": "case_02",
+      "name": "ESTOP_OCCLUDED",
+      "incident_class": "robot_estop_human_incursion",
+      "split": "golden",
+      "summary": "Same incursion, but a parked forklift hides the critical interval from every camera.",
+      "actors": [
+        {
+          "entity_id": "R12",
+          "class": "robot",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 2.0,
+              "y": 8.0,
+              "state": "moving"
+            },
+            {
+              "t": 11.4,
+              "x": 13.4,
+              "y": 8.0,
+              "state": "moving"
+            },
+            {
+              "t": 13.4,
+              "x": 13.6,
+              "y": 8.0,
+              "state": "estop"
+            },
+            {
+              "t": 24.0,
+              "x": 13.6,
+              "y": 8.0,
+              "state": "idle"
+            },
+            {
+              "t": 45.0,
+              "x": 13.6,
+              "y": 8.0,
+              "state": "idle"
+            }
+          ]
+        },
+        {
+          "entity_id": "F01",
+          "class": "forklift",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 13.0,
+              "y": 3.0
+            },
+            {
+              "t": 8.0,
+              "x": 13.0,
+              "y": 11.0
+            },
+            {
+              "t": 45.0,
+              "x": 13.0,
+              "y": 11.0
+            }
+          ]
+        },
+        {
+          "entity_id": "P01",
+          "class": "person",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 2.0,
+              "y": 12.0
+            },
+            {
+              "t": 9.0,
+              "x": 8.5,
+              "y": 12.0
+            },
+            {
+              "t": 12.9,
+              "x": 8.5,
+              "y": 9.5
+            },
+            {
+              "t": 16.0,
+              "x": 8.5,
+              "y": 8.6
+            },
+            {
+              "t": 20.0,
+              "x": 8.5,
+              "y": 11.5
+            },
+            {
+              "t": 45.0,
+              "x": 8.5,
+              "y": 11.5
+            }
+          ]
+        }
+      ],
+      "cause_gt": "P01 entered Z1 at 12.9 s; unobservable between 11.0 s and 16.0 s"
+    },
+    {
+      "id": "case_03",
+      "name": "ESTOP_CROSSCAM",
+      "incident_class": "robot_estop_human_incursion",
+      "split": "tune",
+      "summary": "Worker crosses the blind corridor and reappears in another camera; a distractor is present.",
+      "actors": [
+        {
+          "entity_id": "R12",
+          "class": "robot",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 2.0,
+              "y": 8.0,
+              "state": "moving"
+            },
+            {
+              "t": 15.4,
+              "x": 17.4,
+              "y": 8.0,
+              "state": "moving"
+            },
+            {
+              "t": 17.4,
+              "x": 17.6,
+              "y": 8.0,
+              "state": "estop"
+            },
+            {
+              "t": 28.0,
+              "x": 17.6,
+              "y": 8.0,
+              "state": "idle"
+            },
+            {
+              "t": 45.0,
+              "x": 17.6,
+              "y": 8.0,
+              "state": "idle"
+            }
+          ]
+        },
+        {
+          "entity_id": "P01",
+          "class": "person",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 3.0,
+              "y": 9.8
+            },
+            {
+              "t": 6.0,
+              "x": 7.5,
+              "y": 10.2
+            },
+            {
+              "t": 10.0,
+              "x": 11.0,
+              "y": 10.2
+            },
+            {
+              "t": 16.0,
+              "x": 17.0,
+              "y": 9.5
+            },
+            {
+              "t": 18.0,
+              "x": 17.0,
+              "y": 8.6
+            },
+            {
+              "t": 24.0,
+              "x": 17.0,
+              "y": 11.0
+            },
+            {
+              "t": 45.0,
+              "x": 17.0,
+              "y": 11.0
+            }
+          ]
+        },
+        {
+          "entity_id": "P02",
+          "class": "person",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 21.0,
+              "y": 10.0
+            },
+            {
+              "t": 20.0,
+              "x": 19.0,
+              "y": 10.0
+            },
+            {
+              "t": 45.0,
+              "x": 21.0,
+              "y": 10.0
+            }
+          ]
+        }
+      ],
+      "cause_gt": "P01 entered Z1 at 16.9 s after crossing the blind corridor"
+    },
+    {
+      "id": "case_04",
+      "name": "BLOCKED_ZONE",
+      "incident_class": "zone_blocked_unattended_object",
+      "split": "tune",
+      "summary": "A pallet is left inside the keep-clear zone past the dwell threshold.",
+      "actors": [
+        {
+          "entity_id": "F01",
+          "class": "forklift",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 3.0,
+              "y": 2.0
+            },
+            {
+              "t": 8.0,
+              "x": 12.0,
+              "y": 4.0
+            },
+            {
+              "t": 14.0,
+              "x": 12.0,
+              "y": 8.0
+            },
+            {
+              "t": 20.0,
+              "x": 12.0,
+              "y": 2.0
+            },
+            {
+              "t": 45.0,
+              "x": 3.0,
+              "y": 2.0
+            }
+          ]
+        },
+        {
+          "entity_id": "PL3",
+          "class": "pallet",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 3.0,
+              "y": 2.0
+            },
+            {
+              "t": 8.0,
+              "x": 12.0,
+              "y": 4.0
+            },
+            {
+              "t": 14.0,
+              "x": 12.0,
+              "y": 8.0
+            },
+            {
+              "t": 45.0,
+              "x": 12.0,
+              "y": 8.0
+            }
+          ]
+        }
+      ],
+      "cause_gt": "F01 placed PL3 in Z2 at 14.0 s and left it"
+    },
+    {
+      "id": "case_05",
+      "name": "NEAR_MISS",
+      "incident_class": null,
+      "split": "tune",
+      "summary": "Worker approaches the lane and stops short. Negative case: no incident.",
+      "actors": [
+        {
+          "entity_id": "R12",
+          "class": "robot",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 2.0,
+              "y": 8.0,
+              "state": "moving"
+            },
+            {
+              "t": 45.0,
+              "x": 22.0,
+              "y": 8.0,
+              "state": "moving"
+            }
+          ]
+        },
+        {
+          "entity_id": "P01",
+          "class": "person",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 12.0,
+              "y": 15.0
+            },
+            {
+              "t": 9.0,
+              "x": 12.0,
+              "y": 10.2
+            },
+            {
+              "t": 20.0,
+              "x": 12.0,
+              "y": 10.2
+            },
+            {
+              "t": 28.0,
+              "x": 12.0,
+              "y": 14.0
+            },
+            {
+              "t": 45.0,
+              "x": 12.0,
+              "y": 14.0
+            }
+          ]
+        }
+      ],
+      "cause_gt": null
+    },
+    {
+      "id": "case_06",
+      "name": "BLOCKED_AMBIGUOUS",
+      "incident_class": "zone_blocked_unattended_object",
+      "split": "golden",
+      "summary": "Two forklifts could each explain the obstruction. Tests ranking, not detection.",
+      "actors": [
+        {
+          "entity_id": "F01",
+          "class": "forklift",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 3.0,
+              "y": 2.0
+            },
+            {
+              "t": 10.0,
+              "x": 11.0,
+              "y": 6.2
+            },
+            {
+              "t": 16.0,
+              "x": 3.0,
+              "y": 2.0
+            },
+            {
+              "t": 45.0,
+              "x": 3.0,
+              "y": 2.0
+            }
+          ]
+        },
+        {
+          "entity_id": "PL3",
+          "class": "pallet",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 3.0,
+              "y": 2.0
+            },
+            {
+              "t": 10.0,
+              "x": 11.0,
+              "y": 6.2
+            },
+            {
+              "t": 22.0,
+              "x": 11.0,
+              "y": 6.2
+            },
+            {
+              "t": 24.0,
+              "x": 12.0,
+              "y": 7.5
+            },
+            {
+              "t": 45.0,
+              "x": 12.0,
+              "y": 7.5
+            }
+          ]
+        },
+        {
+          "entity_id": "F02",
+          "class": "forklift",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 12.0,
+              "y": 0.5
+            },
+            {
+              "t": 22.0,
+              "x": 11.5,
+              "y": 6.0
+            },
+            {
+              "t": 26.0,
+              "x": 12.0,
+              "y": 3.0
+            },
+            {
+              "t": 45.0,
+              "x": 12.0,
+              "y": 0.5
+            }
+          ]
+        }
+      ],
+      "cause_gt": "F02 pushed PL3 fully into Z2 at 24.0 s"
+    }
+  ]
+}

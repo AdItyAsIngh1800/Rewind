@@ -1,0 +1,530 @@
+"""Animate the actors, render the cases and export ground truth.
+
+Run headlessly:
+
+    blender --background data/scene/warehouse.blend \
+        --python scripts/dataset/render_cases.py -- --case case_01
+
+Runs inside Blender's bundled Python, so it imports nothing from this project. Every
+number comes from ml/configs/scene_v1.json and ml/configs/cases_v1.json.
+
+GROUND TRUTH COMES FROM RAY-CASTING, NOT FROM RENDER PASSES.
+
+The obvious approach is to render the object-index pass and read back per-pixel object
+ids. It was rejected for two reasons. Reading a pass headlessly depends on the
+compositor Viewer node, which does not reliably update in background mode, and the
+alternative of writing passes to disk was already ruled out by the disk budget in
+docs/09-deployment.md.
+
+Casting rays from the camera through a grid over each object's projected bounding box
+answers the same two questions directly: which pixels actually see this object (giving
+a tight, occlusion-aware box) and what fraction of it is visible. It is faster, it
+works in background mode, and it decouples ground truth from rendering entirely, so
+the annotations can be regenerated in seconds without re-rendering 8,100 frames.
+"""
+
+from __future__ import annotations
+
+import argparse
+import itertools
+import json
+import pathlib
+import sys
+from typing import Any
+
+import bpy
+from bpy_extras.object_utils import world_to_camera_view
+from mathutils import Vector
+
+BlenderObject = Any
+
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
+SCENE_CONFIG = REPO_ROOT / "ml" / "configs" / "scene_v1.json"
+CASES_CONFIG = REPO_ROOT / "ml" / "configs" / "cases_v1.json"
+SAMPLES = REPO_ROOT / "data" / "samples"
+
+#: Rays cast across each object's projected box. 24x24 resolves a person at the far
+#: end of the aisle to a few percent of visibility, which is finer than the 0.15
+#: threshold the scene spec actually cares about.
+RAY_GRID = 24
+
+#: Scene spec section 7: below this, ground truth does not emit the entity at all.
+#: Ground truth must not claim to see what a camera cannot.
+MIN_VISIBILITY = 0.15
+
+
+def script_args() -> argparse.Namespace:
+    """Parse arguments after the ``--`` separator Blender passes through."""
+    argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--case", default="all", help="case id, or 'all'")
+    parser.add_argument("--frames", type=int, default=0, help="limit frames, 0 for all")
+    parser.add_argument(
+        "--gt-only",
+        action="store_true",
+        help="export ground truth without rendering video, for fast iteration",
+    )
+    return parser.parse_args(argv)
+
+
+# --------------------------------------------------------------------------
+# Actors
+# --------------------------------------------------------------------------
+
+
+def spawn_actor(
+    entity_id: str, entity_class: str, spec: dict[str, Any], index: int
+) -> BlenderObject:
+    """Create one actor primitive at its real-world footprint.
+
+    Dimensions come from the scene config rather than being chosen for convenience,
+    so a CC0 asset dropped in later scales into the same bounding volume and zone
+    polygons never need re-checking because of the swap.
+    """
+    footprint = spec["footprint"]
+    height = spec["height"]
+
+    bpy.ops.mesh.primitive_cube_add(size=1.0)
+    actor = bpy.context.active_object
+    actor.name = entity_id
+    actor.scale = (footprint[0], footprint[1], height)
+
+    material = bpy.data.materials.new(f"MAT_{entity_id}")
+    material.use_nodes = True
+    material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (
+        *spec["colour"],
+        1.0,
+    )
+    actor.data.materials.append(material)
+
+    # pass_index is not used for ground truth any more, but keeping it unique makes
+    # the object identifiable if anyone does inspect a render pass by hand.
+    actor.pass_index = index + 1
+    actor["entity_id"] = entity_id
+    actor["entity_class"] = entity_class
+    return actor
+
+
+def interpolate(waypoints: list[dict[str, Any]], t: float) -> tuple[float, float, str | None]:
+    """Position and state at time ``t``, linear between waypoints.
+
+    Linear rather than smoothed on purpose. At 10 FPS and walking speed the visual
+    difference is negligible, and a closed-form position means ground truth is exactly
+    reproducible from the config without replaying an animation system.
+    """
+    if t <= waypoints[0]["t"]:
+        first = waypoints[0]
+        return first["x"], first["y"], first.get("state")
+    if t >= waypoints[-1]["t"]:
+        last = waypoints[-1]
+        return last["x"], last["y"], last.get("state")
+
+    for start, end in itertools.pairwise(waypoints):
+        if start["t"] <= t <= end["t"]:
+            span = end["t"] - start["t"]
+            ratio = 0.0 if span == 0 else (t - start["t"]) / span
+            return (
+                start["x"] + ratio * (end["x"] - start["x"]),
+                start["y"] + ratio * (end["y"] - start["y"]),
+                # State is a step function, not a blend: a robot is either moving or
+                # stopped, never half stopped.
+                start.get("state"),
+            )
+    last = waypoints[-1]
+    return last["x"], last["y"], last.get("state")
+
+
+def place_actors(
+    case: dict[str, Any], actors: dict[str, BlenderObject], scene_cfg: dict[str, Any], t: float
+) -> dict[str, str | None]:
+    """Move every actor to its position at time ``t``; return their states."""
+    states: dict[str, str | None] = {}
+    for track in case["actors"]:
+        actor = actors[track["entity_id"]]
+        x, y, state = interpolate(track["waypoints"], t)
+        height = scene_cfg["entities"][track["class"]]["height"]
+        actor.location = (x, y, height / 2)
+        states[track["entity_id"]] = state
+    bpy.context.view_layer.update()
+    return states
+
+
+# --------------------------------------------------------------------------
+# Ground truth by ray-casting
+# --------------------------------------------------------------------------
+
+
+def projected_box(
+    camera: BlenderObject, actor: BlenderObject
+) -> tuple[float, float, float, float] | None:
+    """Project an actor's world bounding box into normalised camera space.
+
+    Returns ``None`` when the actor is entirely behind or outside the frame, which
+    saves casting a grid of rays that would all miss.
+    """
+    scene = bpy.context.scene
+    xs: list[float] = []
+    ys: list[float] = []
+    for corner in actor.bound_box:
+        world = actor.matrix_world @ Vector(corner)
+        projected = world_to_camera_view(scene, camera, world)
+        if projected.z <= 0:
+            continue  # behind the camera
+        xs.append(projected.x)
+        ys.append(projected.y)
+
+    if not xs:
+        return None
+    x0, x1 = max(0.0, min(xs)), min(1.0, max(xs))
+    y0, y1 = max(0.0, min(ys)), min(1.0, max(ys))
+    if x1 <= x0 or y1 <= y0:
+        return None
+    return x0, y0, x1, y1
+
+
+def observe(
+    camera: BlenderObject, actor: BlenderObject, width: int, height: int
+) -> tuple[tuple[float, float, float, float], float] | None:
+    """Return the visible pixel box and visibility fraction for one actor.
+
+    Rays are cast from the camera through a grid over the actor's projected box. A ray
+    counts as seeing the actor only when the actor is the *first* thing it hits, so
+    racking and other actors occlude correctly and the resulting box is the visible
+    (modal) box a detector would be scored against, not the amodal one.
+    """
+    box = projected_box(camera, actor)
+    if box is None:
+        return None
+
+    scene = bpy.context.scene
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    origin = camera.matrix_world.translation
+
+    nx0, ny0, nx1, ny1 = box
+    hits_x: list[float] = []
+    hits_y: list[float] = []
+    total = 0
+    seen = 0
+
+    for i in range(RAY_GRID):
+        for j in range(RAY_GRID):
+            u = nx0 + (nx1 - nx0) * (i + 0.5) / RAY_GRID
+            v = ny0 + (ny1 - ny0) * (j + 0.5) / RAY_GRID
+            total += 1
+
+            # Reconstruct a world-space ray through this normalised camera point.
+            frame = camera.data.view_frame(scene=scene)
+            top_left = camera.matrix_world @ frame[3]
+            top_right = camera.matrix_world @ frame[0]
+            bottom_left = camera.matrix_world @ frame[2]
+            target = top_left + (top_right - top_left) * u + (bottom_left - top_left) * (1.0 - v)
+            direction = (target - origin).normalized()
+
+            hit, _location, _normal, _index, obj, _matrix = scene.ray_cast(
+                depsgraph, origin, direction
+            )
+            if hit and obj is not None and obj.name == actor.name:
+                seen += 1
+                hits_x.append(u)
+                hits_y.append(v)
+
+    if not hits_x or total == 0:
+        return None
+
+    visibility = seen / total
+    # Pixel box from the rays that actually landed on the actor. Blender's v axis runs
+    # bottom-up; image coordinates run top-down.
+    x1_px = min(hits_x) * width
+    x2_px = max(hits_x) * width
+    y1_px = (1.0 - max(hits_y)) * height
+    y2_px = (1.0 - min(hits_y)) * height
+
+    # A single-ray hit has no extent. Give it one pixel so the box stays valid rather
+    # than being silently dropped by the contract's degenerate-box check.
+    if x2_px - x1_px < 1.0:
+        x2_px = x1_px + 1.0
+    if y2_px - y1_px < 1.0:
+        y2_px = y1_px + 1.0
+
+    return (x1_px, y1_px, x2_px, y2_px), visibility
+
+
+# --------------------------------------------------------------------------
+# Zones and events
+# --------------------------------------------------------------------------
+
+
+def in_polygon(x: float, y: float, polygon: list[list[float]]) -> bool:
+    """Ray-crossing point-in-polygon test."""
+    inside = False
+    count = len(polygon)
+    for i in range(count):
+        x1, y1 = polygon[i]
+        x2, y2 = polygon[(i + 1) % count]
+        if (y1 > y) != (y2 > y):
+            crossing = x1 + (y - y1) / (y2 - y1) * (x2 - x1)
+            if x < crossing:
+                inside = not inside
+    return inside
+
+
+def derive_events(
+    case: dict[str, Any], scene_cfg: dict[str, Any], fps: int, frames: int
+) -> list[dict[str, Any]]:
+    """Derive the annotated event timeline from the actor scripts.
+
+    Derived rather than hand-written so it cannot disagree with the motion that was
+    actually rendered. These are annotations of what *happened*, independent of what
+    any camera saw: an event here that no camera observed is exactly the case the
+    system must not claim to have seen.
+    """
+    events: list[dict[str, Any]] = []
+    zones = scene_cfg["zones"]
+    membership: dict[tuple[str, str], bool] = {}
+    states: dict[str, str | None] = {}
+    counter = 0
+
+    for frame in range(frames):
+        t = frame / fps
+        for track in case["actors"]:
+            entity = track["entity_id"]
+            x, y, state = interpolate(track["waypoints"], t)
+
+            for zone in zones:
+                key = (entity, zone["id"])
+                now = in_polygon(x, y, zone["polygon"])
+                before = membership.get(key, False)
+                if now != before:
+                    counter += 1
+                    events.append(
+                        {
+                            "event_id": f"GT-EVT-{counter:04d}",
+                            "run_id": "GT",
+                            "event_type": "zone_entry" if now else "zone_exit",
+                            "timestamp_s": round(t, 3),
+                            "camera_id": None,
+                            "entity_ids": [entity],
+                            "zone_id": zone["id"],
+                            "confidence": 1.0,
+                            "evidence_refs": [],
+                            "payload": {"x": round(x, 3), "y": round(y, 3)},
+                        }
+                    )
+                    membership[key] = now
+
+            if state is not None and states.get(entity) != state:
+                if states.get(entity) is not None:
+                    counter += 1
+                    events.append(
+                        {
+                            "event_id": f"GT-EVT-{counter:04d}",
+                            "run_id": "GT",
+                            "event_type": "state_change",
+                            "timestamp_s": round(t, 3),
+                            "camera_id": None,
+                            "entity_ids": [entity],
+                            "zone_id": None,
+                            "confidence": 1.0,
+                            "evidence_refs": [],
+                            "payload": {"from": states[entity], "to": state, "source": "telemetry"},
+                        }
+                    )
+                states[entity] = state
+
+    return events
+
+
+# --------------------------------------------------------------------------
+# Rendering and export
+# --------------------------------------------------------------------------
+
+
+def configure_video_output(scene: BlenderObject) -> None:
+    """Configure H.264 video output across Blender versions.
+
+    Blender 5 split image and video output behind ``image_settings.media_type``;
+    before that, ``FFMPEG`` was simply one of the file_format values. Setting the
+    switch when it exists keeps this working on both without pinning a Blender
+    version the render farm may not have.
+    """
+    settings = scene.render.image_settings
+    if hasattr(settings, "media_type"):
+        settings.media_type = "VIDEO"
+    settings.file_format = "FFMPEG"
+    scene.render.ffmpeg.format = "MPEG4"
+    scene.render.ffmpeg.codec = "H264"
+    # Constant rate factor rather than a bitrate target: the scene is mostly static
+    # concrete, and a fixed bitrate would waste space on frames that do not change.
+    scene.render.ffmpeg.constant_rate_factor = "MEDIUM"
+
+
+def render_case(
+    case: dict[str, Any],
+    scene_cfg: dict[str, Any],
+    cases_cfg: dict[str, Any],
+    frames: int,
+    gt_only: bool,
+) -> dict[str, Any]:
+    """Render one case from every camera and export its ground truth."""
+    scene = bpy.context.scene
+    fps = cases_cfg["fps"]
+    out_dir = SAMPLES / case["id"]
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    actors = {
+        track["entity_id"]: spawn_actor(
+            track["entity_id"], track["class"], scene_cfg["entities"][track["class"]], index
+        )
+        for index, track in enumerate(case["actors"])
+    }
+
+    cameras = [bpy.data.objects[spec["id"]] for spec in scene_cfg["cameras"]]
+    width = scene_cfg["camera_optics"]["resolution_x"]
+    height = scene_cfg["camera_optics"]["resolution_y"]
+
+    observations: list[dict[str, Any]] = []
+    gaps: dict[str, list[list[float]]] = {}
+    counter = 0
+
+    for frame in range(frames):
+        t = frame / fps
+        # The returned states drive the telemetry channel, which becomes
+        # state_change events in derive_events rather than a field on Observation.
+        # Nothing here needs them, so the return is deliberately discarded.
+        place_actors(case, actors, scene_cfg, t)
+
+        for camera in cameras:
+            for track in case["actors"]:
+                entity = track["entity_id"]
+                result = observe(camera, actors[entity], width, height)
+                if result is None:
+                    continue
+                (x1, y1, x2, y2), visibility = result
+                if visibility < MIN_VISIBILITY:
+                    continue
+
+                counter += 1
+                x, y, _state = interpolate(track["waypoints"], t)
+                observations.append(
+                    {
+                        "observation_id": f"GT-{case['id']}-{counter:06d}",
+                        "run_id": "GT",
+                        "camera_id": camera.name,
+                        "frame_index": frame,
+                        "timestamp_s": round(t, 3),
+                        "entity_class": track["class"],
+                        "bbox": {
+                            "x1": round(x1, 2),
+                            "y1": round(y1, 2),
+                            "x2": round(x2, 2),
+                            "y2": round(y2, 2),
+                        },
+                        "confidence": 1.0,
+                        "track_id": f"{camera.name}-{entity}",
+                        "entity_id": entity,
+                        "world_xyz": [
+                            round(x, 3),
+                            round(y, 3),
+                            round(scene_cfg["entities"][track["class"]]["height"] / 2, 3),
+                        ],
+                        "visibility": round(visibility, 3),
+                    }
+                )
+
+        # Track intervals where an entity is visible to no camera at all. This is the
+        # ground truth the uncertainty engine is scored against, and without it the
+        # occlusion case cannot be evaluated.
+        for track in case["actors"]:
+            entity = track["entity_id"]
+            seen_now = any(
+                o["entity_id"] == entity and o["frame_index"] == frame for o in observations[-40:]
+            )
+            if not seen_now:
+                gaps.setdefault(entity, []).append([round(t, 3), round(t + 1 / fps, 3)])
+
+        if frame % 50 == 0:
+            print(f"    frame {frame}/{frames}  observations {len(observations)}")
+
+    if not gt_only:
+        configure_video_output(scene)
+        for camera in cameras:
+            scene.camera = camera
+            scene.frame_start = 1
+            scene.frame_end = frames
+            scene.render.filepath = str(out_dir / f"{camera.name}.mp4")
+            print(f"    rendering {camera.name}")
+            bpy.ops.render.render(animation=True)
+
+    return {"observations": observations, "gaps": gaps, "actors": actors}
+
+
+def merge_gaps(intervals: list[list[float]]) -> list[list[float]]:
+    """Collapse per-frame invisible spans into contiguous intervals."""
+    if not intervals:
+        return []
+    merged = [list(intervals[0])]
+    for start, end in intervals[1:]:
+        if start <= merged[-1][1] + 1e-6:
+            merged[-1][1] = end
+        else:
+            merged.append([start, end])
+    return merged
+
+
+def export(case: dict[str, Any], result: dict[str, Any], events: list[dict[str, Any]]) -> None:
+    """Write every ground-truth artefact for one case."""
+    out_dir = SAMPLES / case["id"]
+
+    def write(name: str, payload: Any) -> None:
+        (out_dir / name).write_text(json.dumps(payload, indent=2) + "\n")
+
+    write("observations_gt.json", result["observations"])
+    write("events_gt.json", events)
+    write(
+        "identities_gt.json",
+        {
+            track["entity_id"]: [
+                f"{cam}-{track['entity_id']}" for cam in ("CAM_A", "CAM_B", "CAM_C")
+            ]
+            for track in case["actors"]
+        },
+    )
+    write("cause_gt.json", {"incident_class": case["incident_class"], "cause": case["cause_gt"]})
+    write(
+        "gaps_gt.json",
+        {entity: merge_gaps(spans) for entity, spans in result["gaps"].items()},
+    )
+
+
+def main() -> int:
+    """Render the requested cases and export their ground truth."""
+    args = script_args()
+    scene_cfg = json.loads(SCENE_CONFIG.read_text())
+    cases_cfg = json.loads(CASES_CONFIG.read_text())
+
+    fps = cases_cfg["fps"]
+    total_frames = int(cases_cfg["duration_s"] * fps)
+    frames = args.frames or total_frames
+
+    selected = [c for c in cases_cfg["cases"] if args.case == "all" or c["id"] == args.case]
+    if not selected:
+        print(f"no case matching {args.case!r}")
+        return 1
+
+    for case in selected:
+        print(f"\n{case['id']} — {case['name']} ({frames} frames)")
+        result = render_case(case, scene_cfg, cases_cfg, frames, args.gt_only)
+        events = derive_events(case, scene_cfg, fps, frames)
+        export(case, result, events)
+        print(f"  observations : {len(result['observations'])}")
+        print(f"  events       : {len(events)}")
+        print(f"  written to   : {SAMPLES / case['id']}")
+
+        for actor in result["actors"].values():
+            bpy.data.objects.remove(actor, do_unlink=True)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
