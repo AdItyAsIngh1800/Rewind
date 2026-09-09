@@ -1,0 +1,227 @@
+{
+  "case_count": 6,
+  "cases": [
+    {
+      "case": "case_01",
+      "file_count": 5,
+      "files": [
+        {
+          "bytes": 119,
+          "path": "case_01/cause_gt.json",
+          "sha256": "2e3de6639942307c4c2f9b198a889fc10e679905085a00d8ecb6c5963aabb42f"
+        },
+        {
+          "bytes": 3119,
+          "path": "case_01/events_gt.json",
+          "sha256": "4300a72cbb18c6e60c6097b1c58b075fd28931714e162ff08e435a84cebdc807"
+        },
+        {
+          "bytes": 52,
+          "path": "case_01/gaps_gt.json",
+          "sha256": "7779368692c48a5a13bbcf0e43d6d31523f43621a43e138668812fc51fd4103c"
+        },
+        {
+          "bytes": 135,
+          "path": "case_01/identities_gt.json",
+          "sha256": "0c86b889bdd46f2adfa36d2d6ed6f3daf9ef5ce4c5b8bcf1e89ccdcb4f190da7"
+        },
+        {
+          "bytes": 921213,
+          "path": "case_01/observations_gt.json",
+          "sha256": "b43dc33b410d60248888da22e0ac9a9b111ff4387b73d3d5e606bb59a2454125"
+        }
+      ],
+      "split": "tune",
+      "total_bytes": 924638
+    },
+    {
+      "case": "case_02",
+      "file_count": 5,
+      "files": [
+        {
+          "bytes": 151,
+          "path": "case_02/cause_gt.json",
+          "sha256": "10d28c2a70e241cc0a5b34b8ab2b52b409348d5ba9e4b1c873fd5e91025390d9"
+        },
+        {
+          "bytes": 3416,
+          "path": "case_02/events_gt.json",
+          "sha256": "4ce23b3885e8566cfd339ea6e98fd8afb6ed958de0972c326cbdf73b5b2dcc55"
+        },
+        {
+          "bytes": 173,
+          "path": "case_02/gaps_gt.json",
+          "sha256": "5e82c3c50762a4ad8a27cb5bbb50432c67ba9d249fa85384ba8fde085f816c30"
+        },
+        {
+          "bytes": 201,
+          "path": "case_02/identities_gt.json",
+          "sha256": "321e58a37c091fa087737fab347a213a7ccf463047f6abd014cfe001d3395da8"
+        },
+        {
+          "bytes": 824633,
+          "path": "case_02/observations_gt.json",
+          "sha256": "9d590e815dda9a660aa2370940a041e7b4ce5b4622f8a6e5b74cd9e9f32cd76d"
+        }
+      ],
+      "split": "golden",
+      "total_bytes": 828574
+    },
+    {
+      "case": "case_03",
+      "file_count": 5,
+      "files": [
+        {
+          "bytes": 127,
+          "path": "case_03/cause_gt.json",
+          "sha256": "35ea65002c286cb03d848c2e4040dbadbc085d4eac7c0eece1007ab3d1480717"
+        },
+        {
+          "bytes": 2813,
+          "path": "case_03/events_gt.json",
+          "sha256": "20ba06691dc658ebdf08905fa864262281f76165b575c548add98ccebf7a4069"
+        },
+        {
+          "bytes": 3,
+          "path": "case_03/gaps_gt.json",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        },
+        {
+          "bytes": 201,
+          "path": "case_03/identities_gt.json",
+          "sha256": "63425be6edcecbaa64b087fe00deea3cf23eb4c12ddda41fc6927a740ca7d3db"
+        },
+        {
+          "bytes": 1097187,
+          "path": "case_03/observations_gt.json",
+          "sha256": "114d97aa61caf3f361adeda06fd95d6b5c5c8cea5de754a55aa43bb25a347aff"
+        }
+      ],
+      "split": "tune",
+      "total_bytes": 1100331
+    },
+    {
+      "case": "case_04",
+      "file_count": 5,
+      "files": [
+        {
+          "bytes": 114,
+          "path": "case_04/cause_gt.json",
+          "sha256": "c9ff539b21583079d3dc9d554a91f88b358109f6d52196ce962ae71abd2fb4d8"
+        },
+        {
+          "bytes": 5149,
+          "path": "case_04/events_gt.json",
+          "sha256": "79d696db16d899a2e00b867335291ca985ef9f43d59dd3803c0429e0e7cd9c7a"
+        },
+        {
+          "bytes": 138,
+          "path": "case_04/gaps_gt.json",
+          "sha256": "cec139201d255661f0d5906d0a563580cf751750dc0460cfffe749f3eed28351"
+        },
+        {
+          "bytes": 135,
+          "path": "case_04/identities_gt.json",
+          "sha256": "1f8a265cfc7315e8923e33ed26c340274b2880036a8dc3afe0842e8e807bca67"
+        },
+        {
+          "bytes": 607470,
+          "path": "case_04/observations_gt.json",
+          "sha256": "6ca91f7f3a1ae739723c7ef2c855c6efc9fdd50a6e74f9315430bbeae012951a"
+        }
+      ],
+      "split": "tune",
+      "total_bytes": 613006
+    },
+    {
+      "case": "case_05",
+      "file_count": 5,
+      "files": [
+        {
+          "bytes": 46,
+          "path": "case_05/cause_gt.json",
+          "sha256": "7ceb0dec2592ad63807e6419ec4d521957eb2ce396fb27d85bf0f97980fbb14e"
+        },
+        {
+          "bytes": 1820,
+          "path": "case_05/events_gt.json",
+          "sha256": "1bca886b7562d43cbffdcdb3237c60e149a4496beed2a211e47e7dad1a70d0e7"
+        },
+        {
+          "bytes": 88,
+          "path": "case_05/gaps_gt.json",
+          "sha256": "e56bb4bb88254dd2a0b3b775fffd43e0eefd6aaf79feef1ad5f2db2e9efa346d"
+        },
+        {
+          "bytes": 135,
+          "path": "case_05/identities_gt.json",
+          "sha256": "0c86b889bdd46f2adfa36d2d6ed6f3daf9ef5ce4c5b8bcf1e89ccdcb4f190da7"
+        },
+        {
+          "bytes": 635735,
+          "path": "case_05/observations_gt.json",
+          "sha256": "0ec9d3d2c1b34e2f614a5501f1164fc21fdafbeb99cd8417a9017663f8b3db4e"
+        }
+      ],
+      "split": "tune",
+      "total_bytes": 637824
+    },
+    {
+      "case": "case_06",
+      "file_count": 5,
+      "files": [
+        {
+          "bytes": 110,
+          "path": "case_06/cause_gt.json",
+          "sha256": "e114e53d0ac9c234294485859126067cbaf9081a5a14b00191ea1dade50e49be"
+        },
+        {
+          "bytes": 6069,
+          "path": "case_06/events_gt.json",
+          "sha256": "f5c12c504bd7a798bc7719f7c3369ded15ebfb2442c1a0313b56424fbfdc52b7"
+        },
+        {
+          "bytes": 138,
+          "path": "case_06/gaps_gt.json",
+          "sha256": "6a60a2d065c1c586fd37eb9689ee6a798e27f5b446f9a47188f065e041d60a82"
+        },
+        {
+          "bytes": 201,
+          "path": "case_06/identities_gt.json",
+          "sha256": "677d2fbad117664c9b904c9321d6f7f3ebc307d35c73b78f0fd98927dec0d339"
+        },
+        {
+          "bytes": 893396,
+          "path": "case_06/observations_gt.json",
+          "sha256": "379f7642adf4756aeed4936587c703e95b61b26b7a1694a092fa42181aedd8ba"
+        }
+      ],
+      "split": "golden",
+      "total_bytes": 899914
+    }
+  ],
+  "dataset_version": "v1",
+  "generated_at": "2026-09-09T14:39:23.769009+00:00",
+  "provenance": {
+    "consent_required": "no",
+    "contains_real_people": "no",
+    "licence": "CC0-1.0 (original work, no third-party footage)",
+    "source": "Simulated in Blender from docs/dataset/scene-spec.md"
+  },
+  "scene_spec": "docs/dataset/scene-spec.md",
+  "split_policy": {
+    "golden": [
+      "case_02",
+      "case_06"
+    ],
+    "rule": "No golden-case frame may appear in any training or validation split. Asserted on case ids, never checked by eye.",
+    "tune": [
+      "case_01",
+      "case_03",
+      "case_04",
+      "case_05"
+    ]
+  },
+  "total_bytes": 5004287,
+  "warnings": []
+}
