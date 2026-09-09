@@ -1,0 +1,56 @@
+{
+  "claims": [
+    {
+      "claim_id": "CLM-0001",
+      "evidence_level": "confirmed",
+      "evidence_refs": [
+        "EVT-0006",
+        "NODE-V-ESTOP"
+      ],
+      "schema_version": "1.0.0",
+      "text": "Observed: robot R12 changed state to ESTOP at 13.4 s"
+    },
+    {
+      "claim_id": "CLM-0002",
+      "evidence_level": "confirmed",
+      "evidence_refs": [
+        "EVT-0004",
+        "NODE-V-ZONE1"
+      ],
+      "schema_version": "1.0.0",
+      "text": "Observed: worker P01 entered robot lane Z1 at 12.8 s"
+    },
+    {
+      "claim_id": "CLM-0003",
+      "evidence_level": "strongly_inferred",
+      "evidence_refs": [
+        "HYP-0001",
+        "NODE-V-PROX"
+      ],
+      "schema_version": "1.0.0",
+      "text": "Likely contributed: worker P01 entering the robot lane while R12 was approaching"
+    },
+    {
+      "claim_id": "CLM-0004",
+      "evidence_level": "unknown",
+      "evidence_refs": [],
+      "schema_version": "1.0.0",
+      "text": "Cannot determine whether physical contact occurred between 12.0 s and 14.4 s"
+    }
+  ],
+  "created_at": "2026-09-09T10:32:10Z",
+  "gaps": [
+    "NODE-GAP-CAMC"
+  ],
+  "generator_version": "deterministic-0.1.0",
+  "incident_id": "INC-0001",
+  "limitations": "CAM_C was occluded by forklift F01 between 12.0 s and 14.4 s. No camera establishes contact during that interval, so no contact is claimed.",
+  "ranked_hypotheses": [
+    "HYP-0001",
+    "HYP-0002"
+  ],
+  "report_id": "REP-0001",
+  "run_id": "RUN-GOLD-001",
+  "schema_version": "1.0.0",
+  "summary": "Robot R12 performed an emergency stop at 13.4 s. Worker P01 was observed entering the robot lane 0.6 s earlier."
+}

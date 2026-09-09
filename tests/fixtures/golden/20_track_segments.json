@@ -1,0 +1,66 @@
+[
+  {
+    "camera_id": "CAM_A",
+    "end_time_s": 14.0,
+    "entity_class": "person",
+    "local_track_id": "CAM_A-P01",
+    "mean_confidence": 0.94,
+    "observation_ids": [
+      "OBS-0001",
+      "OBS-0002",
+      "OBS-0003",
+      "OBS-0004",
+      "OBS-0005"
+    ],
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "segment_id": "SEG-A-P01",
+    "start_time_s": 11.5
+  },
+  {
+    "camera_id": "CAM_B",
+    "end_time_s": 14.0,
+    "entity_class": "robot",
+    "local_track_id": "CAM_B-R12",
+    "mean_confidence": 0.94,
+    "observation_ids": [
+      "OBS-0006",
+      "OBS-0007",
+      "OBS-0008",
+      "OBS-0009"
+    ],
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "segment_id": "SEG-B-R12",
+    "start_time_s": 12.2
+  },
+  {
+    "camera_id": "CAM_C",
+    "end_time_s": 11.5,
+    "entity_class": "person",
+    "local_track_id": "CAM_C-P01",
+    "mean_confidence": 0.94,
+    "observation_ids": [
+      "OBS-0010"
+    ],
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "segment_id": "SEG-C-P01",
+    "start_time_s": 11.5
+  },
+  {
+    "camera_id": "CAM_C",
+    "end_time_s": 14.4,
+    "entity_class": "robot",
+    "local_track_id": "CAM_C-R12",
+    "mean_confidence": 0.94,
+    "observation_ids": [
+      "OBS-0011",
+      "OBS-0012"
+    ],
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "segment_id": "SEG-C-R12",
+    "start_time_s": 11.5
+  }
+]

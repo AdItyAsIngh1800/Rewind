@@ -1,0 +1,44 @@
+[
+  {
+    "components": {
+      "evidence_strength": 0.78,
+      "proximity": 0.88,
+      "temporal_precedence": 0.95
+    },
+    "contradiction_refs": [
+      "NODE-GAP-CAMC"
+    ],
+    "description": "Worker P01 entering robot lane Z1 caused R12 to emergency stop",
+    "evidence_level": "strongly_inferred",
+    "hypothesis_id": "HYP-0001",
+    "incident_id": "INC-0001",
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "score": 0.87,
+    "support_refs": [
+      "NODE-V-ZONE1",
+      "NODE-V-PROX",
+      "NODE-V-ESTOP"
+    ]
+  },
+  {
+    "components": {
+      "evidence_strength": 0.31,
+      "proximity": 0.2,
+      "temporal_precedence": 0.42
+    },
+    "contradiction_refs": [
+      "NODE-V-ESTOP"
+    ],
+    "description": "Forklift F01 entering the intersection triggered the stop",
+    "evidence_level": "possible",
+    "hypothesis_id": "HYP-0002",
+    "incident_id": "INC-0001",
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "score": 0.31,
+    "support_refs": [
+      "NODE-GAP-CAMC"
+    ]
+  }
+]

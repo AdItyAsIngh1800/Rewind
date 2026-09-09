@@ -1,0 +1,215 @@
+{
+  "edges": [
+    {
+      "edge_id": "EDGE-0001",
+      "from_node": "NODE-E-P01",
+      "incident_id": "INC-0001",
+      "provenance": {
+        "created_at": "2026-09-09T10:32:10Z",
+        "derived_from": [],
+        "producer_service": "evidence",
+        "producer_version": "0.1.0",
+        "run_id": "RUN-GOLD-001",
+        "schema_version": "1.0.0"
+      },
+      "relation": "observed_as",
+      "run_id": "RUN-GOLD-001",
+      "schema_version": "1.0.0",
+      "to_node": "NODE-V-ZONE1",
+      "weight": 0.9
+    },
+    {
+      "edge_id": "EDGE-0002",
+      "from_node": "NODE-V-ZONE1",
+      "incident_id": "INC-0001",
+      "provenance": {
+        "created_at": "2026-09-09T10:32:10Z",
+        "derived_from": [],
+        "producer_service": "evidence",
+        "producer_version": "0.1.0",
+        "run_id": "RUN-GOLD-001",
+        "schema_version": "1.0.0"
+      },
+      "relation": "precedes",
+      "run_id": "RUN-GOLD-001",
+      "schema_version": "1.0.0",
+      "to_node": "NODE-V-PROX",
+      "weight": 1.0
+    },
+    {
+      "edge_id": "EDGE-0003",
+      "from_node": "NODE-V-PROX",
+      "incident_id": "INC-0001",
+      "provenance": {
+        "created_at": "2026-09-09T10:32:10Z",
+        "derived_from": [],
+        "producer_service": "reasoning",
+        "producer_version": "0.1.0",
+        "run_id": "RUN-GOLD-001",
+        "schema_version": "1.0.0"
+      },
+      "relation": "candidate_cause_of",
+      "run_id": "RUN-GOLD-001",
+      "schema_version": "1.0.0",
+      "to_node": "NODE-V-ESTOP",
+      "weight": 0.87
+    },
+    {
+      "edge_id": "EDGE-0004",
+      "from_node": "NODE-GAP-CAMC",
+      "incident_id": "INC-0001",
+      "provenance": {
+        "created_at": "2026-09-09T10:32:10Z",
+        "derived_from": [],
+        "producer_service": "reasoning",
+        "producer_version": "0.1.0",
+        "run_id": "RUN-GOLD-001",
+        "schema_version": "1.0.0"
+      },
+      "relation": "contradicts",
+      "run_id": "RUN-GOLD-001",
+      "schema_version": "1.0.0",
+      "to_node": "NODE-V-PROX",
+      "weight": 0.3
+    }
+  ],
+  "nodes": [
+    {
+      "confidence": 1.0,
+      "incident_id": "INC-0001",
+      "interval_s": null,
+      "label": "Worker P01",
+      "node_id": "NODE-E-P01",
+      "node_type": "entity",
+      "provenance": {
+        "created_at": "2026-09-09T10:32:10Z",
+        "derived_from": [
+          "SEG-A-P01",
+          "SEG-C-P01"
+        ],
+        "producer_service": "identity",
+        "producer_version": "0.1.0",
+        "run_id": "RUN-GOLD-001",
+        "schema_version": "1.0.0"
+      },
+      "run_id": "RUN-GOLD-001",
+      "schema_version": "1.0.0",
+      "source_ref": null,
+      "timestamp_s": null
+    },
+    {
+      "confidence": 1.0,
+      "incident_id": "INC-0001",
+      "interval_s": null,
+      "label": "Robot R12",
+      "node_id": "NODE-E-R12",
+      "node_type": "entity",
+      "provenance": {
+        "created_at": "2026-09-09T10:32:10Z",
+        "derived_from": [
+          "SEG-B-R12"
+        ],
+        "producer_service": "identity",
+        "producer_version": "0.1.0",
+        "run_id": "RUN-GOLD-001",
+        "schema_version": "1.0.0"
+      },
+      "run_id": "RUN-GOLD-001",
+      "schema_version": "1.0.0",
+      "source_ref": null,
+      "timestamp_s": null
+    },
+    {
+      "confidence": 0.9,
+      "incident_id": "INC-0001",
+      "interval_s": null,
+      "label": "P01 entered robot lane Z1",
+      "node_id": "NODE-V-ZONE1",
+      "node_type": "event",
+      "provenance": {
+        "created_at": "2026-09-09T10:32:10Z",
+        "derived_from": [
+          "EVT-0004"
+        ],
+        "producer_service": "events",
+        "producer_version": "0.1.0",
+        "run_id": "RUN-GOLD-001",
+        "schema_version": "1.0.0"
+      },
+      "run_id": "RUN-GOLD-001",
+      "schema_version": "1.0.0",
+      "source_ref": "EVT-0004",
+      "timestamp_s": 12.8
+    },
+    {
+      "confidence": 0.86,
+      "incident_id": "INC-0001",
+      "interval_s": null,
+      "label": "Separation 1.6 m and closing",
+      "node_id": "NODE-V-PROX",
+      "node_type": "event",
+      "provenance": {
+        "created_at": "2026-09-09T10:32:10Z",
+        "derived_from": [
+          "EVT-0005"
+        ],
+        "producer_service": "events",
+        "producer_version": "0.1.0",
+        "run_id": "RUN-GOLD-001",
+        "schema_version": "1.0.0"
+      },
+      "run_id": "RUN-GOLD-001",
+      "schema_version": "1.0.0",
+      "source_ref": "EVT-0005",
+      "timestamp_s": 13.0
+    },
+    {
+      "confidence": 1.0,
+      "incident_id": "INC-0001",
+      "interval_s": null,
+      "label": "R12 state changed to ESTOP",
+      "node_id": "NODE-V-ESTOP",
+      "node_type": "event",
+      "provenance": {
+        "created_at": "2026-09-09T10:32:10Z",
+        "derived_from": [
+          "EVT-0006"
+        ],
+        "producer_service": "events",
+        "producer_version": "0.1.0",
+        "run_id": "RUN-GOLD-001",
+        "schema_version": "1.0.0"
+      },
+      "run_id": "RUN-GOLD-001",
+      "schema_version": "1.0.0",
+      "source_ref": "EVT-0006",
+      "timestamp_s": 13.4
+    },
+    {
+      "confidence": 0.88,
+      "incident_id": "INC-0001",
+      "interval_s": [
+        12.0,
+        14.4
+      ],
+      "label": "CAM_C occluded by forklift F01",
+      "node_id": "NODE-GAP-CAMC",
+      "node_type": "gap",
+      "provenance": {
+        "created_at": "2026-09-09T10:32:10Z",
+        "derived_from": [
+          "EVT-0003",
+          "EVT-0007"
+        ],
+        "producer_service": "reasoning",
+        "producer_version": "0.1.0",
+        "run_id": "RUN-GOLD-001",
+        "schema_version": "1.0.0"
+      },
+      "run_id": "RUN-GOLD-001",
+      "schema_version": "1.0.0",
+      "source_ref": null,
+      "timestamp_s": null
+    }
+  ]
+}

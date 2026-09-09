@@ -1,0 +1,133 @@
+[
+  {
+    "camera_id": "CAM_A",
+    "confidence": 0.95,
+    "entity_ids": [
+      "P01"
+    ],
+    "event_id": "EVT-0001",
+    "event_type": "zone_exit",
+    "evidence_refs": [
+      "OBS-0001"
+    ],
+    "payload": {},
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "timestamp_s": 6.0,
+    "zone_id": "Z3"
+  },
+  {
+    "camera_id": "CAM_C",
+    "confidence": 0.93,
+    "entity_ids": [
+      "P01"
+    ],
+    "event_id": "EVT-0002",
+    "event_type": "zone_entry",
+    "evidence_refs": [
+      "OBS-0010"
+    ],
+    "payload": {},
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "timestamp_s": 11.5,
+    "zone_id": "Z2"
+  },
+  {
+    "camera_id": "CAM_C",
+    "confidence": 0.88,
+    "entity_ids": [
+      "P01",
+      "R12"
+    ],
+    "event_id": "EVT-0003",
+    "event_type": "occlusion_start",
+    "evidence_refs": [
+      "OBS-0011"
+    ],
+    "payload": {
+      "cause": "forklift F01 parked at (13.0, 11.0)"
+    },
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "timestamp_s": 12.0,
+    "zone_id": null
+  },
+  {
+    "camera_id": "CAM_A",
+    "confidence": 0.9,
+    "entity_ids": [
+      "P01"
+    ],
+    "event_id": "EVT-0004",
+    "event_type": "zone_entry",
+    "evidence_refs": [
+      "OBS-0003"
+    ],
+    "payload": {},
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "timestamp_s": 12.8,
+    "zone_id": "Z1"
+  },
+  {
+    "camera_id": null,
+    "confidence": 0.86,
+    "entity_ids": [
+      "P01",
+      "R12"
+    ],
+    "event_id": "EVT-0005",
+    "event_type": "proximity",
+    "evidence_refs": [
+      "OBS-0003",
+      "OBS-0007"
+    ],
+    "payload": {
+      "closing": true,
+      "separation_m": 1.6
+    },
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "timestamp_s": 13.0,
+    "zone_id": null
+  },
+  {
+    "camera_id": null,
+    "confidence": 1.0,
+    "entity_ids": [
+      "R12"
+    ],
+    "event_id": "EVT-0006",
+    "event_type": "state_change",
+    "evidence_refs": [
+      "OBS-0008"
+    ],
+    "payload": {
+      "from": "moving",
+      "source": "telemetry",
+      "to": "estop"
+    },
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "timestamp_s": 13.4,
+    "zone_id": null
+  },
+  {
+    "camera_id": "CAM_C",
+    "confidence": 0.85,
+    "entity_ids": [
+      "R12"
+    ],
+    "event_id": "EVT-0007",
+    "event_type": "occlusion_end",
+    "evidence_refs": [
+      "OBS-0012"
+    ],
+    "payload": {},
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "timestamp_s": 14.4,
+    "zone_id": null
+  }
+]

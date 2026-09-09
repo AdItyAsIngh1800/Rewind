@@ -1,0 +1,16 @@
+{
+  "config_version": "v0.1.0",
+  "dataset_version": "golden-v1",
+  "device": "mps",
+  "error": null,
+  "finished_at": "2026-09-09T10:32:10Z",
+  "input_hash": "sha256:0000golden0000fixture0000set0000000000000000000000000000000000",
+  "model_versions": {
+    "detector": "yolo11n-ft-0.1.0",
+    "tracker": "bytetrack-0.1.0"
+  },
+  "run_id": "RUN-GOLD-001",
+  "schema_version": "1.0.0",
+  "started_at": "2026-09-09T10:32:10Z",
+  "status": "complete"
+}

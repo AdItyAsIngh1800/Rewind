@@ -1,0 +1,12 @@
+{
+  "detected_at_s": 13.4,
+  "incident_class": "robot_estop_human_incursion",
+  "incident_id": "INC-0001",
+  "run_id": "RUN-GOLD-001",
+  "schema_version": "1.0.0",
+  "severity": "high",
+  "status": "investigating",
+  "trigger_event_id": "EVT-0006",
+  "window_end_s": 23.4,
+  "window_start_s": 3.4000000000000004
+}

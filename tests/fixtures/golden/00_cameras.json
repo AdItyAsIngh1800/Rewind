@@ -1,0 +1,38 @@
+[
+  {
+    "calibration_ref": null,
+    "camera_id": "CAM_A",
+    "clock_offset_s": 0.0,
+    "fps": 10.0,
+    "height": 720,
+    "name": "North-west aisle",
+    "schema_version": "1.0.0",
+    "source_uri": "file://data/samples/gold/CAM_A.mp4",
+    "timezone": "UTC",
+    "width": 1280
+  },
+  {
+    "calibration_ref": null,
+    "camera_id": "CAM_B",
+    "clock_offset_s": 0.4,
+    "fps": 10.0,
+    "height": 720,
+    "name": "East end, looking west",
+    "schema_version": "1.0.0",
+    "source_uri": "file://data/samples/gold/CAM_B.mp4",
+    "timezone": "UTC",
+    "width": 1280
+  },
+  {
+    "calibration_ref": null,
+    "camera_id": "CAM_C",
+    "clock_offset_s": -0.2,
+    "fps": 10.0,
+    "height": 720,
+    "name": "Intersection overhead",
+    "schema_version": "1.0.0",
+    "source_uri": "file://data/samples/gold/CAM_C.mp4",
+    "timezone": "UTC",
+    "width": 1280
+  }
+]

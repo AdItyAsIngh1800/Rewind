@@ -1,0 +1,40 @@
+[
+  {
+    "components": {
+      "appearance": 0.88,
+      "geometric": 0.87,
+      "temporal": 0.98
+    },
+    "decision": "linked",
+    "evidence_refs": [
+      "OBS-0001",
+      "OBS-0010"
+    ],
+    "link_id": "LNK-0001",
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "score": 0.91,
+    "segment_a": "SEG-A-P01",
+    "segment_b": "SEG-C-P01",
+    "threshold": 0.75
+  },
+  {
+    "components": {
+      "appearance": 0.05,
+      "geometric": 0.11,
+      "temporal": 0.4
+    },
+    "decision": "unknown",
+    "evidence_refs": [
+      "OBS-0006",
+      "OBS-0010"
+    ],
+    "link_id": "LNK-0002",
+    "run_id": "RUN-GOLD-001",
+    "schema_version": "1.0.0",
+    "score": 0.18,
+    "segment_a": "SEG-B-R12",
+    "segment_b": "SEG-C-P01",
+    "threshold": 0.75
+  }
+]
