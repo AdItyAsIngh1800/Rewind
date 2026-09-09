@@ -27,10 +27,36 @@ Types: `feat`, `fix`, `docs`, `test`, `chore`, `refactor`, `style`.
 One commit per logical reason someone might need to revert it. Adding code and
 updating the README are always two commits.
 
+## Code documentation standard
+
+**Every module, class and function carries a docstring, and every argument and return
+value is typed.** This is enforced by `ruff` (rules `D` and `ANN`) and `mypy --strict`,
+both blocking in CI. It is not a style preference that can be skipped when busy — an
+undocumented function fails the build.
+
+What each part is for:
+
+| | Answers |
+|---|---|
+| **Docstring** | *What* this does and *why it exists*. One-line summary, then a blank line, then the detail that is not obvious from the signature. |
+| **Type hints** | *What shapes go in and come out.* `mypy --strict` means no implicit `Any`, no untyped defs, no bare `list` or `dict`. |
+| **Comments** | *Why the code is like this.* Non-obvious constraints, an ordering that matters, a workaround and the thing it works around. |
+
+A note on comments, because "comment everything" is easy to misread: a comment that
+restates the code is worse than no comment, because it is one more thing that can drift
+out of date. `# increment the counter` above `count += 1` costs attention and adds
+nothing. Comment the reasoning a reader cannot recover from the code — why this
+threshold, why this order, why not the obvious alternative.
+
+Docstrings that earn their place in this codebase explain *why a rule exists*, not just
+what it does. `Claim._must_cite_unless_unknown` does not say "validates evidence refs";
+it says why an UNKNOWN claim is exempt. That is the difference between documentation and
+noise.
+
 ## Before you push
 
 ```
-make lint
+make lint    # ruff check + format + mypy --strict
 make test
 ```
 
