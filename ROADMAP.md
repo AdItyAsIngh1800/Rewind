@@ -29,7 +29,9 @@ The working directory contains only the `.docx`. This is greenfield.
 | Budget | **20 weeks**, solo | ~15–20 h/week assumed. Weeks 17 and 20 are deliberate slack. |
 | Dataset | **Simulated (Blender)** | Perfect ground truth, exact timestamps, repeatable incidents, zero privacy/licensing risk. Public-footage realism check deferred to stretch. |
 | Production depth | **Modular monolith, containerized** | Kafka / service split / AWS / OTel are *not* on the critical path. An ADR records why. Stretch only if Gates 1–6 clear early. |
-| Report layer | **Deterministic template committed** | Spec §D3 requires the engine to work without an LLM. LLM report is a Week 19 stretch (assumption — flag if you want it promoted to core). |
+| Report layer | **Deterministic template committed** | Spec §D3 requires the engine to work without an LLM. LLM report is a Week 19 stretch (**Claude Haiku 4.5 API**, stretch #2) — the template stays the fallback either way. |
+| Database | **Supabase (hosted)** | ADR-0003. Dev and Compose reach Supabase over the network; no local install, no `postgres` container. CI is the deliberate exception — it runs an ephemeral `pgvector/pgvector:pg16` so tests stay hermetic and never mutate the shared project. Costs a network dependency and credentials; buys storage, RLS and `pgvector` for free. |
+| Repo visibility | **Private now, public in Week 20** | Keeps a half-built pipeline off the public record while the AGPL detector question and the responsible-use statement settle. Flipping is one click at delivery (E11). |
 
 ### Non-goals (write these into the charter and defend them)
 
@@ -85,8 +87,13 @@ you point at when you're tempted to add a feature in Week 12.
 - Docs system live from day one: ADR template (§O2), experiment template (§O3), weekly log (§O4),
   postmortem template (§O5). Write **ADR-0001: modular monolith over microservices** immediately —
   it's the decision you already made, and having ADR-0001 exist makes ADR-0002 easy to write.
+- **Create the repo private.** It flips to public in Week 20 alongside the demo (E11).
 - GitHub Actions: ruff + mypy + pytest on push. It runs zero real tests today. That's fine — the point
   is the gate exists before there's anything to gate.
+- Store `SUPABASE_URL` and `SUPABASE_ANON_KEY` as GitHub Action secrets — the keep-alive workflow
+  needs them, and the anon key is safe there because RLS denies by default (ADR-0003). The quality
+  job needs neither: it sets `DATABASE_URL` at its own ephemeral container. Add `ANTHROPIC_API_KEY`
+  only if stretch #2 is attempted.
 - `Makefile` targets: `make dev`, `make test`, `make bench`, `make render`.
 
 **Exit:** clean clone → `make dev` → green CI.
@@ -188,6 +195,8 @@ calendar dates. A gate with no date is a wish.
 - [ ] Charter frozen, non-goals written down
 - [ ] GPU envelope measured, versions pinned, lockfile committed
 - [ ] Repo tree + docs templates + green CI
+- [x] Supabase keep-alive ping scheduled weekly — `.github/workflows/keepalive.yml`. The free tier
+      auto-pauses after 7 idle days; over 20 weeks with quiet weeks that happens at least once.
 - [ ] **Schemas frozen, migration runs, `openapi.json` generated**
 - [ ] **Golden fixtures exist for all 8 boundaries; mock API serves them**
 - [ ] Scene + 2 incidents + occlusion case storyboarded, ground-truth format = Observation schema
@@ -322,19 +331,19 @@ frontend is a time sink (§K).
 
 | | |
 |---|---|
-| **E10.1 Full Compose stack** | api + worker + postgres + redis + web in one `docker-compose up`. **Verification: clone to a fresh directory and follow only the README.** If you touch anything not in the README, the README is wrong. |
+| **E10.1 Full Compose stack** | api + worker + redis + web in one `docker-compose up`, reaching Supabase over the network (no `postgres` container — ADR-0003). **Verification: clone to a fresh directory and follow only the README.** If you touch anything not in the README, the README is wrong. |
 | **E10.2 Observability** | Structured logs (structlog); `/health` and `/metrics`; the spec §N metric set: queue depth/age, FPS, VRAM, ID-switch rate, event rate, report latency, API latency/errors, retries/dead-letters, evidence coverage, unsupported-claim rate. |
 | **E10.3 Security & privacy pass** | Basic auth + one role boundary; raw-video access separated from derived metadata; evidence access logged; retention/deletion rules documented; responsible-use statement (spec §M) in the README **and** in every generated report. |
 | **E10.4 ADR: why not Kafka** | Write the distributed-systems decision up properly — context, options, decision, consequences, and the concrete trigger that would justify revisiting. This is a deliverable, not an excuse. |
 
 ## E11 · Delivery — Week 20
 Demo video (end-to-end, showing an UNKNOWN interval prominently) · technical presentation · final
-academic report · future-work roadmap · repository final pass.
+academic report · future-work roadmap · repository final pass · **flip the repo to public**.
 
 ### Stretch backlog — attempt only if Week 19 finishes early, in this order
 1. **Public-footage realism check** (WILDTRACK / MMPTRACK) — highest evidential value; proves the
    pipeline isn't overfit to synthetic data.
-2. **LLM report layer** — local quantized model via Ollama, strictly after the evidence graph,
+2. **LLM report layer** — **Claude Haiku 4.5 API**, strictly after the evidence graph,
    consuming structured evidence only, deterministic template retained as fallback. Add an
    unsupported-claim regression test comparing LLM output against template output.
 3. **Kafka/Redpanda split** — perception moved behind an event bus.
@@ -417,7 +426,7 @@ Choose from these. **Necessary** = the plan assumes it; removing it requires a r
 | CV utils | OpenCV + ffmpeg | Decode, sample, draw. |
 | **CV glue** | **`supervision`** (Roboflow, MIT) | Zone polygons, line crossings, annotators, detection format conversion. Replaces ~500 lines you'd otherwise write. Highest-leverage single library here. |
 | API | FastAPI + Uvicorn + Pydantic v2 | Spec §C; OpenAPI generation is what makes PS-4 work. |
-| DB | PostgreSQL 16 + SQLAlchemy 2.0 + Alembic | Spec §C; JSONB for evidence/config. |
+| DB | PostgreSQL 16 **hosted on Supabase** + SQLAlchemy 2.0 + Alembic | ADR-0003 — hosted only, no local install or container. Spec §C; JSONB for evidence/config. |
 | Cache/queue | Redis + **ARQ** | ARQ is async-native and pairs with FastAPI far more simply than Celery. |
 | Dataset | **Blender** (+ Python API) | Free, scriptable, exact ground truth. |
 | Frontend | React + TypeScript + Vite | Spec §C. |
@@ -452,7 +461,7 @@ Choose from these. **Necessary** = the plan assumes it; removing it requires a r
 | Tool | When |
 |---|---|
 | Redpanda (Kafka API, single binary) | Stretch #3. Far lighter than Kafka for local demo. |
-| Local LLM: **Ollama** + Qwen2.5 7B / Llama 3.1 8B quantized | Stretch #2. Fits 6 GB at Q4. |
+| **Claude Haiku 4.5 API** (`anthropic` SDK) | Stretch #2. Cloud, paid, needs `ANTHROPIC_API_KEY`; leaves the 6 GB VRAM budget entirely to perception. |
 | `instructor` / structured outputs | With the LLM — forces schema-conformant, citable output. |
 | Prometheus + Grafana | Stretch. Compose adds 2 services. |
 | OpenTelemetry | Stretch. Only meaningful once services are actually split. |
