@@ -43,6 +43,7 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 SCENE_CONFIG = REPO_ROOT / "ml" / "configs" / "scene_v1.json"
 CASES_CONFIG = REPO_ROOT / "ml" / "configs" / "cases_v1.json"
 SAMPLES = REPO_ROOT / "data" / "samples"
+SCENES = REPO_ROOT / "data" / "scene"
 
 #: Rays cast across each object's projected box. 24x24 resolves a person at the far
 #: end of the aisle to a few percent of visibility, which is finer than the 0.15
@@ -64,6 +65,14 @@ def script_args() -> argparse.Namespace:
         "--gt-only",
         action="store_true",
         help="export ground truth without rendering video, for fast iteration",
+    )
+    parser.add_argument(
+        "--save-blend",
+        action="store_true",
+        help=(
+            "write a scrubbable .blend per case with the actors keyframed, instead "
+            "of rendering. Open it in Blender to inspect occlusion and camera framing."
+        ),
     )
     parser.add_argument(
         "--skip-existing",
@@ -400,6 +409,43 @@ def detach_progress() -> None:
     _progress_state.clear()
 
 
+def keyframe_actors(
+    case: dict[str, Any],
+    actors: dict[str, BlenderObject],
+    scene_cfg: dict[str, Any],
+    fps: int,
+    frames: int,
+) -> None:
+    """Bake actor motion into keyframes so the timeline can be scrubbed.
+
+    The renderer positions actors per frame in Python and never keyframes them, which
+    is fine for producing images but leaves a saved .blend showing an empty
+    warehouse. Baking the motion makes a case inspectable: open it in Blender, scrub
+    the timeline, and look through each camera to see exactly what will be rendered.
+
+    That matters for one job the scene spec calls for explicitly and no script can
+    do: checking by eye that no pallet edge is visible under the racking.
+    """
+    # Motion between waypoints is linear, so the keyframes must be too. Blender
+    # defaults to Bezier easing, which rounds every corner and would put an actor
+    # somewhere the ground truth says it is not. Setting the preference before
+    # inserting avoids walking F-curves afterwards, whose API moved to slotted
+    # actions in Blender 4.4 and would need a version branch.
+    preferences = bpy.context.preferences.edit
+    previous = preferences.keyframe_new_interpolation_type
+    preferences.keyframe_new_interpolation_type = "LINEAR"
+    try:
+        for track in case["actors"]:
+            actor = actors[track["entity_id"]]
+            height = scene_cfg["entities"][track["class"]]["height"]
+            for frame in range(frames):
+                x, y, _state = interpolate(track["waypoints"], frame / fps)
+                actor.location = (x, y, height / 2)
+                actor.keyframe_insert(data_path="location", frame=frame + 1)
+    finally:
+        preferences.keyframe_new_interpolation_type = previous
+
+
 def configure_video_output(scene: BlenderObject) -> None:
     """Configure H.264 video output across Blender versions.
 
@@ -425,6 +471,7 @@ def render_case(
     cases_cfg: dict[str, Any],
     frames: int,
     gt_only: bool,
+    save_blend: bool = False,
 ) -> dict[str, Any]:
     """Render one case from every camera and export its ground truth."""
     scene = bpy.context.scene
@@ -506,7 +553,17 @@ def render_case(
         if frame % 50 == 0:
             print(f"    frame {frame}/{frames}  observations {len(observations)}")
 
-    if not gt_only:
+    if save_blend:
+        keyframe_actors(case, actors, scene_cfg, fps, frames)
+        scene.frame_start = 1
+        scene.frame_end = frames
+        scene.camera = cameras[0]
+        target = SCENES / f"{case['id']}.blend"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        bpy.ops.wm.save_as_mainfile(filepath=str(target), copy=True)
+        print(f"    scrubbable scene: {target}")
+
+    if not gt_only and not save_blend:
         configure_video_output(scene)
         for position, camera in enumerate(cameras, start=1):
             scene.camera = camera
@@ -586,7 +643,7 @@ def main() -> int:
             print(f"\n[{index}/{len(selected)}] {case['id']} — already rendered, skipping")
             continue
         print(f"\n[{index}/{len(selected)}] {case['id']} — {case['name']} ({frames} frames)")
-        result = render_case(case, scene_cfg, cases_cfg, frames, args.gt_only)
+        result = render_case(case, scene_cfg, cases_cfg, frames, args.gt_only, args.save_blend)
         events = derive_events(case, scene_cfg, fps, frames)
         export(case, result, events)
         print(f"  observations : {len(result['observations'])}")
