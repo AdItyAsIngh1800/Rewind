@@ -74,9 +74,37 @@ class BenchmarkResult:
         return [name for name in self.metrics if self.verdict(name) == "FAIL"]
 
 
+#: The golden-fixture layout and the rendered-case layout name the same artefacts
+#: differently. Mapping them here lets one harness score both, so the benchmark that
+#: proved itself against fixtures is the same code that scores real renders.
+LAYOUT_ALIASES: dict[str, str] = {
+    "10_observations.json": "observations_gt.json",
+    "40_events.json": "events_gt.json",
+    "30_identity_links.json": "identities_gt.json",
+}
+
+
+def _resolve(directory: pathlib.Path, name: str) -> pathlib.Path | None:
+    """Find an artefact under either layout, or return None when absent.
+
+    A rendered case has no report or hypotheses until the pipeline has run over it,
+    so absence is normal rather than an error. Metrics simply skip what is missing.
+    """
+    direct = directory / name
+    if direct.exists():
+        return direct
+    alias = LAYOUT_ALIASES.get(name)
+    if alias and (directory / alias).exists():
+        return directory / alias
+    return None
+
+
 def _load(directory: pathlib.Path, name: str) -> object:
-    """Read one JSON artefact from a prediction or ground-truth directory."""
-    return json.loads((directory / name).read_text())
+    """Read one JSON artefact, raising if it is genuinely required and missing."""
+    path = _resolve(directory, name)
+    if path is None:
+        raise FileNotFoundError(directory / name)
+    return json.loads(path.read_text())
 
 
 def run_benchmark(predicted: pathlib.Path, truth: pathlib.Path) -> BenchmarkResult:
@@ -86,13 +114,20 @@ def run_benchmark(predicted: pathlib.Path, truth: pathlib.Path) -> BenchmarkResu
     the same path for both is the self-check: it must return perfect scores, and if
     it does not, the harness is broken rather than the model.
     """
-    run = _load(truth, "01_run.json")
-    assert isinstance(run, dict)
+    if _resolve(truth, "01_run.json") is not None:
+        run = _load(truth, "01_run.json")
+        assert isinstance(run, dict)
+        dataset_version = str(run["dataset_version"])
+        run_id = str(run["run_id"])
+        device = str(run.get("device", "unknown"))
+    else:
+        # A rendered case carries no processing run: it is ground truth, not output.
+        dataset_version, run_id, device = "rendered", truth.name, "n/a"
 
     result = BenchmarkResult(
-        dataset_version=str(run["dataset_version"]),
-        run_id=str(run["run_id"]),
-        device=str(run.get("device", "unknown")),
+        dataset_version=dataset_version,
+        run_id=run_id,
+        device=device,
         generated_at=datetime.now(UTC),
     )
 
@@ -118,17 +153,32 @@ def run_benchmark(predicted: pathlib.Path, truth: pathlib.Path) -> BenchmarkResu
     )
 
     # --- cross-camera identity ---
-    pred_links = _load(predicted, "30_identity_links.json")
-    true_links = _load(truth, "30_identity_links.json")
-    assert isinstance(pred_links, list) and isinstance(true_links, list)
-    true_pairs = {
-        frozenset({str(link["segment_a"]), str(link["segment_b"])})
-        for link in true_links
-        if link.get("decision") == "linked"
-    }
-    result.metrics["false_link_rate"] = false_link_rate(pred_links, true_pairs)
+    pred_links_path = _resolve(predicted, "30_identity_links.json")
+    if pred_links_path is not None and pred_links_path.name == "30_identity_links.json":
+        pred_links = _load(predicted, "30_identity_links.json")
+        true_links = _load(truth, "30_identity_links.json")
+        assert isinstance(pred_links, list) and isinstance(true_links, list)
+        true_pairs = {
+            frozenset({str(link["segment_a"]), str(link["segment_b"])})
+            for link in true_links
+            if link.get("decision") == "linked"
+        }
+        result.metrics["false_link_rate"] = false_link_rate(pred_links, true_pairs)
 
-    # --- cause ranking ---
+    # --- cause ranking and evidence quality, only once a report exists ---
+    if _resolve(predicted, "80_report.json") is None:
+        result.notes.append(
+            "No report or evidence graph in this directory, so cause ranking and "
+            "evidence quality are not scored. That is expected for raw ground truth: "
+            "those metrics measure pipeline output, which does not exist yet."
+        )
+        if predicted == truth:
+            result.notes.append(
+                "Predictions and ground truth are the same directory. Perfect scores "
+                "here prove the harness works; they say nothing about any model."
+            )
+        return result
+
     pred_report = _load(predicted, "80_report.json")
     true_report = _load(truth, "80_report.json")
     assert isinstance(pred_report, dict) and isinstance(true_report, dict)
