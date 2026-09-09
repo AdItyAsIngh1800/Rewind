@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies verify-security verify-contrast tokens migrate scene validate-cases gt render validate-gt manifest clean
+.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies verify-security verify-contrast tokens migrate scene validate-cases gt render render-fg render-watch render-status render-stop validate-gt manifest clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -59,8 +59,31 @@ migrate:  ## Apply database migrations
 scene:  ## Build the Blender warehouse scene from ml/configs/scene_v1.json
 	blender --background --python scripts/dataset/build_scene.py -- --out data/scene/warehouse.blend
 
-render:  ## Render the simulated dataset (requires Blender)
-	blender --background data/scene/warehouse.blend --python scripts/dataset/render_cases.py
+render:  ## Render any case that has no video yet, logging to artifacts/render.log
+	@mkdir -p artifacts
+	@echo "Rendering in the background. Watch with: make render-watch"
+	@nohup blender --background data/scene/warehouse.blend \
+	  --python scripts/dataset/render_cases.py -- --case all --skip-existing \
+	  > artifacts/render.log 2>&1 &
+	@sleep 2 && echo "started, pid $$(pgrep -f render_cases.py | head -1)"
+
+render-fg:  ## Same, but in the foreground so you can watch it directly
+	blender --background data/scene/warehouse.blend --python scripts/dataset/render_cases.py -- --case all --skip-existing
+
+render-watch:  ## Follow the render log
+	tail -f artifacts/render.log
+
+render-status:  ## How many cases are rendered, and what is running
+	@for c in data/samples/case_*; do \
+	   n=$$(ls $$c/*.mp4 2>/dev/null | wc -l | tr -d ' '); \
+	   printf "  %s  %s/3 cameras\n" "$$(basename $$c)" "$$n"; \
+	 done
+	@pgrep -f render_cases.py >/dev/null 2>&1 \
+	   && echo "  render is RUNNING (pid $$(pgrep -f render_cases.py | head -1))" \
+	   || echo "  no render running"
+
+render-stop:  ## Stop a background render
+	@pkill -f render_cases.py && echo "stopped" || echo "nothing running"
 
 validate-cases:  ## Lint case waypoints against the scene geometry, before rendering
 	uv run python scripts/dataset/validate_cases.py

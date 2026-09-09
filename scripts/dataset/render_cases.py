@@ -30,6 +30,7 @@ import itertools
 import json
 import pathlib
 import sys
+import time
 from typing import Any
 
 import bpy
@@ -64,7 +65,22 @@ def script_args() -> argparse.Namespace:
         action="store_true",
         help="export ground truth without rendering video, for fast iteration",
     )
+    parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="skip cases whose video is already rendered, so a run can be resumed",
+    )
     return parser.parse_args(argv)
+
+
+def already_rendered(case_id: str, camera_count: int) -> bool:
+    """Whether a case already has video for every camera.
+
+    Rendering is measured in tens of minutes per case, so a resumed run must not
+    redo finished work. Checked by file count rather than a marker file: a marker
+    can outlive the files it claims to describe.
+    """
+    return len(list((SAMPLES / case_id).glob("*.mp4"))) >= camera_count
 
 
 # --------------------------------------------------------------------------
@@ -339,6 +355,51 @@ def derive_events(
 # --------------------------------------------------------------------------
 
 
+_progress_state: dict[str, Any] = {}
+
+
+def _on_frame_rendered(scene: BlenderObject, _depsgraph: BlenderObject = None) -> None:
+    """Print a progress line as each frame completes.
+
+    Blender's own per-frame chatter goes to stderr and is easy to lose in a log. A
+    single predictable line per interval is what makes `tail -f` useful while a
+    multi-hour render is running.
+    """
+    state = _progress_state
+    if not state:
+        return
+    done = scene.frame_current - scene.frame_start + 1
+    total = state["total"]
+    if done % 25 and done != total:
+        return
+    elapsed = time.time() - state["started"]
+    rate = done / elapsed if elapsed > 0 else 0.0
+    remaining = (total - done) / rate if rate > 0 else 0.0
+    print(
+        f"      {state['camera']} {done}/{total} frames "
+        f"({done * 100 // total}%) {rate:.1f} fps, about {remaining / 60:.0f} min left",
+        flush=True,
+    )
+
+
+def attach_progress(camera: str, total: int) -> None:
+    """Start reporting progress for one camera."""
+    _progress_state.update({"camera": camera, "total": total, "started": time.time()})
+    bpy.app.handlers.render_post.append(_on_frame_rendered)
+
+
+def detach_progress() -> None:
+    """Stop reporting progress and clear the handler.
+
+    Removed explicitly rather than left attached: handlers persist for the life of
+    the Blender session, and a stale one would report the previous camera's totals
+    against the next camera's frames.
+    """
+    if _on_frame_rendered in bpy.app.handlers.render_post:
+        bpy.app.handlers.render_post.remove(_on_frame_rendered)
+    _progress_state.clear()
+
+
 def configure_video_output(scene: BlenderObject) -> None:
     """Configure H.264 video output across Blender versions.
 
@@ -447,13 +508,21 @@ def render_case(
 
     if not gt_only:
         configure_video_output(scene)
-        for camera in cameras:
+        for position, camera in enumerate(cameras, start=1):
             scene.camera = camera
             scene.frame_start = 1
             scene.frame_end = frames
             scene.render.filepath = str(out_dir / f"{camera.name}.mp4")
-            print(f"    rendering {camera.name}")
-            bpy.ops.render.render(animation=True)
+            print(
+                f"    rendering {camera.name} ({position}/{len(cameras)}) {frames} frames",
+                flush=True,
+            )
+            attach_progress(camera.name, frames)
+            try:
+                bpy.ops.render.render(animation=True)
+            finally:
+                detach_progress()
+            print(f"    finished {camera.name}", flush=True)
 
     return {"observations": observations, "gaps": gaps, "actors": actors}
 
@@ -511,8 +580,12 @@ def main() -> int:
         print(f"no case matching {args.case!r}")
         return 1
 
-    for case in selected:
-        print(f"\n{case['id']} — {case['name']} ({frames} frames)")
+    camera_count = len(scene_cfg["cameras"])
+    for index, case in enumerate(selected, start=1):
+        if args.skip_existing and not args.gt_only and already_rendered(case["id"], camera_count):
+            print(f"\n[{index}/{len(selected)}] {case['id']} — already rendered, skipping")
+            continue
+        print(f"\n[{index}/{len(selected)}] {case['id']} — {case['name']} ({frames} frames)")
         result = render_case(case, scene_cfg, cases_cfg, frames, args.gt_only)
         events = derive_events(case, scene_cfg, fps, frames)
         export(case, result, events)
