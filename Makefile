@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies verify-security verify-contrast tokens migrate render clean
+.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies verify-security verify-contrast tokens migrate scene render validate-gt manifest clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -56,8 +56,17 @@ tokens:  ## Regenerate tokens.css and the evidence swatch page
 migrate:  ## Apply database migrations
 	uv run alembic upgrade head
 
+scene:  ## Build the Blender warehouse scene from ml/configs/scene_v1.json
+	blender --background --python scripts/dataset/build_scene.py -- --out data/scene/warehouse.blend
+
 render:  ## Render the simulated dataset (requires Blender)
-	uv run python scripts/dataset/render_cases.py
+	blender --background data/scene/warehouse.blend --python scripts/dataset/render_cases.py
+
+validate-gt:  ## Validate rendered ground truth against the frozen contracts
+	uv run python scripts/dataset/validate_ground_truth.py data/samples/case_*
+
+manifest:  ## Write the dataset manifest with checksums
+	uv run python scripts/dataset/make_manifest.py --dataset-version v1
 
 clean:  ## Remove caches
 	rm -rf .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage

@@ -18,6 +18,9 @@ data/**/*.mp4
 data/**/*.mkv
 data/**/*.png
 data/**/*.jpg
+# The .blend is a build artifact, regenerated from ml/configs/scene_v1.json
+# by `make scene`. The config is the committed record, not the binary.
+*.blend
 *.blend1
 
 # Model weights are never committed — including checkpoints that tooling
