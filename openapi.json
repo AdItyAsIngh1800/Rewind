@@ -221,6 +221,82 @@
   "openapi": "3.1.0",
   "paths": {
     "/api/v1/cases": {
+      "get": {
+        "description": "List incidents for the case inbox, filtered by severity and status.\n\nNot present in specification \u00a7F, which jumps straight to fetching one case by\nid. The Case Inbox screen in \u00a7G filters incidents by severity, time, location\nand status, and cannot be built without a collection endpoint \u2014 so \u00a7F is\nincomplete rather than this being new scope.\n\nNot yet implemented \u2014 delivered by E6.2.",
+        "operationId": "list_cases_api_v1_cases_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Cases Api V1 Cases Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Cases",
+        "tags": [
+          "cases"
+        ]
+      },
       "post": {
         "description": "Create a processing run and queue the pipeline.\n\nNot yet implemented \u2014 delivered by E2.2.",
         "operationId": "create_case_api_v1_cases_post",

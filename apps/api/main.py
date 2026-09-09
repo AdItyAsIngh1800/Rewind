@@ -128,6 +128,24 @@ def create_case(body: CreateCaseRequest) -> CreateCaseResponse:
     raise _pending("E2.2")
 
 
+@app.get(f"{PREFIX}/cases", tags=["cases"])
+def list_cases(
+    severity: str | None = None,
+    status: str | None = None,
+    limit: int = 50,
+) -> dict[str, object]:
+    """List incidents for the case inbox, filtered by severity and status.
+
+    Not present in specification §F, which jumps straight to fetching one case by
+    id. The Case Inbox screen in §G filters incidents by severity, time, location
+    and status, and cannot be built without a collection endpoint — so §F is
+    incomplete rather than this being new scope.
+
+    Not yet implemented — delivered by E6.2.
+    """
+    raise _pending("E6.2")
+
+
 @app.get(f"{PREFIX}/cases/{{case_id}}", tags=["cases"])
 def get_case(case_id: CaseId) -> dict[str, object]:
     """Return the case summary.
