@@ -4,6 +4,13 @@ Metadata extraction, deterministic frame sampling and timestamp normalization on
 the shared timebase.
 """
 
+from .registry import (
+    RunConflictError,
+    create_run,
+    find_by_input,
+    run_identity,
+    transition,
+)
 from .video import (
     IngestionError,
     SampledFrame,
@@ -19,13 +26,18 @@ from .video import (
 
 __all__ = [
     "IngestionError",
+    "RunConflictError",
     "SampledFrame",
     "VideoMetadata",
+    "create_run",
     "decode_frames",
+    "find_by_input",
     "hash_file",
     "input_hash",
     "plan_sampling",
     "probe",
+    "run_identity",
     "sample_indices",
     "shared_timebase",
+    "transition",
 ]
