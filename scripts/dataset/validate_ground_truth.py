@@ -116,7 +116,9 @@ def check_coverage(observations: list[dict[str, Any]], cameras: int = 3) -> list
     if len(seen) < cameras:
         problems.append(
             f"only {len(seen)} camera(s) present ({sorted(str(s) for s in seen)}); "
-            f"the scene defines {cameras}"
+            f"the scene defines {cameras}. On a full case this means a camera saw "
+            "nothing at all; on a truncated render it usually just means the action "
+            "had not reached that camera's field of view yet"
         )
     if not observations:
         problems.append("export contains no observations at all")

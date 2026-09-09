@@ -127,7 +127,11 @@ Its sight line to the aisle crosses RACK 2 at a height of 1.88 m against a 2.6 m
 and is fully blocked. This was invisible on paper and obvious in the first render.
 
 The camera now sits on the north edge of the aisle at the west end. The trade is that
-**no camera sees the pedestrian walkway Z3 at all.**
+**Z3 is effectively uncovered.** Measured on the `C01` ground truth rather than
+asserted: `CAM_A` catches the person in Z3 for 29 of 450 frames, all in the first
+2.8 seconds at the far eastern end, at a mean visibility of 0.27. Coverage is a
+grazing sliver over RACK 3, not surveillance. **The Z3 exit at 7.2 s is observed by no
+camera.**
 
 That is kept rather than patched, for two reasons. Covering the west aisle is what
 makes `C03` work, and cross-camera identity across the blind corridor is a harder and
@@ -136,10 +140,30 @@ uncovered zone is realistic: facilities have blind spots, which is the premise o
 whole product.
 
 **The consequence is a test, not a loss.** The annotated timeline still records the
-person leaving Z3 at t = 6.0 s, because that is what happened. No camera observed it.
-A correct system therefore reports the person's first *observed* appearance as the Z2
-entry at 11.5 s and does not claim to have seen them leave the walkway. A system that
-reports the Z3 exit as observed has invented it.
+person leaving Z3, because that is what happened. No camera observed it. A correct
+system does not claim to have seen it; a system that reports the Z3 exit as observed
+has invented it.
+
+### C01 is not as clean as the spec assumed
+
+Generating the ground truth surfaced something the hand-written timeline did not
+predict. Even in the baseline case, **P01 is invisible to all three cameras between
+2.9 s and 9.6 s** — a 6.7 second evidence gap while crossing the walkway and turning
+into the cross aisle.
+
+This is kept. The material events are all still observed: the Z2 entry at 11.6 s, the
+Z1 entry at 12.9 s and the ESTOP at 13.5 s. What changes is that even the easiest case
+now exercises the uncertainty engine, so a system that only works when an entity is
+continuously visible fails at `C01` rather than surviving until `C02`.
+
+### Derived timings supersede the hand-written table
+
+The event timeline is now derived from the actor waypoints rather than transcribed,
+so it cannot disagree with the motion that was rendered. Where the two differ, the
+derivation is right: §6.1 lists the Z3 exit at 6.0 s, which is when the actor *turns*;
+they cross the zone boundary at 7.2 s. Measured against the spec's own intent, the Z2
+entry (11.5 vs 11.6), Z1 entry (12.8 vs 12.9) and ESTOP (13.4 vs 13.5) all land within
+one frame.
 
 ### 4.1 Camera timing offsets
 
