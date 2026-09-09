@@ -10,9 +10,10 @@ dev:  ## Create the environment from the lockfile
 test:  ## Run the test suite
 	uv run pytest -q
 
-lint:  ## Lint and format check
+lint:  ## Lint, format and docstring/annotation check
 	uv run ruff check .
 	uv run ruff format --check .
+	uv run mypy packages services apps/api apps/worker
 
 fmt:  ## Auto-format
 	uv run ruff format .

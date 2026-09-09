@@ -50,8 +50,10 @@ jobs:
           uv run ruff check .
           uv run ruff format --check .
 
+      # Blocking, not advisory. A type error is a defect, and `|| true` on a
+      # quality gate means the gate does not exist.
       - name: Type check
-        run: uv run mypy packages services apps/api apps/worker || true
+        run: uv run mypy packages services apps/api apps/worker
 
       - name: Migrations apply cleanly
         run: uv run alembic upgrade head

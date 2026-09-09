@@ -70,7 +70,19 @@ target-version = "py312"
 exclude = ["ml/notebooks", "apps/web"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+# D  = pydocstyle      — every module, class and function carries a docstring
+# ANN = annotations    — every argument and return value is typed
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "D", "ANN"]
+ignore = [
+    "D203",   # conflicts with D211; we use "no blank line before class docstring"
+    "D213",   # conflicts with D212; we use "summary on the first line"
+    "ANN401", # typing.Any is legitimate for JSONB payloads and event payloads
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Alembic writes these; the template supplies docstrings, but the module header is
+# generated from the revision message and is not worth policing.
+"packages/database/migrations/versions/*" = ["D400", "D415"]
 
 [tool.mypy]
 python_version = "3.12"
