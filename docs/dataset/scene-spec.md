@@ -233,7 +233,22 @@ is the case the whole system is tuned against.
 
 ### 6.2 `C02 ESTOP_OCCLUDED` — the UNKNOWN case
 
-Identical to `C01`, with two changes:
+> **Superseded by measurement.** The design below could not be built. `CAM_C` sits at
+> 5 m on a steep downward angle, so a 2.2 m forklift parked beneath it never occludes
+> it: the sight line passes overhead. Coverage was instead measured directly from the
+> `C05` ground truth, which showed a natural blind band at **x ≥ 19**, where `CAM_B`
+> and `CAM_C` are both out of frame. `C02` now places the incursion there, with one
+> forklift at (18.3, 9.5) blocking the only remaining camera.
+>
+> The outcome matches the original intent closely. P01 is observed from 7.9 s to
+> 11.0 s, **unobserved from 11.1 s to 14.8 s** — covering both the Z1 entry at 12.7 s
+> and the ESTOP at 13.6 s — and observed again from 14.8 s.
+>
+> The general lesson is worth keeping: an occluder has to sit **near the target**, not
+> near the camera. A camera 4 m up looking at the floor passes over a 2.2 m obstacle
+> at mid-distance.
+
+Original design, retained for the record:
 
 - A `forklift_F01` is parked at **(13.0, 11.0)** from t = 8.0 s, oriented north-south.
   Being 2.2 m tall, it occludes `CAM_C`'s view of the intersection floor.
