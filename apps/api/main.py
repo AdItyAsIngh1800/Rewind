@@ -11,13 +11,22 @@ more useful than one that does not exist.
 
 from __future__ import annotations
 
+import pathlib
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Path, status
+from fastapi import Depends, FastAPI, HTTPException, Path, status
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
+from packages.database.session import get_session
 from packages.schemas import SCHEMA_VERSION
+from services.ingestion import create_run
+
+#: Where rendered case media lives. A case reference resolves to a directory here
+#: rather than to arbitrary caller-supplied paths, so the API cannot be pointed at
+#: files outside the dataset.
+SAMPLES = pathlib.Path("data/samples")
 
 API_VERSION = "0.1.0"
 PREFIX = "/api/v1"
@@ -34,6 +43,10 @@ app = FastAPI(
 )
 
 CaseId = Annotated[str, Path(description="Case (incident) identifier")]
+
+#: Annotated form rather than a `Depends` default: the default-argument form is the
+#: older FastAPI idiom and evaluates a call at import time.
+DbSession = Annotated[Session, Depends(get_session)]
 
 
 # --------------------------------------------------------------------------
@@ -102,6 +115,10 @@ class CreateCaseResponse(BaseModel):
     run_id: str
     incident_id: str | None = None
     status: str
+    #: False when this submission matched an existing run. The caller learns that its
+    #: work was already accepted rather than being told, misleadingly, that a second
+    #: run was started.
+    created: bool = True
 
 
 NOT_IMPLEMENTED = "Pending — see ROADMAP.md for the phase that delivers this."
@@ -120,12 +137,42 @@ def _pending(phase: str) -> HTTPException:
     status_code=status.HTTP_202_ACCEPTED,
     tags=["cases"],
 )
-def create_case(body: CreateCaseRequest) -> CreateCaseResponse:
-    """Create a processing run and queue the pipeline.
+def create_case(body: CreateCaseRequest, session: DbSession) -> CreateCaseResponse:
+    """Create a processing run for a case, or return the run that already covers it.
 
-    Not yet implemented — delivered by E2.2.
+    Idempotent by design. Submitting the same case, dataset and config twice returns
+    the first run rather than starting a second, which is what makes a redelivered
+    message safe to handle.
+
+    Dispatch to a worker arrives with the perception pipeline in E3. Until then a run
+    is created and left queued, which is the honest state: the work is accepted and
+    recorded, and nothing is processing it yet.
     """
-    raise _pending("E2.2")
+    case_dir = SAMPLES / body.case_ref
+    if not case_dir.is_dir():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No case media for {body.case_ref!r} under {SAMPLES}.",
+        )
+
+    clips = sorted(case_dir.glob("*.mp4"))
+    if not clips:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Case {body.case_ref!r} has ground truth but no rendered video. "
+                "Run `make render` before creating a processing run."
+            ),
+        )
+
+    run, created = create_run(
+        session,
+        input_paths=clips,
+        dataset_version=body.dataset_version,
+        config_version=body.config_version,
+    )
+    session.commit()
+    return CreateCaseResponse(run_id=run.run_id, status=run.status, created=created)
 
 
 @app.get(f"{PREFIX}/cases", tags=["cases"])

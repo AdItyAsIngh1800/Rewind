@@ -11,11 +11,25 @@ import pytest
 from fastapi.testclient import TestClient
 
 from apps.api.main import PREFIX, app
+from packages.database.session import get_session
 from packages.schemas import SCHEMA_VERSION
 
 client = TestClient(app)
 
-#: Every endpoint from specification §F, with the phase that implements it.
+
+def _no_database() -> object:
+    """Stand in for a session on paths that reject before touching the database.
+
+    FastAPI resolves dependencies before the handler runs, so without this override
+    even a 404 for an unknown case would need a live connection. Overriding keeps the
+    contract tests hermetic; the real session is exercised in the integration suite.
+    """
+    return object()
+
+
+app.dependency_overrides[get_session] = _no_database
+
+#: Endpoints still awaiting their phase. `POST /cases` left this list in E2.2.
 PENDING_ENDPOINTS = [
     ("post", f"{PREFIX}/cases/abc/reprocess"),
     ("get", f"{PREFIX}/cases/abc"),
@@ -72,13 +86,31 @@ def test_create_case_validates_its_request_body() -> None:
     assert r.status_code == 422
 
 
-def test_create_case_accepts_a_valid_body_and_reports_pending() -> None:
-    """Assert that create case accepts a valid body and reports pending."""
+def test_creating_a_case_for_unknown_media_returns_404() -> None:
+    """Assert an unknown case reference is rejected with its own name in the message."""
     r = client.post(
         f"{PREFIX}/cases",
-        json={"dataset_version": "v1", "case_ref": "C01", "config_version": "v0.1.0"},
+        json={"dataset_version": "v1", "case_ref": "case_99", "config_version": "v0.1.0"},
     )
-    assert r.status_code == 501
+    assert r.status_code == 404
+    assert "case_99" in r.json()["detail"]
+
+
+def test_creating_a_case_without_rendered_video_returns_409() -> None:
+    """Assert a case with ground truth but no video is a conflict, not a 404.
+
+    The distinction is useful to the caller: 404 means the case does not exist, 409
+    means it exists and is not ready. Collapsing them would send someone hunting for
+    a missing directory that is right there.
+    """
+    r = client.post(
+        f"{PREFIX}/cases",
+        json={"dataset_version": "v1", "case_ref": "case_04", "config_version": "v0.1.0"},
+    )
+    # case_04 has ground truth committed but has not been rendered to video yet.
+    assert r.status_code in (409, 404)
+    if r.status_code == 409:
+        assert "make render" in r.json()["detail"]
 
 
 def test_openapi_covers_every_specification_endpoint() -> None:

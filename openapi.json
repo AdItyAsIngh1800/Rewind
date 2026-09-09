@@ -29,6 +29,11 @@
       "CreateCaseResponse": {
         "description": "Acknowledgement of an accepted case, before any processing has happened.",
         "properties": {
+          "created": {
+            "default": true,
+            "title": "Created",
+            "type": "boolean"
+          },
           "incident_id": {
             "anyOf": [
               {
@@ -298,7 +303,7 @@
         ]
       },
       "post": {
-        "description": "Create a processing run and queue the pipeline.\n\nNot yet implemented \u2014 delivered by E2.2.",
+        "description": "Create a processing run for a case, or return the run that already covers it.\n\nIdempotent by design. Submitting the same case, dataset and config twice returns\nthe first run rather than starting a second, which is what makes a redelivered\nmessage safe to handle.\n\nDispatch to a worker arrives with the perception pipeline in E3. Until then a run\nis created and left queued, which is the honest state: the work is accepted and\nrecorded, and nothing is processing it yet.",
         "operationId": "create_case_api_v1_cases_post",
         "requestBody": {
           "content": {
