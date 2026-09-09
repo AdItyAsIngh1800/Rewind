@@ -112,13 +112,34 @@ All three: **1280 x 720, 10 FPS**, sensor width 36 mm, focal length **25.7 mm**
 
 | ID | Position (X,Y,Z) | Aim point | Sees | Deliberately cannot see |
 |---|---|---|---|---|
-| `CAM_A` | (4.0, 14.0, 4.5) | (12.0, 8.0, 0.0) | West half of Z1, the walkway exit, west approach to the intersection | Ground behind RACK 2 (X 6–9.5, Y ≈ 10.5) — the **blind corridor** |
+| `CAM_A` | (2.0, 9.8, 4.2) | (14.0, 8.0, 0.8) | West half of Z1 and the west approach to the intersection | Ground behind RACK 2 (X 6–9.5, Y ≈ 10.5) — the **blind corridor**; and all of Z3 |
 | `CAM_B` | (23.0, 8.0, 4.0) | (6.0, 8.0, 0.8) | Full length of Z1 from the east, at a shallow angle | Anything north of the racks; heavily foreshortened past X ≈ 8 |
 | `CAM_C` | (12.0, 13.5, 5.0) | (12.0, 7.0, 0.0) | The intersection Z2 from above, both aisle approaches | Occluded by any object taller than 1.8 m standing at (13, 11) |
 
 **Overlap is intentional and unequal.** Z2 is covered by all three; the west end of Z1
 by A and B only; the blind corridor behind RACK 2 by none. Cross-camera identity is
 only interesting because coverage is uneven.
+
+### CAM_A was moved after rendering, and Z3 is now uncovered
+
+The original placement at (4.0, 14.0, 4.5) aiming at (12.0, 8.0, 0.0) does not work.
+Its sight line to the aisle crosses RACK 2 at a height of 1.88 m against a 2.6 m rack
+and is fully blocked. This was invisible on paper and obvious in the first render.
+
+The camera now sits on the north edge of the aisle at the west end. The trade is that
+**no camera sees the pedestrian walkway Z3 at all.**
+
+That is kept rather than patched, for two reasons. Covering the west aisle is what
+makes `C03` work, and cross-camera identity across the blind corridor is a harder and
+more valuable case than watching someone walk along a walkway. And an entirely
+uncovered zone is realistic: facilities have blind spots, which is the premise of the
+whole product.
+
+**The consequence is a test, not a loss.** The annotated timeline still records the
+person leaving Z3 at t = 6.0 s, because that is what happened. No camera observed it.
+A correct system therefore reports the person's first *observed* appearance as the Z2
+entry at 11.5 s and does not claim to have seen them leave the walkway. A system that
+reports the Z3 exit as observed has invented it.
 
 ### 4.1 Camera timing offsets
 
@@ -171,7 +192,7 @@ reads a state channel, exactly as it would from a real robot's telemetry.
 |---|---|---|
 | 0.0 | `robot_R12` | Enters Z1 at (2.0, 8.0), heading east at 1.0 m/s, state `MOVING` |
 | 0.0 | `person_P01` | Walking west along Z3 at (18.0, 15.0), 1.3 m/s |
-| 6.0 | `person_P01` | Turns south at (12.0, 15.0), leaves Z3 toward the cross aisle |
+| 6.0 | `person_P01` | Turns south at (12.0, 15.0), leaves Z3 toward the cross aisle. **Annotated only, observed by no camera** |
 | 11.5 | `person_P01` | **Enters Z2** at (12.0, 10.0) — first material event |
 | 12.8 | `person_P01` | **Enters Z1** at (12.0, 9.5) |
 | 13.0 | `robot_R12` | At (13.2, 8.0). Separation to P01 is 1.6 m and closing |
