@@ -14,8 +14,6 @@ Exits non-zero if any application table is unprotected.
 
 from __future__ import annotations
 
-import sys
-
 from sqlalchemy import text
 
 from packages.database.session import make_engine
