@@ -20,6 +20,23 @@ is typed.** Enforced by `ruff` (`D`, `ANN`) and `mypy --strict`, both blocking i
 
 Docstrings here explain why a rule exists, not merely what it checks. Match that.
 
+## Output — logging, never print
+
+**No `print`. Anywhere.** Enforced by `ruff` (`T20`), blocking in CI.
+
+Take a module-level `log = logging.getLogger(__name__)` and log to it. The process
+entry point — the `if __name__ == "__main__":` block — calls `configure_logging()`
+from `services/observability/logging.py` once, and nothing else configures handlers.
+
+The reason is E10.2: structured logs go to an aggregator, and a `print` is invisible
+there. Because every call site is already a stdlib logger, that phase swaps one
+formatter in one file. A single `print` merged today is a call site someone has to
+find and rewrite then.
+
+The one exception is `scripts/dataset/build_scene.py` and `render_cases.py`, which
+run inside Blender's bundled Python and cannot import this project — they call
+`logging.basicConfig` inline with the same handler.
+
 ## Before claiming anything is done
 
 ```bash
