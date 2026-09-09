@@ -243,11 +243,14 @@ def build_events() -> list[SemanticEvent]:
             run_id=RUN_ID,
             event_type=EventType.ZONE_EXIT,
             timestamp_s=6.0,
-            camera_id="CAM_A",
+            # No camera_id and no evidence refs: Z3 is covered by no camera, so this
+            # is an annotated fact about what happened rather than an observation.
+            # A system that reports it as observed has invented it.
+            camera_id=None,
             entity_ids=["P01"],
             zone_id="Z3",
-            confidence=0.95,
-            evidence_refs=["OBS-0001"],
+            confidence=0.0,
+            evidence_refs=[],
         ),
         SemanticEvent(
             event_id="EVT-0002",

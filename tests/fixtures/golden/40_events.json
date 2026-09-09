@@ -1,15 +1,13 @@
 [
   {
-    "camera_id": "CAM_A",
-    "confidence": 0.95,
+    "camera_id": null,
+    "confidence": 0.0,
     "entity_ids": [
       "P01"
     ],
     "event_id": "EVT-0001",
     "event_type": "zone_exit",
-    "evidence_refs": [
-      "OBS-0001"
-    ],
+    "evidence_refs": [],
     "payload": {},
     "run_id": "RUN-GOLD-001",
     "schema_version": "1.0.0",
