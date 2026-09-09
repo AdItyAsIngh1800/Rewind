@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REWIND evidence encoding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600&family=Fira+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../apps/web/src/styles/tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: var(--space-6);
+    background: var(--ground); color: var(--text);
+    font-family: var(--font-ui); font-size: var(--text-base); line-height: 1.55;
+  }
+  h1 { font-size: var(--text-xl); font-weight: 600; margin: 0 0 var(--space-2); }
+  h2 { font-size: var(--text-lg); font-weight: 600; margin: var(--space-6) 0 var(--space-3); }
+  p  { max-width: 68ch; color: var(--text-muted); margin: 0 0 var(--space-3); }
+  .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+           font-size: var(--text-xs); color: var(--text-dim); }
+  .panel { background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: var(--space-5);
+            margin-bottom: var(--space-5); }
+  .states { display: grid; gap: var(--space-4);
+             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .chip { height: 40px; border: 1.5px solid var(--c); border-radius: var(--radius-sm); }
+  .name { font-weight: 600; margin-top: var(--space-2); text-transform: capitalize; }
+  .say { color: var(--text-muted); font-size: var(--text-sm); }
+  .pat { font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: .1em;
+          color: var(--text-dim); margin-top: var(--space-1); }
+  .grey { filter: grayscale(1); }
+  .ladder { display: grid; gap: 2px; grid-template-columns: repeat(5, 1fr); }
+  .rung { height: 56px; display: flex; align-items: flex-end; padding: var(--space-1);
+           font-family: var(--font-mono); font-size: var(--text-2xs); color: #fff;
+           mix-blend-mode: normal; }
+  .swatchrow { display: grid; gap: var(--space-2);
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .tok { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+  .tok .fill { height: 34px; }
+  .tok .lbl { padding: var(--space-2); font-family: var(--font-mono);
+               font-size: var(--text-2xs); }
+  .note { border-left: 3px solid var(--evidence-possible); padding-left: var(--space-4);
+           color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<h1>Evidence encoding</h1>
+<p class="mono">GENERATED &middot; make tokens &middot; verified by make verify-contrast</p>
+<p>Five evidence states, each encoded on <strong>three independent channels</strong>: colour,
+pattern and text label. An investigator must never mistake an inference for an observation,
+and colour alone cannot carry that distinction reliably.</p>
+
+<div class="panel">
+  <h2 style="margin-top:0">Dark theme</h2>
+  <div class="states">
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-confirmed); background: var(--c);"></div>
+      <div class="meta">
+        <div class="name">confirmed</div>
+        <div class="say">&ldquo;Observed&rdquo;</div>
+        <div class="mono">#65B5FF &middot; 8.78:1 &middot; L 0.757</div>
+        <div class="pat">solid fill</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-inferred); background: repeating-linear-gradient(90deg, var(--c) 0 10px, transparent 10px 17px);"></div>
+      <div class="meta">
+        <div class="name">inferred</div>
+        <div class="say">&ldquo;Likely contributed&rdquo;</div>
+        <div class="mono">#4FDDDD &middot; 11.62:1 &middot; L 0.824</div>
+        <div class="pat">dashed</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-possible); background: repeating-linear-gradient(90deg, var(--c) 0 3px, transparent 3px 9px);"></div>
+      <div class="meta">
+        <div class="name">possible</div>
+        <div class="say">&ldquo;Possible&rdquo;</div>
+        <div class="mono">#FFD656 &middot; 13.66:1 &middot; L 0.891</div>
+        <div class="pat">dotted</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-conflicting); background: repeating-linear-gradient(45deg, var(--c) 0 2px, transparent 2px 7px), repeating-linear-gradient(-45deg, var(--c) 0 2px, transparent 2px 7px);"></div>
+      <div class="meta">
+        <div class="name">conflicting</div>
+        <div class="say">&ldquo;Conflicting evidence&rdquo;</div>
+        <div class="mono">#E14B39 &middot; 4.80:1 &middot; L 0.620</div>
+        <div class="pat">cross-hatch</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-unknown); background: repeating-linear-gradient(45deg, var(--c) 0 2px, transparent 2px 8px);"></div>
+      <div class="meta">
+        <div class="name">unknown</div>
+        <div class="say">&ldquo;Cannot determine&rdquo;</div>
+        <div class="mono">#999C9F &middot; 6.90:1 &middot; L 0.690</div>
+        <div class="pat">diagonal hatch</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" style="--ground: oklch(0.985 0.003 250); --surface: oklch(1.000 0.000 0); --surface-raised: oklch(0.955 0.005 250); --border: oklch(0.820 0.010 250); --text: oklch(0.220 0.012 250); --text-muted: oklch(0.450 0.014 250); --text-dim: oklch(0.530 0.012 250); --focus: oklch(0.200 0.000 0); --evidence-inferred: oklch(0.315 0.090 195); --evidence-confirmed: oklch(0.375 0.150 250); --evidence-unknown: oklch(0.435 0.006 250); --evidence-conflicting: oklch(0.495 0.185 28); --evidence-possible: oklch(0.555 0.130 78); background: var(--surface); color: var(--text);">
+  <h2 style="margin-top:0">Light theme</h2>
+  <div class="states">
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-confirmed); background: var(--c);"></div>
+      <div class="meta">
+        <div class="name">confirmed</div>
+        <div class="say">&ldquo;Observed&rdquo;</div>
+        <div class="mono">#003F8C &middot; 9.59:1 &middot; L 0.375</div>
+        <div class="pat">solid fill</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-inferred); background: repeating-linear-gradient(90deg, var(--c) 0 10px, transparent 10px 17px);"></div>
+      <div class="meta">
+        <div class="name">inferred</div>
+        <div class="say">&ldquo;Likely contributed&rdquo;</div>
+        <div class="mono">#003E40 &middot; 11.38:1 &middot; L 0.315</div>
+        <div class="pat">dashed</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-possible); background: repeating-linear-gradient(90deg, var(--c) 0 3px, transparent 3px 9px);"></div>
+      <div class="meta">
+        <div class="name">possible</div>
+        <div class="say">&ldquo;Possible&rdquo;</div>
+        <div class="mono">#9C6700 &middot; 4.63:1 &middot; L 0.555</div>
+        <div class="pat">dotted</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-conflicting); background: repeating-linear-gradient(45deg, var(--c) 0 2px, transparent 2px 7px), repeating-linear-gradient(-45deg, var(--c) 0 2px, transparent 2px 7px);"></div>
+      <div class="meta">
+        <div class="name">conflicting</div>
+        <div class="say">&ldquo;Conflicting evidence&rdquo;</div>
+        <div class="mono">#B31D1A &middot; 6.46:1 &middot; L 0.495</div>
+        <div class="pat">cross-hatch</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-unknown); background: repeating-linear-gradient(45deg, var(--c) 0 2px, transparent 2px 8px);"></div>
+      <div class="meta">
+        <div class="name">unknown</div>
+        <div class="say">&ldquo;Cannot determine&rdquo;</div>
+        <div class="mono">#4F5154 &middot; 7.60:1 &middot; L 0.435</div>
+        <div class="pat">diagonal hatch</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">The greyscale test</h2>
+  <p class="note">This is the proof that matters. Colour is the channel most likely to be
+  lost, to a projector, a printer, a screenshot or a reader&rsquo;s eyes. Below, the same five
+  states with all colour removed. They remain distinguishable because they sit on separate
+  rungs of a lightness ladder and because the pattern channel is doing real work.</p>
+  <div class="states grey">
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-confirmed); background: var(--c);"></div>
+      <div class="meta">
+        <div class="name">confirmed</div>
+        <div class="say">&ldquo;Observed&rdquo;</div>
+        <div class="mono">#65B5FF &middot; 8.78:1 &middot; L 0.757</div>
+        <div class="pat">solid fill</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-inferred); background: repeating-linear-gradient(90deg, var(--c) 0 10px, transparent 10px 17px);"></div>
+      <div class="meta">
+        <div class="name">inferred</div>
+        <div class="say">&ldquo;Likely contributed&rdquo;</div>
+        <div class="mono">#4FDDDD &middot; 11.62:1 &middot; L 0.824</div>
+        <div class="pat">dashed</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-possible); background: repeating-linear-gradient(90deg, var(--c) 0 3px, transparent 3px 9px);"></div>
+      <div class="meta">
+        <div class="name">possible</div>
+        <div class="say">&ldquo;Possible&rdquo;</div>
+        <div class="mono">#FFD656 &middot; 13.66:1 &middot; L 0.891</div>
+        <div class="pat">dotted</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-conflicting); background: repeating-linear-gradient(45deg, var(--c) 0 2px, transparent 2px 7px), repeating-linear-gradient(-45deg, var(--c) 0 2px, transparent 2px 7px);"></div>
+      <div class="meta">
+        <div class="name">conflicting</div>
+        <div class="say">&ldquo;Conflicting evidence&rdquo;</div>
+        <div class="mono">#E14B39 &middot; 4.80:1 &middot; L 0.620</div>
+        <div class="pat">cross-hatch</div>
+      </div>
+    </div>
+    <div class="state">
+      <div class="chip" style="--c: var(--evidence-unknown); background: repeating-linear-gradient(45deg, var(--c) 0 2px, transparent 2px 8px);"></div>
+      <div class="meta">
+        <div class="name">unknown</div>
+        <div class="say">&ldquo;Cannot determine&rdquo;</div>
+        <div class="mono">#999C9F &middot; 6.90:1 &middot; L 0.690</div>
+        <div class="pat">diagonal hatch</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Lightness ladder</h2>
+  <p>Dark theme, ordered by OKLCH lightness. Separation of at least 0.05 between adjacent
+  rungs is what survives every form of colour-vision deficiency.</p>
+  <div class="ladder">
+    <div class="rung" style="background: var(--evidence-conflicting)">L 0.620</div>
+    <div class="rung" style="background: var(--evidence-unknown)">L 0.690</div>
+    <div class="rung" style="background: var(--evidence-confirmed)">L 0.757</div>
+    <div class="rung" style="background: var(--evidence-inferred)">L 0.824</div>
+    <div class="rung" style="background: var(--evidence-possible)">L 0.891</div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Surface and text tokens</h2>
+  <div class="swatchrow">
+    <div class="tok"><div class="fill" style="background: var(--ground)"></div><div class="lbl">--ground<br>#0D1013</div></div>
+    <div class="tok"><div class="fill" style="background: var(--surface)"></div><div class="lbl">--surface<br>#161A1E</div></div>
+    <div class="tok"><div class="fill" style="background: var(--surface-raised)"></div><div class="lbl">--surface-raised<br>#22262A</div></div>
+    <div class="tok"><div class="fill" style="background: var(--border)"></div><div class="lbl">--border<br>#41474E</div></div>
+    <div class="tok"><div class="fill" style="background: var(--text)"></div><div class="lbl">--text<br>#EBEDEF</div></div>
+    <div class="tok"><div class="fill" style="background: var(--text-muted)"></div><div class="lbl">--text-muted<br>#ACB2B7</div></div>
+    <div class="tok"><div class="fill" style="background: var(--text-dim)"></div><div class="lbl">--text-dim<br>#81878D</div></div>
+    <div class="tok"><div class="fill" style="background: var(--focus)"></div><div class="lbl">--focus<br>#F8F8F8</div></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Type scale</h2>
+  <div style="font-size: var(--text-2xs)">2xs &middot; 11px &middot; uppercase micro-labels</div>
+  <div style="font-size: var(--text-xs)">xs &middot; 12px &middot; table meta and timestamps</div>
+  <div style="font-size: var(--text-sm)">sm &middot; 13px &middot; dense table body</div>
+  <div style="font-size: var(--text-base)">base &middot; 14px &middot; default UI body</div>
+  <div style="font-size: var(--text-md)">md &middot; 16px &middot; report reading text</div>
+  <div style="font-size: var(--text-lg)">lg &middot; 20px &middot; panel titles</div>
+  <div style="font-size: var(--text-xl)">xl &middot; 26px &middot; largest on any screen</div>
+  <p class="mono" style="margin-top: var(--space-3)">
+    10:32:10.400 &middot; CAM_A &middot; OBS-0003 &middot; 0.94 &nbsp;&larr; Fira Mono, tabular
+  </p>
+</div>
+
+</body>
+</html>
