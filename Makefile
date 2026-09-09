@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies verify-security verify-contrast tokens migrate scene render validate-gt manifest clean
+.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies verify-security verify-contrast tokens migrate scene validate-cases gt render validate-gt manifest clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -61,6 +61,12 @@ scene:  ## Build the Blender warehouse scene from ml/configs/scene_v1.json
 
 render:  ## Render the simulated dataset (requires Blender)
 	blender --background data/scene/warehouse.blend --python scripts/dataset/render_cases.py
+
+validate-cases:  ## Lint case waypoints against the scene geometry, before rendering
+	uv run python scripts/dataset/validate_cases.py
+
+gt:  ## Export ground truth for every case without rendering video (about 40s)
+	blender --background data/scene/warehouse.blend --python scripts/dataset/render_cases.py -- --case all --gt-only
 
 validate-gt:  ## Validate rendered ground truth against the frozen contracts
 	uv run python scripts/dataset/validate_ground_truth.py data/samples/case_*
