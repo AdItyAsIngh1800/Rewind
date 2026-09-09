@@ -13,9 +13,14 @@ jobs:
     # Tests that mutate a shared hosted database are neither hermetic nor
     # repeatable, and pointing CI at the real project to run them would trade a
     # real property for a cosmetic consistency. See ADR-0003.
+    #
+    # The image carries pgvector because Supabase has the `vector` extension
+    # enabled (supabase/migrations/…_extensions_rls_buckets.sql). Same engine but
+    # a different extension set is a container that passes on a schema the real
+    # database would reject — hermetic and wrong is not an improvement.
     services:
       postgres:
-        image: postgres:16-alpine
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: rewind
           POSTGRES_PASSWORD: rewind
@@ -33,6 +38,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # Mirrors supabase/migrations for the two things Alembic does not own:
+      # the extension, and the search_path that lets an unqualified `vector`
+      # column type resolve the way it does on Supabase.
+      - name: Match the Supabase extension set
+        run: |
+          psql "postgresql://rewind:rewind@localhost:5432/rewind" <<'SQL'
+          create schema if not exists extensions;
+          create extension if not exists vector with schema extensions;
+          alter database rewind set search_path to "$user", public, extensions;
+          SQL
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
