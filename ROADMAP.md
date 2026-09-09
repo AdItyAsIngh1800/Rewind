@@ -192,17 +192,23 @@ calendar dates. A gate with no date is a wish.
 
 ## Pre-start exit checklist
 
-- [ ] Charter frozen, non-goals written down
-- [ ] GPU envelope measured, versions pinned, lockfile committed
-- [ ] Repo tree + docs templates + green CI
+*Boxes ticked 2026-09-09, each against the artifact named beside it rather than from memory.*
+
+- [x] Charter frozen, non-goals written down — `docs/00-project-charter.md` §4
+- [x] GPU envelope measured, versions pinned, lockfile committed — `docs/09-deployment.md`;
+      `uv.lock` is what pins the resolved versions, `pyproject.toml` carries floors
+- [x] Repo tree + docs templates + green CI — last five pushes to `main` green
 - [x] Supabase keep-alive ping scheduled weekly — `.github/workflows/keepalive.yml`. The free tier
       auto-pauses after 7 idle days; over 20 weeks with quiet weeks that happens at least once.
-- [ ] **Schemas frozen, migration runs, `openapi.json` generated**
-- [ ] **Golden fixtures exist for all 8 boundaries; mock API serves them**
-- [ ] Scene + 2 incidents + occlusion case storyboarded, ground-truth format = Observation schema
-- [ ] `make bench` runs
-- [ ] Design tokens + evidence-state encoding, contrast-verified
-- [ ] Risk register + 7 gate dates on calendar
+- [x] **Schemas frozen, migration runs, `openapi.json` generated** — `packages/schemas/`, `openapi.json`,
+      `make openapi` drift-checked in CI
+- [x] **Golden fixtures exist for all 8 boundaries; mock API serves them** — 10 files in
+      `tests/fixtures/golden/`, served by `scripts/mock_api.py` via `make mock`
+- [x] Scene + 2 incidents + occlusion case storyboarded, ground-truth format = Observation schema —
+      `docs/dataset/scene-spec.md`, enforced by the ground-truth validator
+- [x] `make bench` runs — `packages/evaluation/`, `docs/07-evaluation-plan.md`
+- [x] Design tokens + evidence-state encoding, contrast-verified — `make verify-contrast`, `make tokens`
+- [x] Risk register + 7 gate dates on calendar — `docs/risk-register.md`, 23 risks, all 7 gates dated
 
 ---
 
