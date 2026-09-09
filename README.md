@@ -26,6 +26,7 @@ Pre-start phase (Weeks 0–1). The pipeline does not run yet.
 
 ## Quick start
 
+```bash
 cp .env.example .env   # then fill in the Supabase values below
 make dev               # build the environment from the lockfile
 make up                # start redis
