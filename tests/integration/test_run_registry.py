@@ -14,13 +14,15 @@ from __future__ import annotations
 
 import os
 import pathlib
+import subprocess
+import sys
 from collections.abc import Iterator
 
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from packages.database.models import Base, ProcessingRun
+from packages.database.models import ProcessingRun
 from packages.schemas import RunStatus
 from services.ingestion import (
     RunConflictError,
@@ -37,11 +39,33 @@ needs_db = pytest.mark.skipif(
 )
 
 
+@pytest.fixture(scope="session")
+def migrated_database() -> str:
+    """Bring the test database up to head using Alembic, once per session.
+
+    Deliberately Alembic rather than ``Base.metadata.create_all``. The two build the
+    schema from different sources: ``create_all`` from the models, Alembic from the
+    migration files. Using the shortcut would mean a migration that is wrong while
+    the model is right passes every test and fails only in production, which defeats
+    the contract-to-model-to-migration chain the project relies on.
+    """
+    if not DATABASE_URL:
+        pytest.skip("no DATABASE_URL")
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "DATABASE_URL": DATABASE_URL},
+    )
+    if result.returncode != 0:
+        pytest.fail(f"alembic upgrade failed:\n{result.stderr}")
+    return DATABASE_URL
+
+
 @pytest.fixture
-def session() -> Iterator[Session]:
+def session(migrated_database: str) -> Iterator[Session]:
     """Give each test an isolated session that is rolled back afterwards."""
-    engine = create_engine(DATABASE_URL, future=True)
-    Base.metadata.create_all(engine)
+    engine = create_engine(migrated_database, future=True)
     connection = engine.connect()
     transaction = connection.begin()
     db = Session(bind=connection)
