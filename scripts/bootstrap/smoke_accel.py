@@ -9,11 +9,16 @@ Run:  uv run python scripts/bootstrap/smoke_accel.py
 from __future__ import annotations
 
 import argparse
+import logging
 import platform
 import subprocess
 import time
 from types import ModuleType
 from typing import Any
+
+from services.observability.logging import configure_logging
+
+log = logging.getLogger(__name__)
 
 RESOLUTIONS = [(1280, 720)]
 BATCHES = [1, 2, 4, 8]
@@ -83,8 +88,8 @@ def bench_detector(torch: ModuleType, device: str, model_name: str) -> list[dict
     try:
         from ultralytics import YOLO
     except ImportError:
-        print("! ultralytics not installed — skipping detector benchmark.")
-        print("  Install with: uv sync --extra ml")
+        log.info("! ultralytics not installed — skipping detector benchmark.")
+        log.info("  Install with: uv sync --extra ml")
         return []
 
     model = YOLO(model_name)
@@ -122,7 +127,7 @@ def bench_detector(torch: ModuleType, device: str, model_name: str) -> list[dict
                 }
             )
             last = rows[-1]
-            print(f"  {w}x{h} batch={batch}: {last['fps']} FPS, {last['ms_per_frame']} ms/frame")
+            log.info(f"  {w}x{h} batch={batch}: {last['fps']} FPS, {last['ms_per_frame']} ms/frame")
 
     return rows
 
@@ -133,36 +138,37 @@ def main() -> int:
     ap.add_argument("--model", default="yolo11n.pt", help="detector checkpoint to benchmark")
     args = ap.parse_args()
 
-    print("REWIND — accelerator smoke test\n")
+    log.info("REWIND — accelerator smoke test\n")
 
     facts = host_facts()
     torch, tfacts = torch_facts()
     facts.update(tfacts)
 
-    print("## Host\n")
+    log.info("## Host\n")
     for k, v in facts.items():
-        print(f"| {k} | {v} |")
+        log.info(f"| {k} | {v} |")
 
     if torch is None:
-        print("\nCannot benchmark without torch. Run `make dev` first.")
+        log.info("\nCannot benchmark without torch. Run `make dev` first.")
         return 1
 
     device = pick_device(torch)
-    print(f"\n## Benchmark (device={device})\n")
+    log.info(f"\n## Benchmark (device={device})\n")
     rows = bench_detector(torch, device, args.model)
 
     if rows:
-        print("\n| Resolution | Batch | ms/frame | FPS | Driver peak (GB) |")
-        print("|---|---|---|---|---|")
+        log.info("\n| Resolution | Batch | ms/frame | FPS | Driver peak (GB) |")
+        log.info("|---|---|---|---|---|")
         for r in rows:
-            print(
+            log.info(
                 f"| {r['resolution']} | {r['batch']} | {r['ms_per_frame']} | "
                 f"{r['fps']} | {r['driver_peak_gb']} |"
             )
-        print("\nPaste this table into docs/09-deployment.md and record the date.")
+        log.info("\nPaste this table into docs/09-deployment.md and record the date.")
 
     return 0
 
 
 if __name__ == "__main__":
+    configure_logging()
     raise SystemExit(main())

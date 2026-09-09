@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import pathlib
 import sys
 from typing import Any
@@ -28,6 +29,9 @@ from packages.schemas import (
     Observation,
     SemanticEvent,
 )
+from services.observability.logging import configure_logging
+
+log = logging.getLogger(__name__)
 
 #: Scene spec §7: an entity less than this visible is not emitted at all. Ground
 #: truth must not claim to see what a camera cannot, otherwise every occlusion case
@@ -159,30 +163,31 @@ def main() -> int:
 
     total = 0
     for directory in args.cases:
-        print(f"\n{directory}")
+        log.info(f"\n{directory}")
         try:
             problems = validate_case(directory)
         except GroundTruthError as exc:
-            print(f"  FAILED: {exc}")
+            log.info(f"  FAILED: {exc}")
             total += 1
             continue
 
         if problems:
             for problem in problems[:20]:
-                print(f"  - {problem}")
+                log.info(f"  - {problem}")
             if len(problems) > 20:
-                print(f"  ... and {len(problems) - 20} more")
+                log.info(f"  ... and {len(problems) - 20} more")
             total += len(problems)
         else:
-            print("  ok")
+            log.info("  ok")
 
-    print()
+    log.info("")
     if total:
-        print(f"FAILED — {total} problem(s). Ground truth is not usable until these are fixed.")
+        log.info(f"FAILED — {total} problem(s). Ground truth is not usable until these are fixed.")
         return 1
-    print("OK — ground truth conforms to the frozen contracts.")
+    log.info("OK — ground truth conforms to the frozen contracts.")
     return 0
 
 
 if __name__ == "__main__":
+    configure_logging()
     sys.exit(main())

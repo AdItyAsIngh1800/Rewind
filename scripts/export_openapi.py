@@ -9,10 +9,14 @@ mock server are built against, so a drift between it and the app is a contract b
 from __future__ import annotations
 
 import json
+import logging
 import pathlib
 import sys
 
 from apps.api.main import app
+from services.observability.logging import configure_logging
+
+log = logging.getLogger(__name__)
 
 OUT = pathlib.Path("openapi.json")
 
@@ -24,19 +28,20 @@ def main() -> int:
 
     if "--check" in sys.argv:
         if not OUT.exists():
-            print("openapi.json is missing — run without --check to generate it.")
+            log.info("openapi.json is missing — run without --check to generate it.")
             return 1
         if OUT.read_text() != rendered:
-            print("openapi.json is stale. Regenerate it and commit the result.")
+            log.info("openapi.json is stale. Regenerate it and commit the result.")
             return 1
-        print("openapi.json is current.")
+        log.info("openapi.json is current.")
         return 0
 
     OUT.write_text(rendered)
     paths = len(spec.get("paths", {}))
-    print(f"wrote {OUT} — {paths} paths, API v{spec['info']['version']}")
+    log.info(f"wrote {OUT} — {paths} paths, API v{spec['info']['version']}")
     return 0
 
 
 if __name__ == "__main__":
+    configure_logging()
     raise SystemExit(main())

@@ -17,6 +17,7 @@ Week 4 without waiting for the perception pipeline.
 from __future__ import annotations
 
 import json
+import logging
 import pathlib
 from datetime import UTC, datetime
 
@@ -46,6 +47,9 @@ from packages.schemas import (
     Severity,
     TrackSegment,
 )
+from services.observability.logging import configure_logging
+
+log = logging.getLogger(__name__)
 
 OUT = pathlib.Path("tests/fixtures/golden")
 
@@ -565,11 +569,12 @@ def main() -> int:
         path = OUT / name
         path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
         count = len(payload) if isinstance(payload, list) else 1
-        print(f"  {name:26s} {count:3d} record(s)")
+        log.info(f"  {name:26s} {count:3d} record(s)")
 
-    print(f"\nwrote {len(files)} fixtures to {OUT}")
+    log.info(f"\nwrote {len(files)} fixtures to {OUT}")
     return 0
 
 
 if __name__ == "__main__":
+    configure_logging()
     raise SystemExit(main())

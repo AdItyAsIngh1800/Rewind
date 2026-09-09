@@ -16,9 +16,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import pathlib
 from datetime import UTC, datetime
 from typing import Any
+
+from services.observability.logging import configure_logging
+
+log = logging.getLogger(__name__)
 
 SAMPLES = pathlib.Path("data/samples")
 MANIFESTS = pathlib.Path("data/manifests")
@@ -109,7 +114,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if not SAMPLES.exists() or not any(SAMPLES.iterdir()):
-        print(f"No rendered cases under {SAMPLES}. Run `make render` first.")
+        log.info(f"No rendered cases under {SAMPLES}. Run `make render` first.")
         return 1
 
     manifest = build(args.dataset_version)
@@ -118,14 +123,15 @@ def main() -> int:
     target.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
 
     megabytes = manifest["total_bytes"] / 1048576
-    print(f"{target}")
-    print(f"  dataset version : {manifest['dataset_version']}")
-    print(f"  cases           : {manifest['case_count']}")
-    print(f"  total size      : {megabytes:.1f} MB")
+    log.info(f"{target}")
+    log.info(f"  dataset version : {manifest['dataset_version']}")
+    log.info(f"  cases           : {manifest['case_count']}")
+    log.info(f"  total size      : {megabytes:.1f} MB")
     for warning in manifest["warnings"]:
-        print(f"  WARNING: {warning}")
+        log.info(f"  WARNING: {warning}")
     return 0
 
 
 if __name__ == "__main__":
+    configure_logging()
     raise SystemExit(main())

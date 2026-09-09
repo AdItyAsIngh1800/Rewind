@@ -70,9 +70,11 @@ target-version = "py312"
 exclude = ["ml/notebooks", "apps/web"]
 
 [tool.ruff.lint]
-# D  = pydocstyle      — every module, class and function carries a docstring
+# D   = pydocstyle     — every module, class and function carries a docstring
 # ANN = annotations    — every argument and return value is typed
-select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "D", "ANN"]
+# T20 = flake8-print   — output goes through logging, never print; see
+#                        services/observability/logging.py for why
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "D", "ANN", "T20"]
 ignore = [
     "D203",   # conflicts with D211; we use "no blank line before class docstring"
     "D213",   # conflicts with D212; we use "summary on the first line"

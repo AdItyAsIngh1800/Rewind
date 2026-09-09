@@ -18,12 +18,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import pathlib
 import sys
 from typing import Any
 
 import bpy
 from mathutils import Vector
+
+log = logging.getLogger(__name__)
 
 # Blender's own types cannot be imported into this project's environment, so bpy
 # objects are annotated as Any. Naming the reason here is better than scattering
@@ -215,7 +218,7 @@ def configure_render(config: dict[str, Any]) -> None:
         # Engine identifiers moved between Blender 4.x and 5.x. Falling back is
         # better than failing the whole build over a rename.
         scene.render.engine = "BLENDER_EEVEE"
-        print(f"! engine {engine!r} unavailable, fell back to {scene.render.engine!r}")
+        log.info(f"! engine {engine!r} unavailable, fell back to {scene.render.engine!r}")
 
     optics = config["camera_optics"]
     scene.render.resolution_x = optics["resolution_x"]
@@ -255,13 +258,16 @@ def main() -> int:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(args.out))
 
-    print(f"scene built: {args.out}")
-    print(f"  objects  : {len(bpy.data.objects)}")
-    print(f"  cameras  : {len([o for o in bpy.data.objects if o.type == 'CAMERA'])}")
-    print(f"  frames   : {bpy.context.scene.frame_start}-{bpy.context.scene.frame_end}")
-    print(f"  engine   : {bpy.context.scene.render.engine}")
+    log.info(f"scene built: {args.out}")
+    log.info(f"  objects  : {len(bpy.data.objects)}")
+    log.info(f"  cameras  : {len([o for o in bpy.data.objects if o.type == 'CAMERA'])}")
+    log.info(f"  frames   : {bpy.context.scene.frame_start}-{bpy.context.scene.frame_end}")
+    log.info(f"  engine   : {bpy.context.scene.render.engine}")
     return 0
 
 
 if __name__ == "__main__":
+    # Blender runs its own bundled Python, so services.observability.logging is not
+    # importable here. Same handler, spelled out rather than shared.
+    logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
     raise SystemExit(main())

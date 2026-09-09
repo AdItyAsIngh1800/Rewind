@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import itertools
 import json
+import logging
 import pathlib
 import sys
 import time
@@ -36,6 +37,8 @@ from typing import Any
 import bpy
 from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Vector
+
+log = logging.getLogger(__name__)
 
 BlenderObject = Any
 
@@ -384,10 +387,9 @@ def _on_frame_rendered(scene: BlenderObject, _depsgraph: BlenderObject = None) -
     elapsed = time.time() - state["started"]
     rate = done / elapsed if elapsed > 0 else 0.0
     remaining = (total - done) / rate if rate > 0 else 0.0
-    print(
+    log.info(
         f"      {state['camera']} {done}/{total} frames "
         f"({done * 100 // total}%) {rate:.1f} fps, about {remaining / 60:.0f} min left",
-        flush=True,
     )
 
 
@@ -551,7 +553,7 @@ def render_case(
                 gaps.setdefault(entity, []).append([round(t, 3), round(t + 1 / fps, 3)])
 
         if frame % 50 == 0:
-            print(f"    frame {frame}/{frames}  observations {len(observations)}")
+            log.info(f"    frame {frame}/{frames}  observations {len(observations)}")
 
     if save_blend:
         keyframe_actors(case, actors, scene_cfg, fps, frames)
@@ -561,7 +563,7 @@ def render_case(
         target = SCENES / f"{case['id']}.blend"
         target.parent.mkdir(parents=True, exist_ok=True)
         bpy.ops.wm.save_as_mainfile(filepath=str(target), copy=True)
-        print(f"    scrubbable scene: {target}")
+        log.info(f"    scrubbable scene: {target}")
 
     if not gt_only and not save_blend:
         configure_video_output(scene)
@@ -570,16 +572,15 @@ def render_case(
             scene.frame_start = 1
             scene.frame_end = frames
             scene.render.filepath = str(out_dir / f"{camera.name}.mp4")
-            print(
+            log.info(
                 f"    rendering {camera.name} ({position}/{len(cameras)}) {frames} frames",
-                flush=True,
             )
             attach_progress(camera.name, frames)
             try:
                 bpy.ops.render.render(animation=True)
             finally:
                 detach_progress()
-            print(f"    finished {camera.name}", flush=True)
+            log.info(f"    finished {camera.name}")
 
     return {"observations": observations, "gaps": gaps, "actors": actors}
 
@@ -634,21 +635,21 @@ def main() -> int:
 
     selected = [c for c in cases_cfg["cases"] if args.case == "all" or c["id"] == args.case]
     if not selected:
-        print(f"no case matching {args.case!r}")
+        log.info(f"no case matching {args.case!r}")
         return 1
 
     camera_count = len(scene_cfg["cameras"])
     for index, case in enumerate(selected, start=1):
         if args.skip_existing and not args.gt_only and already_rendered(case["id"], camera_count):
-            print(f"\n[{index}/{len(selected)}] {case['id']} — already rendered, skipping")
+            log.info(f"\n[{index}/{len(selected)}] {case['id']} — already rendered, skipping")
             continue
-        print(f"\n[{index}/{len(selected)}] {case['id']} — {case['name']} ({frames} frames)")
+        log.info(f"\n[{index}/{len(selected)}] {case['id']} — {case['name']} ({frames} frames)")
         result = render_case(case, scene_cfg, cases_cfg, frames, args.gt_only, args.save_blend)
         events = derive_events(case, scene_cfg, fps, frames)
         export(case, result, events)
-        print(f"  observations : {len(result['observations'])}")
-        print(f"  events       : {len(events)}")
-        print(f"  written to   : {SAMPLES / case['id']}")
+        log.info(f"  observations : {len(result['observations'])}")
+        log.info(f"  events       : {len(events)}")
+        log.info(f"  written to   : {SAMPLES / case['id']}")
 
         for actor in result["actors"].values():
             bpy.data.objects.remove(actor, do_unlink=True)
@@ -657,4 +658,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    # Blender runs its own bundled Python, so services.observability.logging is not
+    # importable here. Same handler, spelled out rather than shared.
+    logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
     raise SystemExit(main())

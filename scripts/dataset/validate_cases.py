@@ -17,8 +17,13 @@ from __future__ import annotations
 import argparse
 import itertools
 import json
+import logging
 import pathlib
 from typing import Any
+
+from services.observability.logging import configure_logging
+
+log = logging.getLogger(__name__)
 
 SCENE = pathlib.Path("ml/configs/scene_v1.json")
 CASES = pathlib.Path("ml/configs/cases_v1.json")
@@ -164,18 +169,19 @@ def main() -> int:
 
     for case in cases["cases"]:
         problems = found.get(case["id"], [])
-        print(f"{case['id']:9s} {'FAIL' if problems else 'ok'}")
+        log.info(f"{case['id']:9s} {'FAIL' if problems else 'ok'}")
         for problem in problems:
-            print(f"    - {problem}")
+            log.info(f"    - {problem}")
 
-    print()
+    log.info("")
     if found:
         total = sum(len(v) for v in found.values())
-        print(f"FAILED — {total} problem(s) across {len(found)} case(s). Do not render yet.")
+        log.info(f"FAILED — {total} problem(s) across {len(found)} case(s). Do not render yet.")
         return 1
-    print(f"OK — {len(cases['cases'])} cases are geometrically valid.")
+    log.info(f"OK — {len(cases['cases'])} cases are geometrically valid.")
     return 0
 
 
 if __name__ == "__main__":
+    configure_logging()
     raise SystemExit(main())

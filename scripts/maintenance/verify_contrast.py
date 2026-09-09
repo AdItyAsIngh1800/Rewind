@@ -9,6 +9,8 @@ Exits non-zero if any pair fails, so a palette regression cannot ship quietly.
 
 from __future__ import annotations
 
+import logging
+
 from packages.common.color import (
     CVD_MATRICES,
     contrast_ratio,
@@ -17,6 +19,9 @@ from packages.common.color import (
     simulate_cvd,
     to_hex,
 )
+from services.observability.logging import configure_logging
+
+log = logging.getLogger(__name__)
 
 Oklch = tuple[float, float, float]
 
@@ -100,19 +105,19 @@ def check_theme(name: str, palette: dict[str, Oklch], evidence: dict[str, Oklch]
     ground = rgb(palette["ground"])
     surface = rgb(palette["surface"])
 
-    print(f"\n## {name} — text on ground")
+    log.info(f"\n## {name} — text on ground")
     for key in ("text", "text-muted", "text-dim"):
         ratio = contrast_ratio(rgb(palette[key]), ground)
         floor = TEXT_MIN if key != "text-dim" else MARK_MIN
         ok = ratio >= floor
         verdict = "ok" if ok else "FAIL"
         swatch = to_hex(rgb(palette[key]))
-        print(f"  {key:16s} {swatch}  {ratio:5.2f}:1  need {floor}  {verdict}")
+        log.info(f"  {key:16s} {swatch}  {ratio:5.2f}:1  need {floor}  {verdict}")
         if not ok:
             failures.append(f"{name}/{key} contrast {ratio:.2f} below {floor}")
 
     ratio = contrast_ratio(rgb(palette["border"]), surface)
-    print(
+    log.info(
         f"  {'border':16s} {to_hex(rgb(palette['border']))}  {ratio:5.2f}:1  need 1.50  "
         f"{'ok' if ratio >= 1.5 else 'FAIL'}"
     )
@@ -120,20 +125,20 @@ def check_theme(name: str, palette: dict[str, Oklch], evidence: dict[str, Oklch]
         failures.append(f"{name}/border too faint against surface ({ratio:.2f})")
 
     ratio = contrast_ratio(rgb(palette["focus"]), surface)
-    print(
+    log.info(
         f"  {'focus ring':16s} {to_hex(rgb(palette['focus']))}  {ratio:5.2f}:1  need {MARK_MIN}  "
         f"{'ok' if ratio >= MARK_MIN else 'FAIL'}"
     )
     if ratio < MARK_MIN:
         failures.append(f"{name}/focus ring contrast {ratio:.2f} below {MARK_MIN}")
 
-    print(f"\n## {name} — evidence states on ground")
+    log.info(f"\n## {name} — evidence states on ground")
     for key, token in evidence.items():
         ratio = contrast_ratio(rgb(token), ground)
         ok = ratio >= TEXT_MIN
         verdict = "ok" if ok else "FAIL"
         swatch = to_hex(rgb(token))
-        print(f"  {key:16s} {swatch}  {ratio:5.2f}:1  need {TEXT_MIN}  {verdict}")
+        log.info(f"  {key:16s} {swatch}  {ratio:5.2f}:1  need {TEXT_MIN}  {verdict}")
         if not ok:
             failures.append(f"{name}/evidence.{key} contrast {ratio:.2f} below {TEXT_MIN}")
     return failures
@@ -143,8 +148,8 @@ def check_cvd(name: str, evidence: dict[str, Oklch]) -> list[str]:
     """Check the evidence states stay separable under dichromacy."""
     failures: list[str] = []
     keys = list(evidence)
-    print(f"\n## {name} — evidence separation under colour-vision deficiency")
-    print("  (colour is one of three channels; pattern and label carry the same meaning)")
+    log.info(f"\n## {name} — evidence separation under colour-vision deficiency")
+    log.info("  (colour is one of three channels; pattern and label carry the same meaning)")
 
     for kind in ["normal", *CVD_MATRICES]:
         worst = (999.0, "", "")
@@ -157,7 +162,7 @@ def check_cvd(name: str, evidence: dict[str, Oklch]) -> list[str]:
                 if distance < worst[0]:
                     worst = (distance, a, b)
         ok = worst[0] >= CVD_MIN_DISTANCE
-        print(
+        log.info(
             f"  {kind:14s} closest pair: {worst[1]:12s} / {worst[2]:12s}  "
             f"distance {worst[0]:.3f}  {'ok' if ok else 'FAIL'}"
         )
@@ -177,7 +182,7 @@ def check_lightness_ladder(name: str, evidence: dict[str, Oklch]) -> list[str]:
     """
     failures: list[str] = []
     ordered = sorted(evidence.items(), key=lambda kv: kv[1][0])
-    print(f"\n## {name} — lightness ladder")
+    log.info(f"\n## {name} — lightness ladder")
     previous: tuple[str, float] | None = None
     for key, token in ordered:
         lightness = token[0]
@@ -190,14 +195,14 @@ def check_lightness_ladder(name: str, evidence: dict[str, Oklch]) -> list[str]:
                 failures.append(
                     f"{name}: {previous[0]} and {key} share a lightness rung (delta {delta:.3f})"
                 )
-        print(f"  L={lightness:.3f}  {key:14s}{marker}")
+        log.info(f"  L={lightness:.3f}  {key:14s}{marker}")
         previous = (key, lightness)
     return failures
 
 
 def main() -> int:
     """Verify both themes and return a process exit code."""
-    print("REWIND colour token verification")
+    log.info("REWIND colour token verification")
     failures: list[str] = []
     failures += check_theme("dark", DARK, EVIDENCE_DARK)
     failures += check_lightness_ladder("dark", EVIDENCE_DARK)
@@ -206,15 +211,16 @@ def main() -> int:
     failures += check_lightness_ladder("light", EVIDENCE_LIGHT)
     failures += check_cvd("light", EVIDENCE_LIGHT)
 
-    print()
+    log.info("")
     if failures:
-        print(f"FAILED — {len(failures)} problem(s):")
+        log.info(f"FAILED — {len(failures)} problem(s):")
         for f in failures:
-            print(f"  - {f}")
+            log.info(f"  - {f}")
         return 1
-    print("OK — all contrast and separation checks pass.")
+    log.info("OK — all contrast and separation checks pass.")
     return 0
 
 
 if __name__ == "__main__":
+    configure_logging()
     raise SystemExit(main())

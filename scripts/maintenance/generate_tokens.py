@@ -10,6 +10,7 @@ it, and regenerate.
 
 from __future__ import annotations
 
+import logging
 import pathlib
 
 from scripts.maintenance.verify_contrast import (
@@ -18,6 +19,9 @@ from scripts.maintenance.verify_contrast import (
     EVIDENCE_LIGHT,
     LIGHT,
 )
+from services.observability.logging import configure_logging
+
+log = logging.getLogger(__name__)
 
 OUT = pathlib.Path("apps/web/src/styles/tokens.css")
 
@@ -169,9 +173,10 @@ def main() -> int:
 """
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(css)
-    print(f"wrote {OUT} ({len(css.splitlines())} lines)")
+    log.info(f"wrote {OUT} ({len(css.splitlines())} lines)")
     return 0
 
 
 if __name__ == "__main__":
+    configure_logging()
     raise SystemExit(main())

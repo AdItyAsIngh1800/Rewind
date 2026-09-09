@@ -9,9 +9,13 @@ self-check. Point ``--predicted`` at a real prediction directory once one exists
 from __future__ import annotations
 
 import argparse
+import logging
 import pathlib
 
 from packages.evaluation.benchmark import render_markdown, run_benchmark
+from services.observability.logging import configure_logging
+
+log = logging.getLogger(__name__)
 
 DEFAULT_FIXTURES = pathlib.Path("tests/fixtures/golden")
 REPORTS = pathlib.Path("artifacts/benchmark-reports")
@@ -37,8 +41,8 @@ def main() -> int:
     path = REPORTS / f"{stamp}.md"
     path.write_text(report)
 
-    print(report)
-    print(f"written to {path}")
+    log.info(report)
+    log.info(f"written to {path}")
 
     if args.strict and result.failures:
         return 1
@@ -46,4 +50,5 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    configure_logging()
     raise SystemExit(main())

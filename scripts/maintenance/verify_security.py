@@ -14,9 +14,14 @@ Exits non-zero if any application table is unprotected.
 
 from __future__ import annotations
 
+import logging
+
 from sqlalchemy import text
 
 from packages.database.session import make_engine
+from services.observability.logging import configure_logging
+
+log = logging.getLogger(__name__)
 
 #: Tables that legitimately have no RLS. Alembic's bookkeeping table contains no
 #: application data and is not reachable through the REST API.
@@ -38,43 +43,43 @@ def main() -> int:
             """)
         ).all()
 
-        print("Row Level Security")
+        log.info("Row Level Security")
         for name, enabled, forced in rows:
             if name in EXEMPT:
-                print(f"  {name:24s} exempt")
+                log.info(f"  {name:24s} exempt")
                 continue
             if not enabled:
                 failures.append(f"table {name!r} has RLS disabled")
-                print(f"  {name:24s} DISABLED  <-- unprotected")
+                log.info(f"  {name:24s} DISABLED  <-- unprotected")
             elif not forced:
                 # Without FORCE, the table owner bypasses RLS. Supabase's postgres
                 # role owns these tables, so this matters.
                 failures.append(f"table {name!r} has RLS enabled but not forced")
-                print(f"  {name:24s} enabled, NOT forced")
+                log.info(f"  {name:24s} enabled, NOT forced")
             else:
-                print(f"  {name:24s} on + forced")
+                log.info(f"  {name:24s} on + forced")
 
-        print("\nStorage buckets")
+        log.info("\nStorage buckets")
         buckets = cx.execute(text("select id, public from storage.buckets order by 1")).all()
         if not buckets:
             failures.append("no storage buckets exist")
-            print("  none found")
+            log.info("  none found")
         for bid, is_public in buckets:
             if is_public:
                 failures.append(f"bucket {bid!r} is public")
-                print(f"  {bid:22s} PUBLIC  <-- raw media should not be public")
+                log.info(f"  {bid:22s} PUBLIC  <-- raw media should not be public")
             else:
-                print(f"  {bid:22s} private")
+                log.info(f"  {bid:22s} private")
 
-    print()
+    log.info("")
     if failures:
-        print(f"FAILED — {len(failures)} problem(s):")
+        log.info(f"FAILED — {len(failures)} problem(s):")
         for f in failures:
-            print(f"  - {f}")
-        print("\nAdd RLS in a supabase/migrations/ file. Do not add it via Studio.")
+            log.info(f"  - {f}")
+        log.info("\nAdd RLS in a supabase/migrations/ file. Do not add it via Studio.")
         return 1
 
-    print(
+    log.info(
         f"OK — {len(rows) - len(EXEMPT & {r[0] for r in rows})} tables protected, "
         f"{len(buckets)} buckets private."
     )
@@ -82,4 +87,5 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    configure_logging()
     raise SystemExit(main())

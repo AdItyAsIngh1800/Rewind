@@ -14,6 +14,7 @@ the greyscale strip is the proof that the encoding survives losing it.
 
 from __future__ import annotations
 
+import logging
 import pathlib
 
 from packages.common.color import contrast_ratio, oklch_to_linear_rgb, to_hex
@@ -23,6 +24,9 @@ from scripts.maintenance.verify_contrast import (
     EVIDENCE_LIGHT,
     LIGHT,
 )
+from services.observability.logging import configure_logging
+
+log = logging.getLogger(__name__)
 
 OUT = pathlib.Path("docs/ui/swatches.html")
 
@@ -233,9 +237,10 @@ and colour alone cannot carry that distinction reliably.</p>
 """
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(html)
-    print(f"wrote {OUT}")
+    log.info(f"wrote {OUT}")
     return 0
 
 
 if __name__ == "__main__":
+    configure_logging()
     raise SystemExit(main())
