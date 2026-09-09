@@ -14,7 +14,7 @@ Complete PS-1 through PS-9 from `ROADMAP.md`.
 | PS-1 Scope freeze & charter | **Done** | `docs/00-project-charter.md` — 2 incident classes, 3 cameras, 6 cases, 4 entity classes frozen; DoD transcribed with provisional benchmark floors |
 | PS-2 Hardware & environment baseline | **Done** | `docs/09-deployment.md` §7 with measured numbers; `scripts/bootstrap/smoke_accel.py` |
 | PS-3 Repo skeleton, docs system, CI | **Done** | 50 directories each with a scope README; CI green on `main` |
-| PS-4 Contract freeze | **Done** | `packages/schemas/`, `openapi.json` (9 paths), `alembic upgrade head` builds 11 tables |
+| PS-4 Contract freeze | **Done** | `packages/schemas/`, `openapi.json` (9 paths), 12 tables on Supabase with RLS forced, 2 private buckets, pgvector |
 | PS-5 Golden fixtures + mock API | **Not started** | — |
 | PS-6 Scene & incident design | **Done** | `docs/dataset/scene-spec.md` — coordinates, zones, cameras, 6 case scripts |
 | PS-7 Evaluation harness stub | **Not started** | — |
@@ -43,11 +43,25 @@ First measurements exist. No baseline to compare against yet.
   to 5433 rather than touching the existing service.
 - **`uv` selected Python 3.13 locally while CI installed 3.12.** Caught by a
   deprecation warning naming the interpreter path. Pinned via `.python-version`.
+- **Supabase free tier allows two active projects; both slots were taken.** The cost
+  API reports $0 for a new project, which is the price, not the quota — a distinction
+  worth remembering. Resolved by pausing an unrelated project.
+- **`%%` in a PL/pgSQL `RAISE`** produced "too many parameters specified for RAISE".
+  A literal percent needs no escaping when an argument follows.
+- **Model weights committed by a careless `git add -A`.** `yolo11n.pt` (5.4 MB) is in
+  pushed history at `375a586`. Untracked now, gitignore widened to `*.pt` at any
+  path. The blob still needs scrubbing before the repository goes public in Week 20.
+- **A lint failure was missed locally** because it was chained behind `&&` and only
+  the absence of a success echo signalled it. Quality gates now report per-check
+  pass/fail explicitly.
 
 ## Decisions made
 
 - `ADR-0001` — modular monolith over microservices.
 - `ADR-0002` — AGPL-3.0, keep Ultralytics, private repo until delivery.
+- `ADR-0003` — Supabase for database, object storage and auth. Alembic stays
+  authoritative for schema; Supabase migrations handle only RLS, buckets and
+  extensions.
 - Hardware retargeted from RTX 4050 / CUDA to Apple M4 / MPS (`docs/09-deployment.md`).
 
 ## Deviations logged
