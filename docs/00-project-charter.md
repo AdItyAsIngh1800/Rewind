@@ -112,6 +112,7 @@ experiment record showing why it was unreachable.
 | Architecture | Modular monolith, containerized | `ADR-0001` |
 | Report generation | Deterministic template; LLM is stretch only | spec §D3 |
 | Accelerator / environment | Apple M4, 16 GB unified memory, Metal/MPS | `docs/09-deployment.md` |
+| Database / storage / auth | Supabase (hosted Postgres, Storage, Auth + RLS, pgvector) | `ADR-0003` |
 | Licence | AGPL-3.0 (inherited from Ultralytics) | `ADR-0002` |
 | Hosting | Private GitHub repo; public at delivery | `ADR-0002` |
 

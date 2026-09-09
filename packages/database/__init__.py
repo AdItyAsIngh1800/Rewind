@@ -3,6 +3,7 @@
 from .models import (
     Base,
     Camera,
+    EvidenceAccessLog,
     EvidenceEdge,
     EvidenceNode,
     Hypothesis,
@@ -18,6 +19,7 @@ from .models import (
 __all__ = [
     "Base",
     "Camera",
+    "EvidenceAccessLog",
     "EvidenceEdge",
     "EvidenceNode",
     "Hypothesis",

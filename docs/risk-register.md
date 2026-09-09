@@ -27,6 +27,9 @@ Not "soon".
 | R17 | Hardware mismatch | Resolved | — | — | Retargeted to Apple Silicon / MPS in PS-2; spec §H superseded | An MPS operator gap blocks a required op with no CPU fallback |
 | R19 | **Disk headroom** | **High** | High | 32 GB free against a spec assuming 200 GB | Blender passes consumed in-process, never persisted; prune Docker cache; compact derived observations | Free space below 15 GB |
 | R20 | Docker has no Metal access | Certain | Medium | — | Worker runs on the host in development; container image is CPU-only for CI and the Gate 6 clone test | Gate 6 requires GPU parity inside the container |
+| R21 | **Network dependency on Supabase** | Medium | High | Development blocked when offline or when the project is unreachable | Hosted database accepted deliberately (`ADR-0003`); CI runs against an ephemeral Postgres so tests never depend on it | Development blocked more than once by connectivity |
+| R22 | **Free-tier pause and project quota** | High | Medium | Project idle approaching seven days; organisation limited to two active projects | Weekly keep-alive GitHub Action; un-pause from the dashboard takes about a minute | Pause interrupts work mid-phase more than once — then upgrade or move local |
+| R23 | **Gate 6 weakened by hosted credentials** | Certain | Medium | "Clone and run" now needs a Supabase project | README documents the four required values and where to find them | A new developer cannot reach a working timeline from the README alone |
 | R18 | **Blender authoring effort** | Medium | High | Scene build running past Week 2 | Use CC0 assets; never model an asset by hand | E1.1 not done by end of Week 2 |
 
 ## Gate calendar

@@ -1,33 +1,19 @@
-# Development backing services only — no application containers.
+# Development backing services.
 #
-# The app runs on the host during development because Docker on Apple silicon has
-# no Metal passthrough, so a containerised worker cannot reach the GPU. See
-# docs/09-deployment.md §8. The full stack lives in docker-compose.yml (E10.1).
+# Postgres is gone — the database is Supabase (ADR-0003). Only Redis remains, for
+# the ARQ job queue, because a hosted queue would add a network dependency to every
+# job state transition for no benefit at this scale.
 #
-#   docker compose -f docker-compose.dev.yml up -d
+# The application itself runs on the host during development: Docker on Apple
+# silicon has no Metal passthrough, so a containerised worker cannot reach the GPU.
+# See docs/09-deployment.md §8.
 #
-# Postgres is on 5433, not 5432: a system PostgreSQL is commonly already bound to
-# 5432 and wins the localhost race, which surfaces as a confusing
-# "role does not exist" error rather than a port conflict.
+#   make up
+#
+# The full stack, including containerised app services, lives in
+# docker-compose.yml and arrives with E10.1.
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: rewind-pg
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-rewind}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rewind}
-      POSTGRES_DB: ${POSTGRES_DB:-rewind}
-    ports:
-      - "5433:5432"
-    volumes:
-      - rewind_pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rewind}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   redis:
     image: redis:7-alpine
     container_name: rewind-redis
@@ -38,6 +24,3 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-
-volumes:
-  rewind_pgdata:

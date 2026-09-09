@@ -8,6 +8,29 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+
+    # Integration tests run against an ephemeral Postgres, never against Supabase.
+    # Tests that mutate a shared hosted database are neither hermetic nor
+    # repeatable, and pointing CI at the real project to run them would trade a
+    # real property for a cosmetic consistency. See ADR-0003.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rewind
+          POSTGRES_PASSWORD: rewind
+          POSTGRES_DB: rewind
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rewind"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+psycopg://rewind:rewind@localhost:5432/rewind
+
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +52,9 @@ jobs:
 
       - name: Type check
         run: uv run mypy packages services apps/api apps/worker || true
+
+      - name: Migrations apply cleanly
+        run: uv run alembic upgrade head
 
       - name: API contract is not stale
         run: uv run python scripts/export_openapi.py --check

@@ -26,13 +26,41 @@ Pre-start phase (Weeks 0–1). The pipeline does not run yet.
 
 ## Quick start
 
-```bash
-make dev      # build the environment from the lockfile
-make up       # start postgres (5433) and redis
-make migrate  # apply database migrations
-make test     # run the suite
-make help     # list every target
+cp .env.example .env   # then fill in the Supabase values below
+make dev               # build the environment from the lockfile
+make up                # start redis
+make migrate           # apply database migrations to Supabase
+make test              # run the suite
+make help              # list every target
 ```
+
+### Supabase setup
+
+The database, object storage and auth are Supabase ([`ADR-0003`](docs/adr/ADR-0003-supabase.md)).
+You need a project and four values in `.env`:
+
+| Variable | Where to find it |
+|---|---|
+| `SUPABASE_PROJECT_REF` | The subdomain of your project URL, `https://<ref>.supabase.co` |
+| `SUPABASE_DB_PASSWORD` | Set when the project was created; resettable in Settings → Database |
+| `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Settings → API |
+| `SUPABASE_SERVICE_ROLE_KEY` | Settings → API. **Server-side only — never sent to a browser** |
+
+Then:
+
+```bash
+make db-url        # confirm the DSN resolves (password masked)
+make migrate       # Alembic creates the application tables
+make db-policies   # extensions, RLS and storage buckets
+```
+
+Connections go through the Supavisor **session pooler**, not the direct database
+endpoint — the direct endpoint is IPv6-only and fails on IPv4-only networks with an
+opaque timeout. `make db-url` shows what you are actually connecting to.
+
+> **Schema authority:** Alembic owns the tables. Supabase Studio is for *reading* the
+> evidence graph, not for altering it. A change made in Studio is schema drift — if it
+> happens, reflect it back into the SQLAlchemy model and capture it in a migration.
 
 The API contract is browsable without any of the above:
 

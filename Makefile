@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev test lint fmt typecheck openapi bench mock up down migrate render clean
+.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies migrate render clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -30,11 +30,17 @@ bench:  ## Run the evaluation harness and emit a benchmark report
 mock:  ## Serve golden fixtures at the real API endpoints
 	uv run uvicorn scripts.mock_api:app --reload --port 8000
 
-up:  ## Start backing services (postgres on 5433, redis on 6379)
+up:  ## Start backing services (redis)
 	docker compose -f docker-compose.dev.yml up -d
 
 down:  ## Stop backing services
 	docker compose -f docker-compose.dev.yml down
+
+db-url:  ## Print the resolved database DSN with the password masked
+	uv run python -c "from packages.database.session import settings; print(settings.safe_url)"
+
+db-policies:  ## Apply extensions, RLS and storage buckets (Supabase-only concerns)
+	supabase db push
 
 migrate:  ## Apply database migrations
 	uv run alembic upgrade head

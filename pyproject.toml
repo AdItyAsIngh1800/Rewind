@@ -21,6 +21,9 @@ dependencies = [
     # point-in-polygon gets wrong, and zone logic is load-bearing here.
     "shapely>=2.0",
     "numpy>=2.1",
+    # Supabase: storage buckets and auth. The database itself is reached over
+    # plain SQLAlchemy through the Supavisor pooler, not through this client.
+    "supabase>=2.10",
     # Config and logging
     "pyyaml>=6.0",
     "structlog>=24.4",

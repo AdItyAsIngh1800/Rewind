@@ -167,13 +167,22 @@ Five repetitions per configuration, synthetic 720p frames.
 
 Unchanged by the hardware decision — see `ADR-0001`.
 
-| Service | Container | Notes |
+| Service | Where it runs | Notes |
 |---|---|---|
-| `api` | FastAPI + Uvicorn | Metadata queries target sub-500 ms locally |
-| `worker` | ARQ | Runs the perception pipeline off the request path. **Runs on the host during development**, not in Docker — containers cannot reach Metal |
-| `postgres` | PostgreSQL 16 | Incident metadata, events, evidence |
-| `redis` | Redis 7 | Job queue and transient investigation state |
+| `api` | Host (dev) / container | FastAPI + Uvicorn. Metadata queries target sub-500 ms |
+| `worker` | **Host only in development** | ARQ. Cannot run in Docker in dev — no Metal passthrough |
+| Database | **Supabase (hosted)** | Postgres 17 + Storage + Auth + RLS + pgvector. See `ADR-0003` |
+| `redis` | Container | Job queue and transient investigation state |
 | `web` | Vite dev server / static build | Investigator dashboard |
+
+### Consequence for Gate 6
+
+Gate 6 is "a new developer can run the system from the repository". With a hosted
+database that becomes "…from the repository, **plus a Supabase project and its
+credentials**". This is a genuine weakening and is recorded here rather than
+discovered in Week 19. The README documents exactly which four values are needed and
+where to find them; the Gate 6 check is that someone can go from clone to running
+timeline using only that section.
 
 > **Docker cannot access the GPU on Apple silicon.** There is no Metal passthrough
 > equivalent to `--gpus all`. The worker therefore runs on the host in development,

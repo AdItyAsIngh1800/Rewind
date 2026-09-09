@@ -204,3 +204,25 @@ class Report(Base):
     limitations: Mapped[str] = mapped_column(Text)
     # Reports referenced by an audit trail must remain readable exactly as issued.
     immutable: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class EvidenceAccessLog(Base):
+    """Who looked at what evidence, and when.
+
+    Specification §M requires access to sensitive evidence to be logged. This is an
+    append-only audit table: rows are written, never updated or deleted. It is
+    deliberately separate from application logging, because an audit trail that can
+    be rotated away with the application logs is not an audit trail.
+    """
+
+    __tablename__ = "evidence_access_log"
+
+    access_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    accessed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    actor: Mapped[str] = mapped_column(String(128), index=True)
+    actor_role: Mapped[str] = mapped_column(String(32))
+    incident_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    resource_type: Mapped[str] = mapped_column(String(32))
+    resource_ref: Mapped[str] = mapped_column(String(256))
+    action: Mapped[str] = mapped_column(String(32))
+    request_context: Mapped[dict] = mapped_column(JSONB, default=dict)
