@@ -9,6 +9,7 @@ store an unvalidated blob.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import (
     Boolean,
@@ -25,10 +26,21 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
-    pass
+    """Declarative base shared by every model.
+
+    Alembic's autogenerate compares against ``Base.metadata``, so a model that does
+    not inherit from this is invisible to migrations.
+    """
 
 
 class Camera(Base):
+    """A fixed camera and the intrinsics needed to interpret its frames.
+
+    ``clock_offset_s`` is the correction applied at ingestion to reach the shared
+    timebase. The dataset injects known offsets deliberately so that the
+    synchronisation logic has something real to correct.
+    """
+
     __tablename__ = "cameras"
 
     camera_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -43,12 +55,18 @@ class Camera(Base):
 
 
 class ProcessingRun(Base):
+    """One execution of the pipeline over one input set.
+
+    The four version fields — input hash, dataset, models, config — are what make a
+    result reproducible. A benchmark number without a run behind it is an anecdote.
+    """
+
     __tablename__ = "processing_runs"
 
     run_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     input_hash: Mapped[str] = mapped_column(String(128), index=True)
     dataset_version: Mapped[str] = mapped_column(String(64))
-    model_versions: Mapped[dict] = mapped_column(JSONB, default=dict)
+    model_versions: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict)
     config_version: Mapped[str] = mapped_column(String(64))
     status: Mapped[str] = mapped_column(String(32), default="queued", index=True)
     device: Mapped[str] = mapped_column(String(32), default="unknown")
@@ -58,6 +76,14 @@ class ProcessingRun(Base):
 
 
 class Observation(Base):
+    """One entity seen in one frame of one camera.
+
+    The bounding box is stored as four columns rather than JSONB because range
+    queries over coordinates are a real access pattern and JSONB would not index
+    them usefully. Ground truth is written in this same table shape, which is what
+    lets the evaluation harness compare predictions against truth directly.
+    """
+
     __tablename__ = "observations"
 
     observation_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -73,7 +99,7 @@ class Observation(Base):
     confidence: Mapped[float] = mapped_column(Float)
     track_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     entity_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    world_xyz: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    world_xyz: Mapped[dict[str, float] | None] = mapped_column(JSONB, nullable=True)
     visibility: Mapped[float] = mapped_column(Float, default=1.0)
 
     __table_args__ = (
@@ -84,6 +110,12 @@ class Observation(Base):
 
 
 class TrackSegment(Base):
+    """A contiguous run of observations of one entity within a single camera.
+
+    Segments are per-camera by construction. Joining them across cameras is the
+    identity layer's job, and it is allowed to refuse.
+    """
+
     __tablename__ = "track_segments"
 
     segment_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -93,11 +125,18 @@ class TrackSegment(Base):
     entity_class: Mapped[str] = mapped_column(String(32))
     start_time_s: Mapped[float] = mapped_column(Float)
     end_time_s: Mapped[float] = mapped_column(Float)
-    observation_ids: Mapped[list] = mapped_column(JSONB, default=list)
+    observation_ids: Mapped[list[str]] = mapped_column(JSONB, default=list)
     mean_confidence: Mapped[float] = mapped_column(Float)
 
 
 class IdentityLink(Base):
+    """One cross-camera identity comparison and its outcome.
+
+    Refusals are persisted alongside links. A row saying "these two segments were
+    compared and deliberately not linked" is evidence; discarding it would hide the
+    decision and leave a coverage gap looking like an absence of data.
+    """
+
     __tablename__ = "identity_links"
 
     link_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -109,11 +148,18 @@ class IdentityLink(Base):
     decision: Mapped[str] = mapped_column(String(16), index=True)
     score: Mapped[float] = mapped_column(Float)
     threshold: Mapped[float] = mapped_column(Float)
-    components: Mapped[dict] = mapped_column(JSONB, default=dict)
-    evidence_refs: Mapped[list] = mapped_column(JSONB, default=list)
+    components: Mapped[dict[str, float]] = mapped_column(JSONB, default=dict)
+    evidence_refs: Mapped[list[str]] = mapped_column(JSONB, default=list)
 
 
 class SemanticEvent(Base):
+    """A trajectory turned into something an investigator would recognise.
+
+    ``camera_id`` is null for events derived across cameras rather than observed in
+    one. ``evidence_refs`` points back at the observations that justify the event,
+    so every event remains traceable to pixels.
+    """
+
     __tablename__ = "events"
 
     event_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -121,16 +167,22 @@ class SemanticEvent(Base):
     event_type: Mapped[str] = mapped_column(String(32), index=True)
     timestamp_s: Mapped[float] = mapped_column(Float, index=True)
     camera_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    entity_ids: Mapped[list] = mapped_column(JSONB, default=list)
+    entity_ids: Mapped[list[str]] = mapped_column(JSONB, default=list)
     zone_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     confidence: Mapped[float] = mapped_column(Float)
-    evidence_refs: Mapped[list] = mapped_column(JSONB, default=list)
-    payload: Mapped[dict] = mapped_column(JSONB, default=dict)
+    evidence_refs: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
 
     __table_args__ = (Index("ix_event_run_time", "run_id", "timestamp_s"),)
 
 
 class Incident(Base):
+    """A detected incident and the rewind window opened to investigate it.
+
+    The window is stored rather than recomputed so that a report can be audited
+    later against exactly the interval that produced it.
+    """
+
     __tablename__ = "incidents"
 
     incident_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -145,6 +197,12 @@ class Incident(Base):
 
 
 class EvidenceNode(Base):
+    """A node in an incident's evidence graph.
+
+    Nodes of type ``gap`` carry an interval and no source reference: they represent
+    time no camera could see. Those are first-class evidence, not missing data.
+    """
+
     __tablename__ = "evidence_nodes"
 
     node_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -157,10 +215,16 @@ class EvidenceNode(Base):
     interval_end_s: Mapped[float | None] = mapped_column(Float, nullable=True)
     source_ref: Mapped[str | None] = mapped_column(String(64), nullable=True)
     confidence: Mapped[float] = mapped_column(Float, default=1.0)
-    provenance: Mapped[dict] = mapped_column(JSONB)
+    provenance: Mapped[dict[str, Any]] = mapped_column(JSONB)
 
 
 class EvidenceEdge(Base):
+    """A relationship between two evidence nodes.
+
+    Every edge carries provenance. Without it the graph is a set of assertions;
+    with it, the graph is auditable.
+    """
+
     __tablename__ = "evidence_edges"
 
     edge_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -170,10 +234,17 @@ class EvidenceEdge(Base):
     to_node: Mapped[str] = mapped_column(ForeignKey("evidence_nodes.node_id"))
     relation: Mapped[str] = mapped_column(String(32), index=True)
     weight: Mapped[float] = mapped_column(Float, default=1.0)
-    provenance: Mapped[dict] = mapped_column(JSONB)
+    provenance: Mapped[dict[str, Any]] = mapped_column(JSONB)
 
 
 class Hypothesis(Base):
+    """A candidate contributing cause, with what argues for and against it.
+
+    ``contradiction_refs`` is not optional decoration. A ranked cause shown without
+    its counter-evidence invites exactly the false certainty this system exists to
+    prevent.
+    """
+
     __tablename__ = "hypotheses"
 
     hypothesis_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -182,12 +253,20 @@ class Hypothesis(Base):
     description: Mapped[str] = mapped_column(Text)
     evidence_level: Mapped[str] = mapped_column(String(32))
     score: Mapped[float] = mapped_column(Float, index=True)
-    support_refs: Mapped[list] = mapped_column(JSONB, default=list)
-    contradiction_refs: Mapped[list] = mapped_column(JSONB, default=list)
-    components: Mapped[dict] = mapped_column(JSONB, default=dict)
+    support_refs: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    contradiction_refs: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    components: Mapped[dict[str, float]] = mapped_column(JSONB, default=dict)
 
 
 class Report(Base):
+    """A generated investigation report.
+
+    Claims are stored as JSONB and validated by the ``Claim`` contract on the way in
+    and on the way out, so a claim that cannot be validated cannot be persisted.
+    Reports are immutable once issued: a cited report must still read as issued when
+    it is audited later.
+    """
+
     __tablename__ = "reports"
 
     report_id: Mapped[str] = mapped_column(String(64), primary_key=True)
@@ -198,9 +277,9 @@ class Report(Base):
     summary: Mapped[str] = mapped_column(Text)
     # Claims are stored as JSONB, validated by the Claim contract on the way in and
     # on the way out. A claim that cannot be validated cannot be persisted.
-    claims: Mapped[list] = mapped_column(JSONB, default=list)
-    ranked_hypotheses: Mapped[list] = mapped_column(JSONB, default=list)
-    gaps: Mapped[list] = mapped_column(JSONB, default=list)
+    claims: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    ranked_hypotheses: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    gaps: Mapped[list[str]] = mapped_column(JSONB, default=list)
     limitations: Mapped[str] = mapped_column(Text)
     # Reports referenced by an audit trail must remain readable exactly as issued.
     immutable: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -225,4 +304,4 @@ class EvidenceAccessLog(Base):
     resource_type: Mapped[str] = mapped_column(String(32))
     resource_ref: Mapped[str] = mapped_column(String(256))
     action: Mapped[str] = mapped_column(String(32))
-    request_context: Mapped[dict] = mapped_column(JSONB, default=dict)
+    request_context: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)

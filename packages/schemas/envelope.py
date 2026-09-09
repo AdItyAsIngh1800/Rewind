@@ -16,6 +16,13 @@ from .base import Contract
 
 
 class EventEnvelope(Contract):
+    """Wrapper placed around every message that crosses a service boundary.
+
+    Carrying producer identity and version here, rather than inside each payload,
+    is what would let a stage move onto a message bus later without its contract
+    changing.
+    """
+
     event_id: str
     event_type: str
     event_time: datetime

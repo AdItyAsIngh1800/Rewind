@@ -86,6 +86,8 @@ class IncidentClass(StrEnum):
 
 
 class Severity(StrEnum):
+    """How serious an incident is, used for triage order in the case inbox."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -93,6 +95,8 @@ class Severity(StrEnum):
 
 
 class IncidentStatus(StrEnum):
+    """Where an incident sits in the investigation workflow."""
+
     NEW = "new"
     INVESTIGATING = "investigating"
     RESOLVED = "resolved"
@@ -137,6 +141,8 @@ class Relation(StrEnum):
 
 
 class RunStatus(StrEnum):
+    """Lifecycle of a processing run, from queued to terminal."""
+
     QUEUED = "queued"
     RUNNING = "running"
     COMPLETE = "complete"

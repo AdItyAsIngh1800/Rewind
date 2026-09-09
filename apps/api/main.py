@@ -42,6 +42,8 @@ CaseId = Annotated[str, Path(description="Case (incident) identifier")]
 
 
 class Health(BaseModel):
+    """Liveness response, including the contract version this API is serving."""
+
     status: str = "ok"
     api_version: str = API_VERSION
     schema_version: str = SCHEMA_VERSION
@@ -87,12 +89,16 @@ def metrics() -> Metrics:
 
 
 class CreateCaseRequest(BaseModel):
+    """Body of a request to create a case and queue its processing run."""
+
     dataset_version: str
     case_ref: str = Field(description="Which rendered case or media set to process")
     config_version: str = "v0.1.0"
 
 
 class CreateCaseResponse(BaseModel):
+    """Acknowledgement of an accepted case, before any processing has happened."""
+
     run_id: str
     incident_id: str | None = None
     status: str
@@ -115,41 +121,62 @@ def _pending(phase: str) -> HTTPException:
     tags=["cases"],
 )
 def create_case(body: CreateCaseRequest) -> CreateCaseResponse:
-    """Create a processing run and queue the pipeline. **Not yet implemented.**"""
+    """Create a processing run and queue the pipeline.
+
+    Not yet implemented — delivered by E2.2.
+    """
     raise _pending("E2.2")
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}", tags=["cases"])
 def get_case(case_id: CaseId) -> dict[str, object]:
-    """Case summary. **Not yet implemented.**"""
+    """Return the case summary.
+
+    Not yet implemented — delivered by E6.2.
+    """
     raise _pending("E6.2")
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}/timeline", tags=["cases"])
 def get_timeline(case_id: CaseId) -> dict[str, object]:
-    """Cross-camera semantic event timeline. **Not yet implemented.**"""
+    """Return the cross-camera semantic event timeline.
+
+    Not yet implemented — delivered by E4.3.
+    """
     raise _pending("E4.3")
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}/evidence", tags=["cases"])
 def get_evidence(case_id: CaseId) -> dict[str, object]:
-    """Evidence graph with provenance. **Not yet implemented.**"""
+    """Return the evidence graph, with provenance on every node and edge.
+
+    Not yet implemented — delivered by E7.1.
+    """
     raise _pending("E7.1")
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}/replay", tags=["cases"])
 def get_replay(case_id: CaseId) -> dict[str, object]:
-    """Synchronized replay metadata: clips, offsets, shared timebase. **Not yet implemented.**"""
+    """Return synchronized replay metadata: clips, offsets and the shared timebase.
+
+    Not yet implemented — delivered by E8.2.
+    """
     raise _pending("E8.2")
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}/report", tags=["cases"])
 def get_report(case_id: CaseId) -> dict[str, object]:
-    """Evidence-grounded report. **Not yet implemented.**"""
+    """Return the evidence-grounded report for this case.
+
+    Not yet implemented — delivered by E7.4.
+    """
     raise _pending("E7.4")
 
 
 @app.post(f"{PREFIX}/cases/{{case_id}}/reprocess", tags=["cases"])
 def reprocess_case(case_id: CaseId) -> dict[str, object]:
-    """Re-run a case with a different model or config version. **Not yet implemented.**"""
+    """Re-run a case with a different model or config version.
+
+    Not yet implemented — delivered by E2.2.
+    """
     raise _pending("E2.2")

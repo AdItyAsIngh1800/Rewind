@@ -2,6 +2,7 @@
   "components": {
     "schemas": {
       "CreateCaseRequest": {
+        "description": "Body of a request to create a case and queue its processing run.",
         "properties": {
           "case_ref": {
             "description": "Which rendered case or media set to process",
@@ -26,6 +27,7 @@
         "type": "object"
       },
       "CreateCaseResponse": {
+        "description": "Acknowledgement of an accepted case, before any processing has happened.",
         "properties": {
           "incident_id": {
             "anyOf": [
@@ -68,6 +70,7 @@
         "type": "object"
       },
       "Health": {
+        "description": "Liveness response, including the contract version this API is serving.",
         "properties": {
           "api_version": {
             "default": "0.1.0",
@@ -219,7 +222,7 @@
   "paths": {
     "/api/v1/cases": {
       "post": {
-        "description": "Create a processing run and queue the pipeline. **Not yet implemented.**",
+        "description": "Create a processing run and queue the pipeline.\n\nNot yet implemented \u2014 delivered by E2.2.",
         "operationId": "create_case_api_v1_cases_post",
         "requestBody": {
           "content": {
@@ -261,7 +264,7 @@
     },
     "/api/v1/cases/{case_id}": {
       "get": {
-        "description": "Case summary. **Not yet implemented.**",
+        "description": "Return the case summary.\n\nNot yet implemented \u2014 delivered by E6.2.",
         "operationId": "get_case_api_v1_cases__case_id__get",
         "parameters": [
           {
@@ -308,7 +311,7 @@
     },
     "/api/v1/cases/{case_id}/evidence": {
       "get": {
-        "description": "Evidence graph with provenance. **Not yet implemented.**",
+        "description": "Return the evidence graph, with provenance on every node and edge.\n\nNot yet implemented \u2014 delivered by E7.1.",
         "operationId": "get_evidence_api_v1_cases__case_id__evidence_get",
         "parameters": [
           {
@@ -355,7 +358,7 @@
     },
     "/api/v1/cases/{case_id}/replay": {
       "get": {
-        "description": "Synchronized replay metadata: clips, offsets, shared timebase. **Not yet implemented.**",
+        "description": "Return synchronized replay metadata: clips, offsets and the shared timebase.\n\nNot yet implemented \u2014 delivered by E8.2.",
         "operationId": "get_replay_api_v1_cases__case_id__replay_get",
         "parameters": [
           {
@@ -402,7 +405,7 @@
     },
     "/api/v1/cases/{case_id}/report": {
       "get": {
-        "description": "Evidence-grounded report. **Not yet implemented.**",
+        "description": "Return the evidence-grounded report for this case.\n\nNot yet implemented \u2014 delivered by E7.4.",
         "operationId": "get_report_api_v1_cases__case_id__report_get",
         "parameters": [
           {
@@ -449,7 +452,7 @@
     },
     "/api/v1/cases/{case_id}/reprocess": {
       "post": {
-        "description": "Re-run a case with a different model or config version. **Not yet implemented.**",
+        "description": "Re-run a case with a different model or config version.\n\nNot yet implemented \u2014 delivered by E2.2.",
         "operationId": "reprocess_case_api_v1_cases__case_id__reprocess_post",
         "parameters": [
           {
@@ -496,7 +499,7 @@
     },
     "/api/v1/cases/{case_id}/timeline": {
       "get": {
-        "description": "Cross-camera semantic event timeline. **Not yet implemented.**",
+        "description": "Return the cross-camera semantic event timeline.\n\nNot yet implemented \u2014 delivered by E4.3.",
         "operationId": "get_timeline_api_v1_cases__case_id__timeline_get",
         "parameters": [
           {

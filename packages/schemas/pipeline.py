@@ -34,14 +34,18 @@ class BBox(Contract):
 
     @property
     def area(self) -> float:
+        """Return the box area in square pixels."""
         return (self.x2 - self.x1) * (self.y2 - self.y1)
 
     @property
     def centroid(self) -> tuple[float, float]:
+        """Return the box centre as ``(x, y)`` in pixel coordinates."""
         return ((self.x1 + self.x2) / 2, (self.y1 + self.y2) / 2)
 
 
 class Camera(Contract):
+    """A fixed camera, its intrinsics and its offset from the shared clock."""
+
     camera_id: str
     name: str
     source_uri: str

@@ -12,12 +12,16 @@ import argparse
 import platform
 import subprocess
 import time
+from types import ModuleType
+from typing import Any
 
 RESOLUTIONS = [(1280, 720)]
 BATCHES = [1, 2, 4, 8]
 
 
 def host_facts() -> dict[str, str]:
+    """Collect chip, core count and memory size for the benchmark header."""
+
     def sysctl(key: str) -> str:
         try:
             return subprocess.check_output(["sysctl", "-n", key], text=True).strip()
@@ -33,7 +37,8 @@ def host_facts() -> dict[str, str]:
     }
 
 
-def torch_facts() -> tuple[object | None, dict[str, str]]:
+def torch_facts() -> tuple[ModuleType | None, dict[str, str]]:
+    """Import torch if present and report its version and MPS availability."""
     try:
         import torch
     except ImportError:
@@ -51,7 +56,8 @@ def torch_facts() -> tuple[object | None, dict[str, str]]:
     return torch, facts
 
 
-def pick_device(torch) -> str:  # type: ignore[no-untyped-def]
+def pick_device(torch: ModuleType) -> str:
+    """Choose the fastest available backend, preferring Metal on Apple silicon."""
     if torch.backends.mps.is_available():
         return "mps"
     if torch.cuda.is_available():
@@ -59,7 +65,7 @@ def pick_device(torch) -> str:  # type: ignore[no-untyped-def]
     return "cpu"
 
 
-def mps_driver_gb(torch) -> float:  # type: ignore[no-untyped-def]
+def mps_driver_gb(torch: ModuleType) -> float:
     """Total memory Metal has taken from the unified pool.
 
     `current_allocated_memory` only counts live tensors and reads ~0 between
@@ -72,7 +78,7 @@ def mps_driver_gb(torch) -> float:  # type: ignore[no-untyped-def]
         return float("nan")
 
 
-def bench_detector(torch, device: str, model_name: str) -> list[dict[str, object]]:  # type: ignore[no-untyped-def]
+def bench_detector(torch: ModuleType, device: str, model_name: str) -> list[dict[str, Any]]:
     """Benchmark the real workload: a compact detector over 720p frames."""
     try:
         from ultralytics import YOLO
@@ -122,6 +128,7 @@ def bench_detector(torch, device: str, model_name: str) -> list[dict[str, object
 
 
 def main() -> int:
+    """Run the smoke test and print a markdown table of the results."""
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--model", default="yolo11n.pt", help="detector checkpoint to benchmark")
     args = ap.parse_args()

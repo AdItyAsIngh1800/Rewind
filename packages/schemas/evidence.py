@@ -22,6 +22,13 @@ from .enums import (
 
 
 class EvidenceNode(Contract):
+    """A single node in an incident's evidence graph.
+
+    A ``GAP`` node represents an interval no camera could see. It is evidence in its
+    own right — the thing that lets a report say "cannot determine" rather than
+    quietly omitting the interval.
+    """
+
     node_id: str
     run_id: str
     incident_id: str
@@ -43,6 +50,8 @@ class EvidenceNode(Contract):
 
 
 class EvidenceEdge(Contract):
+    """A directed relationship between two evidence nodes, with its provenance."""
+
     edge_id: str
     run_id: str
     incident_id: str
@@ -114,6 +123,13 @@ class Claim(Contract):
 
 
 class Report(Contract):
+    """A generated investigation report.
+
+    ``limitations`` is required and must not be empty: there is always something a
+    three-camera reconstruction cannot establish, and a report that claims otherwise
+    is misrepresenting its own evidence.
+    """
+
     report_id: str
     run_id: str
     incident_id: str

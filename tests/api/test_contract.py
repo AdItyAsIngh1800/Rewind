@@ -27,6 +27,7 @@ PENDING_ENDPOINTS = [
 
 
 def test_health_reports_the_frozen_schema_version() -> None:
+    """Assert that health reports the frozen schema version."""
     r = client.get(f"{PREFIX}/health")
     assert r.status_code == 200
     body = r.json()
@@ -51,10 +52,10 @@ def test_metrics_exposes_the_specification_metric_set() -> None:
 
 @pytest.mark.parametrize(("method", "path"), PENDING_ENDPOINTS)
 def test_unimplemented_endpoints_return_501_not_404(method: str, path: str) -> None:
-    """501 means 'this exists and is coming'. 404 would mean the contract is wrong.
+    """Return 501 rather than 404 for endpoints whose phase has not landed.
 
-    The distinction matters: the frontend treats 501 as 'use the mock' and 404 as
-    'you have the path wrong'.
+    501 means "this exists and is coming"; 404 would mean the contract is wrong. The
+    frontend treats 501 as "use the mock" and 404 as "you have the path wrong".
     """
     r = getattr(client, method)(path)
     assert r.status_code == 501, f"{method.upper()} {path} returned {r.status_code}"
@@ -62,13 +63,17 @@ def test_unimplemented_endpoints_return_501_not_404(method: str, path: str) -> N
 
 
 def test_create_case_validates_its_request_body() -> None:
-    """Validation happens before the 501 — a malformed request is a 422 regardless
-    of whether the pipeline behind it exists yet."""
+    """Validate the request body before reporting the endpoint as unimplemented.
+
+    A malformed request is a 422 regardless of whether the pipeline behind it
+    exists yet.
+    """
     r = client.post(f"{PREFIX}/cases", json={"case_ref": "C01"})
     assert r.status_code == 422
 
 
 def test_create_case_accepts_a_valid_body_and_reports_pending() -> None:
+    """Assert that create case accepts a valid body and reports pending."""
     r = client.post(
         f"{PREFIX}/cases",
         json={"dataset_version": "v1", "case_ref": "C01", "config_version": "v0.1.0"},
@@ -77,6 +82,7 @@ def test_create_case_accepts_a_valid_body_and_reports_pending() -> None:
 
 
 def test_openapi_covers_every_specification_endpoint() -> None:
+    """Assert that openapi covers every specification endpoint."""
     spec = app.openapi()
     expected = {
         f"{PREFIX}/cases",

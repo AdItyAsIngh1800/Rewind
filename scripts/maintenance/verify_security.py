@@ -24,6 +24,7 @@ EXEMPT = {"alembic_version"}
 
 
 def main() -> int:
+    """Audit RLS and bucket visibility; return a non-zero exit code on any gap."""
     failures: list[str] = []
 
     with make_engine().connect() as cx:

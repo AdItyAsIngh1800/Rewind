@@ -17,6 +17,12 @@ from sqlalchemy.orm import Session, sessionmaker
 
 
 class DatabaseSettings(BaseSettings):
+    """Database connection settings, read from the environment and ``.env``.
+
+    Credentials never live in the repository. ``DATABASE_URL`` exists as an escape
+    hatch so CI can point at an ephemeral Postgres without Supabase credentials.
+    """
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     supabase_project_ref: str = ""
@@ -31,6 +37,12 @@ class DatabaseSettings(BaseSettings):
 
     @property
     def url(self) -> str:
+        """Build the SQLAlchemy DSN, preferring an explicit override when set.
+
+        Raises:
+            RuntimeError: if neither an override nor Supabase credentials are set.
+
+        """
         if self.database_url:
             return self.database_url
         if not self.supabase_project_ref or not self.supabase_db_password:
@@ -64,6 +76,12 @@ settings = DatabaseSettings()
 
 
 def make_engine(url: str | None = None) -> Engine:
+    """Create an engine, defaulting to the configured DSN.
+
+    ``pool_pre_ping`` matters against a hosted database: a pooled connection can be
+    closed server-side between requests, and pre-ping turns that into a transparent
+    reconnect rather than an error on the next query.
+    """
     return create_engine(url or settings.url, pool_pre_ping=True, future=True)
 
 

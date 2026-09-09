@@ -51,7 +51,10 @@ NOW = datetime(2026, 9, 9, 10, 32, 10, tzinfo=UTC)
     ],
 )
 def test_claim_without_evidence_cannot_be_constructed(level: EvidenceLevel) -> None:
-    """Every level except UNKNOWN must cite something. This is the core guarantee."""
+    """Reject a claim above UNKNOWN that cites no evidence.
+
+    This is the core guarantee of the whole system.
+    """
     with pytest.raises(ValidationError, match="no evidence_refs"):
         Claim(
             claim_id="c1",
@@ -62,8 +65,11 @@ def test_claim_without_evidence_cannot_be_constructed(level: EvidenceLevel) -> N
 
 
 def test_unknown_claim_may_stand_without_evidence() -> None:
-    """'Cannot determine' is a claim about absent evidence. Demanding a citation
-    for it would be incoherent, and would punish the honest answer."""
+    """Allow an UNKNOWN claim to stand without any citation.
+
+    "Cannot determine" is a claim *about* absent evidence. Demanding a citation for
+    it would be incoherent, and would punish the honest answer.
+    """
     claim = Claim(
         claim_id="c2",
         text="Cannot determine whether contact occurred between 11.0s and 16.0s",
@@ -74,8 +80,11 @@ def test_unknown_claim_may_stand_without_evidence() -> None:
 
 
 def test_claim_phrasing_is_bound_to_its_evidence_level() -> None:
-    """A CONFIRMED claim may not be phrased with hedging language, and an inferred
-    claim may not be phrased as an observation."""
+    """Reject phrasing that overstates the claim's evidence level.
+
+    A CONFIRMED claim may not hedge, and an inferred claim may not be phrased as a
+    direct observation.
+    """
     with pytest.raises(ValidationError, match="requires the phrase"):
         Claim(
             claim_id="c3",
@@ -86,6 +95,7 @@ def test_claim_phrasing_is_bound_to_its_evidence_level() -> None:
 
 
 def test_correctly_phrased_claim_is_accepted() -> None:
+    """Assert that correctly phrased claim is accepted."""
     claim = Claim(
         claim_id="c4",
         text="Likely contributed: worker P01 entering the robot lane at 12.8s",
@@ -96,12 +106,16 @@ def test_correctly_phrased_claim_is_accepted() -> None:
 
 
 def test_allowed_language_covers_every_evidence_level() -> None:
-    """A new evidence level without a phrasing rule would silently bypass the
-    phrasing validator, so the mapping must stay exhaustive."""
+    """Require every evidence level to have a phrasing rule.
+
+    A level with no entry would silently bypass the phrasing validator, so the
+    mapping must stay exhaustive.
+    """
     assert set(ALLOWED_LANGUAGE) == set(EvidenceLevel)
 
 
 def test_hypothesis_above_unknown_requires_support() -> None:
+    """Assert that hypothesis above unknown requires support."""
     with pytest.raises(ValidationError, match="no support_refs"):
         Hypothesis(
             hypothesis_id="h1",
@@ -120,6 +134,7 @@ def test_hypothesis_above_unknown_requires_support() -> None:
 
 
 def test_identity_link_cannot_claim_a_link_below_its_own_threshold() -> None:
+    """Assert that identity link cannot claim a link below its own threshold."""
     with pytest.raises(ValidationError, match="below threshold"):
         IdentityLink(
             link_id="l1",
@@ -152,17 +167,20 @@ def test_identity_link_may_refuse_to_link() -> None:
 
 
 def test_degenerate_bbox_is_rejected() -> None:
+    """Assert that degenerate bbox is rejected."""
     with pytest.raises(ValidationError, match="degenerate bbox"):
         BBox(x1=10, y1=10, x2=10, y2=20)
 
 
 def test_bbox_geometry() -> None:
+    """Assert that bbox geometry."""
     box = BBox(x1=0, y1=0, x2=4, y2=2)
     assert box.area == 8
     assert box.centroid == (2.0, 1.0)
 
 
 def test_zone_event_must_name_a_zone() -> None:
+    """Assert that zone event must name a zone."""
     with pytest.raises(ValidationError, match="requires a zone_id"):
         SemanticEvent(
             event_id="e1",
@@ -174,6 +192,7 @@ def test_zone_event_must_name_a_zone() -> None:
 
 
 def test_investigation_window_must_contain_its_trigger() -> None:
+    """Assert that investigation window must contain its trigger."""
     with pytest.raises(ValidationError, match="does not contain its own trigger"):
         Incident(
             incident_id="i1",
@@ -188,6 +207,7 @@ def test_investigation_window_must_contain_its_trigger() -> None:
 
 
 def test_track_segment_cannot_end_before_it_starts() -> None:
+    """Assert that track segment cannot end before it starts."""
     with pytest.raises(ValidationError, match="ends before it starts"):
         TrackSegment(
             segment_id="s1",
@@ -203,8 +223,11 @@ def test_track_segment_cannot_end_before_it_starts() -> None:
 
 
 def test_contracts_reject_unknown_fields() -> None:
-    """Extra fields are forbidden so that a stage adding one silently fails fast
-    rather than drifting away from the frozen contract unnoticed."""
+    """Reject unknown fields on a contract.
+
+    A stage that quietly adds a field should fail fast rather than drift away from
+    the frozen contract unnoticed.
+    """
     with pytest.raises(ValidationError):
         BBox(x1=0, y1=0, x2=1, y2=1, confidence=0.9)  # type: ignore[call-arg]
 
@@ -215,6 +238,7 @@ def test_contracts_reject_unknown_fields() -> None:
 
 
 def test_observation_round_trips_through_json() -> None:
+    """Assert that observation round trips through json."""
     obs = Observation(
         observation_id="o1",
         run_id="r1",
@@ -232,6 +256,7 @@ def test_observation_round_trips_through_json() -> None:
 
 
 def test_every_contract_carries_the_schema_version() -> None:
+    """Assert that every contract carries the schema version."""
     obs = Observation(
         observation_id="o1",
         run_id="r1",
@@ -251,6 +276,7 @@ def test_every_contract_carries_the_schema_version() -> None:
 
 
 def test_evidence_coverage_counts_unknown_as_covered() -> None:
+    """Assert that evidence coverage counts unknown as covered."""
     report = Report(
         report_id="rep1",
         run_id="r1",

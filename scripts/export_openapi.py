@@ -18,6 +18,7 @@ OUT = pathlib.Path("openapi.json")
 
 
 def main() -> int:
+    """Write or verify openapi.json; return a process exit code."""
     spec = app.openapi()
     rendered = json.dumps(spec, indent=2, sort_keys=True) + "\n"
 
