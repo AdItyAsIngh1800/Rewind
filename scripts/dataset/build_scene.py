@@ -18,12 +18,17 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import pathlib
 import sys
+from typing import Any
 
 import bpy
 from mathutils import Vector
+
+# Blender's own types cannot be imported into this project's environment, so bpy
+# objects are annotated as Any. Naming the reason here is better than scattering
+
+BlenderObject = Any
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = REPO_ROOT / "ml" / "configs" / "scene_v1.json"
@@ -34,7 +39,9 @@ def script_args() -> argparse.Namespace:
     argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=pathlib.Path, default=DEFAULT_CONFIG)
-    parser.add_argument("--out", type=pathlib.Path, default=REPO_ROOT / "data/scene/warehouse.blend")
+    parser.add_argument(
+        "--out", type=pathlib.Path, default=REPO_ROOT / "data/scene/warehouse.blend"
+    )
     return parser.parse_args(argv)
 
 
@@ -51,7 +58,9 @@ def clear_scene() -> None:
             collection.remove(block)
 
 
-def make_material(name: str, rgb: tuple[float, float, float], roughness: float = 0.8):  # noqa: ANN201
+def make_material(
+    name: str, rgb: tuple[float, float, float], roughness: float = 0.8
+) -> BlenderObject:
     """Create a simple diffuse material.
 
     Deliberately plain. Physically-accurate shading buys realism the detector does not
@@ -70,9 +79,9 @@ def add_box(
     x_range: tuple[float, float],
     y_range: tuple[float, float],
     height: float,
-    material,  # noqa: ANN001
+    material: BlenderObject,
     z_base: float = 0.0,
-):  # noqa: ANN201
+) -> BlenderObject:
     """Add an axis-aligned box spanning the given world ranges."""
     size_x = x_range[1] - x_range[0]
     size_y = y_range[1] - y_range[0]
@@ -89,7 +98,7 @@ def add_box(
     return box
 
 
-def build_shell(config: dict, materials: dict) -> None:  # noqa: ANN001
+def build_shell(config: dict[str, Any], materials: dict[str, BlenderObject]) -> None:
     """Build floor, walls and ceiling."""
     house = config["warehouse"]
     width, depth, height = house["size_x"], house["size_y"], house["height_z"]
@@ -114,7 +123,7 @@ def build_shell(config: dict, materials: dict) -> None:  # noqa: ANN001
         add_box(name, xs, ys, height, materials["wall"])
 
 
-def build_racking(config: dict, materials: dict) -> None:  # noqa: ANN001
+def build_racking(config: dict[str, Any], materials: dict[str, BlenderObject]) -> None:
     """Build the eight racking blocks.
 
     These are the static occluders. The blind corridor behind RACK_2 is what makes
@@ -131,7 +140,7 @@ def build_racking(config: dict, materials: dict) -> None:  # noqa: ANN001
         )
 
 
-def build_zone_markings(config: dict, materials: dict) -> None:  # noqa: ANN001
+def build_zone_markings(config: dict[str, Any], materials: dict[str, BlenderObject]) -> None:
     """Paint the zone polygons onto the floor.
 
     Purely visual: zone membership is decided by the geometry primitives in
@@ -150,7 +159,7 @@ def build_zone_markings(config: dict, materials: dict) -> None:  # noqa: ANN001
         bpy.context.collection.objects.link(obj)
 
 
-def aim_at(obj, target: Vector) -> None:  # noqa: ANN001
+def aim_at(obj: BlenderObject, target: Vector) -> None:
     """Point an object's -Z axis at a world position.
 
     Blender cameras look down local -Z with +Y up. Computing the rotation directly
@@ -161,7 +170,7 @@ def aim_at(obj, target: Vector) -> None:  # noqa: ANN001
     obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
 
 
-def build_cameras(config: dict) -> None:
+def build_cameras(config: dict[str, Any]) -> None:
     """Place the three cameras with the optics fixed in the spec."""
     optics = config["camera_optics"]
     for spec in config["cameras"]:
@@ -174,7 +183,7 @@ def build_cameras(config: dict) -> None:
         aim_at(camera, Vector(spec["aim"]))
 
 
-def build_lighting(config: dict) -> None:
+def build_lighting(config: dict[str, Any]) -> None:
     """Add flat overhead lighting.
 
     Constant across every case on purpose. Varying light between cases would make a
@@ -195,7 +204,7 @@ def build_lighting(config: dict) -> None:
         bpy.context.collection.objects.link(light)
 
 
-def configure_render(config: dict) -> None:
+def configure_render(config: dict[str, Any]) -> None:
     """Set the render engine, resolution and frame rate from the config."""
     render_cfg = config["render"]
     scene = bpy.context.scene
