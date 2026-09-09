@@ -41,7 +41,7 @@ begin
       execute format('alter table public.%I enable row level security', t);
       execute format('alter table public.%I force row level security', t);
     else
-      raise notice 'table %% not present yet — run alembic upgrade head first', t;
+      raise notice 'table % not present yet - run alembic upgrade head first', t;
     end if;
   end loop;
 end

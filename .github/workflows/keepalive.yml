@@ -32,6 +32,28 @@ jobs:
           # 200 and 401 both prove the project is awake. Only a timeout or 5xx
           # means it is paused or unhealthy.
           case "$code" in
-            200|401|404) exit 0 ;;
+            200|401|404) ;;
             *) echo "Project may be paused or unhealthy."; exit 1 ;;
           esac
+
+      # Probes the real attack surface with the anon key only — no privileged
+      # credential in CI. If RLS were ever dropped on a table, this returns rows.
+      - name: Anon key reads nothing
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ]; then exit 0; fi
+          fail=0
+          for t in incidents observations events reports evidence_nodes evidence_access_log; do
+            body=$(curl -s "$SUPABASE_URL/rest/v1/$t?select=*&limit=1" \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+            if [ "$body" = "[]" ] || echo "$body" | grep -q '"code"'; then
+              echo "  $t: denied"
+            else
+              echo "  $t: LEAKED -> $body"
+              fail=1
+            fi
+          done
+          exit $fail

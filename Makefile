@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies migrate render clean
+.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies verify-security migrate render clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -41,6 +41,9 @@ db-url:  ## Print the resolved database DSN with the password masked
 
 db-policies:  ## Apply extensions, RLS and storage buckets (Supabase-only concerns)
 	supabase db push
+
+verify-security:  ## Assert every application table has RLS and buckets are private
+	uv run python scripts/maintenance/verify_security.py
 
 migrate:  ## Apply database migrations
 	uv run alembic upgrade head

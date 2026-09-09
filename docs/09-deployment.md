@@ -175,6 +175,19 @@ Unchanged by the hardware decision — see `ADR-0001`.
 | `redis` | Container | Job queue and transient investigation state |
 | `web` | Vite dev server / static build | Investigator dashboard |
 
+### Security posture
+
+RLS is **enabled and forced** on all 12 application tables with no policies attached,
+which denies every request except the service role. Verified rather than assumed:
+inserting a row as the service role and reading with the anon key returns `[]`.
+
+```bash
+make verify-security   # fails loudly if any table ships without RLS
+```
+
+The weekly keep-alive workflow repeats the outside-in half of that check using only
+the anon key, so no privileged credential lives in CI.
+
 ### Consequence for Gate 6
 
 Gate 6 is "a new developer can run the system from the repository". With a hosted
