@@ -371,7 +371,11 @@ Tracked here rather than discovered during E1.1:
       visible pallets (§3.1), with a `world_z < 0.5` filter as a safety net (§7).
 - [x] **Detector class coverage — resolved.** COCO covers `person` only; `yolo11n` is
       fine-tuned on the four tuning cases. See `ADR-0004`.
-- [ ] **Verify no pallet edges are visible.** After the scene is built, render a
+- [ ] **Verify no pallet edges are visible.** Use `make scenes`, then open
+      `data/scene/case_04.blend` in Blender, look through each camera and scrub the
+      timeline. The per-case scenes carry the actors keyframed, which the base
+      `warehouse.blend` does not: actors are created procedurally at render time, so
+      the base file shows an empty warehouse and is no use for this check. After the scene is built, render a
       handful of frames from all three cameras and inspect the racking directly. A
       pallet edge peeking from under a shrink-wrapped stack silently contaminates
       every precision measurement that follows, and it is far cheaper to catch here
