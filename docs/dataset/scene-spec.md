@@ -70,6 +70,17 @@ Y
 Solid boxes, **2.6 m tall** — above eye level, so they occlude cameras but not the
 ceiling-mounted views entirely. This is what creates natural blind spots.
 
+**Racking stays densely loaded.** The occlusion cases depend on it: `C02` needs the
+blind corridor behind RACK 2 to be genuinely blind. Sparse racking would weaken the
+project's central claim.
+
+**But stored goods must never show a visible pallet.** Load the racking with boxed
+units, shrink-wrapped stacks and closed containers whose base is hidden. `pallet` is a
+tracked entity class, so a visible pallet in racking would be detected while ground
+truth labelled only the floor-level one — an apparent false-positive rate that is
+really an annotation ambiguity. Fixing it at the source in the scene is cleaner than
+explaining it away in every benchmark report afterwards.
+
 | Rack | X range | Y range |
 |---|---|---|
 | RACK 1 | 0.5 – 4.5 | 10.5 – 13.5 |
@@ -131,7 +142,7 @@ exactly that.
 | `person` | 1.75 m | 1.2–1.5 m/s walking | High-visibility vest; distinct vest colour per actor so appearance features have signal |
 | `robot` | 1.2 m | 1.0 m/s | AMR-style box on wheels. Carries a state channel: `MOVING` / `ESTOP` / `IDLE` |
 | `forklift` | 2.2 m | 2.0 m/s | Tall enough to occlude `CAM_C`. The scene's mobile occluder |
-| `pallet` | 0.15 m (1.2 x 1.0 m footprint) | static | Carried by the forklift or left on the floor |
+| `pallet` | 0.15 m (1.2 x 1.0 m footprint) | static | Carried by the forklift or left on the floor. **A `pallet` entity is floor-level only** — stored goods in racking are scenery, not entities |
 
 The robot's `ESTOP` state is exported in the ground truth as a state-change event. It
 is the **trigger**, not something to be inferred from motion — the incident detector
@@ -245,7 +256,13 @@ class, entity_id, bbox_xyxy, world_xyz, visibility, confidence=1.0
 
 `visibility` is the fraction of the entity's silhouette not occluded, computed inside
 the Blender render loop from the object-index and depth passes **without persisting
-them** (see §8). **`visibility < 0.15` means the entity
+them** (see §8).
+
+**Floor-level filter for pallets.** A `pallet` observation is emitted only when
+`world_z < 0.5`. This is a safety net, not the primary fix — the primary fix is that
+racking contains no visible pallets at all (§3.1). If this filter ever discards
+anything, the scene is wrong and should be corrected rather than relied on to
+compensate. **`visibility < 0.15` means the entity
 is not emitted at all** — ground truth must not claim to see what a camera cannot,
 otherwise the occlusion cases score as detector failures rather than as the evidence
 gaps they are.
@@ -290,11 +307,15 @@ Tracked here rather than discovered during E1.1:
       probably fine and is one less thing to fail. *(The P3 reference suggests a
       simple box with a coloured status strip is enough, and the strip gives the
       robot state channel a visible correlate.)*
-- [ ] **Resolve stored-pallet ambiguity.** Racking loaded with visible pallets means a
-      detector fires on stored goods that ground truth does not label. Preferred fix:
-      load racking with boxed and shrink-wrapped goods where the pallet itself is not
-      visible, and additionally define the `pallet` class as floor-level only
-      (`world_z < 0.5`). See `references/README.md`.
-- [ ] **Confirm detector class coverage.** A COCO-pretrained model provides `person`
-      only; `robot`, `forklift` and `pallet` are not COCO classes. See the open
-      question raised at the end of Week 0.
+- [x] **Stored-pallet ambiguity — resolved.** Racking stays dense but carries no
+      visible pallets (§3.1), with a `world_z < 0.5` filter as a safety net (§7).
+- [x] **Detector class coverage — resolved.** COCO covers `person` only; `yolo11n` is
+      fine-tuned on the four tuning cases. See `ADR-0004`.
+- [ ] **Verify no pallet edges are visible.** After the scene is built, render a
+      handful of frames from all three cameras and inspect the racking directly. A
+      pallet edge peeking from under a shrink-wrapped stack silently contaminates
+      every precision measurement that follows, and it is far cheaper to catch here
+      than to explain in the Gate 1 report.
+- [ ] **Assert split integrity.** The training split manifest must be checked by
+      asserting on case IDs — no `C02` or `C06` frame may appear in any training or
+      validation split.

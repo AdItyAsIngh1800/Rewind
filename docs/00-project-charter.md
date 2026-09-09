@@ -59,7 +59,9 @@ Written down so they can be pointed at in Week 12 when they start sounding reaso
 
 - Face recognition — permanently out of scope, not merely deferred.
 - Live RTSP or real-camera ingestion.
-- Training a detector or tracker from scratch.
+- Training a detector or tracker **from scratch** — random initialisation, large
+  external datasets, detector research. **Fine-tuning a pretrained detector on our own
+  synthetic data is explicitly in scope** and is not this; see `ADR-0004`.
 - Kafka, an event bus, or any service split (see `ADR-0001`).
 - Multi-tenant authentication or user management.
 - Cloud deployment as a requirement.
@@ -111,6 +113,7 @@ experiment record showing why it was unreachable.
 | Dataset | Simulated, authored in Blender | §3 above |
 | Architecture | Modular monolith, containerized | `ADR-0001` |
 | Report generation | Deterministic template; LLM is stretch only | spec §D3 |
+| Detection | `yolo11n` fine-tuned on the four tuning cases; zero-shot baseline reported alongside | `ADR-0004` |
 | Accelerator / environment | Apple M4, 16 GB unified memory, Metal/MPS | `docs/09-deployment.md` |
 | Database / storage / auth | Supabase (hosted Postgres, Storage, Auth + RLS, pgvector) | `ADR-0003` |
 | Licence | AGPL-3.0 (inherited from Ultralytics) | `ADR-0002` |
