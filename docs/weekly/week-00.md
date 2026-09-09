@@ -15,10 +15,10 @@ Complete PS-1 through PS-9 from `ROADMAP.md`.
 | PS-2 Hardware & environment baseline | **Done** | `docs/09-deployment.md` §7 with measured numbers; `scripts/bootstrap/smoke_accel.py` |
 | PS-3 Repo skeleton, docs system, CI | **Done** | 50 directories each with a scope README; CI green on `main` |
 | PS-4 Contract freeze | **Done** | `packages/schemas/`, `openapi.json` (9 paths), 12 tables on Supabase with RLS forced, 2 private buckets, pgvector |
-| PS-5 Golden fixtures + mock API | **Not started** | — |
+| PS-5 Golden fixtures + mock API | **Done** | 10 fixtures generated from the contracts; mock API serves them at the real paths; 23 validation tests |
 | PS-6 Scene & incident design | **Done** | `docs/dataset/scene-spec.md` — coordinates, zones, cameras, 6 case scripts |
-| PS-7 Evaluation harness stub | **Not started** | — |
-| PS-8 Design language | **Not started** | — |
+| PS-7 Evaluation harness stub | **Done** | `make bench` emits dated reports; 29 metric tests, 11 harness tests, 7 of which prove it can fail |
+| PS-8 Design language | **Done** | `docs/ui/design-tokens.md`, generated `tokens.css` and `swatches.html`, `make verify-contrast` |
 | PS-9 Risk register & gate calendar | **Done** | `docs/risk-register.md` — 20 risks, 7 gates dated |
 
 ## Benchmark movement
@@ -54,6 +54,21 @@ First measurements exist. No baseline to compare against yet.
 - **A lint failure was missed locally** because it was chained behind `&&` and only
   the absence of a success echo signalled it. Quality gates now report per-check
   pass/fail explicitly.
+- **The first evidence palette failed verification in four places.** Five distinct
+  hues collapsed under protanopia and tritanopia. The fix was structural rather than
+  cosmetic: a dichromat perceives roughly a two-dimensional colour space, so five
+  categories cannot be separated by hue at all. The palette was rebuilt on a
+  *lightness ladder*, which survives every colour-vision deficiency, greyscale
+  printing and a washed-out projector.
+- **The swatch page shipped a rendering bug that the numbers could not catch.** The
+  light-theme panel displayed dark-theme swatches, because the theme selectors are
+  `:root`-scoped and a nested `data-theme` cannot override them. Found only by
+  screenshotting the page. Worth remembering: computed contrast values were all
+  correct while the page was visibly wrong.
+- **A UI database search returned a confident mismatch.** Asked for an investigator
+  console design system, it proposed Cinzel and Josefin Sans, fonts whose recorded
+  mood is "real estate, luxury, property", plus a Matrix-green palette on pure black.
+  Both rejected. Tool output needs verifying against the brief, not applying.
 
 ## Decisions made
 
@@ -98,5 +113,10 @@ bottlenecks.
 
 ## Next week
 
-PS-5 golden fixtures and mock API, PS-7 evaluation harness, PS-8 design language. Then
-the pre-start checklist closes and E1 begins.
+**Pre-start is closed.** E1 begins: build the Blender scene, render the six cases and
+export ground truth in the `Observation` schema.
+
+Two carried-forward items: the `yolo11n.pt` blob still sits in pushed history at
+`375a586` and needs scrubbing before the repository goes public in Week 20, and the
+scene spec's manual render inspection (no visible pallet edges) has to happen as soon
+as E1.1 produces frames.
