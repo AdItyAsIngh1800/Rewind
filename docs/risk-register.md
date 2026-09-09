@@ -25,7 +25,7 @@ Not "soon".
 | R15 | Frontend time sink | High | Medium | UI day/week consistently overrunning | Replay and timeline first; graph polish last | UI eats a phase that is not E8 |
 | R16 | Cloud cost | Resolved | — | — | Local-first; cloud is stretch only | Any recurring charge appears |
 | R17 | Hardware mismatch | Resolved | — | — | Retargeted to Apple Silicon / MPS in PS-2; spec §H superseded | An MPS operator gap blocks a required op with no CPU fallback |
-| R19 | **Disk headroom** | **High** | High | 32 GB free against a spec assuming 200 GB | Blender passes consumed in-process, never persisted; prune Docker cache; compact derived observations | Free space below 15 GB |
+| R19 | Disk headroom | **Low** (was High) | High | 53 GB free after reclaiming 25 GB of stale Docker data on 2026-09-09 | Blender passes consumed in-process, never persisted; prune Docker cache; compact derived observations | Free space below 15 GB |
 | R20 | Docker has no Metal access | Certain | Medium | — | Worker runs on the host in development; container image is CPU-only for CI and the Gate 6 clone test | Gate 6 requires GPU parity inside the container |
 | R21 | **Network dependency on Supabase** | Medium | High | Development blocked when offline or when the project is unreachable | Hosted database accepted deliberately (`ADR-0003`); CI runs against an ephemeral Postgres so tests never depend on it | Development blocked more than once by connectivity |
 | R22 | **Free-tier pause and project quota** | High | Medium | Project idle approaching seven days; organisation limited to two active projects | Weekly keep-alive GitHub Action; un-pause from the dashboard takes about a minute | Pause interrupts work mid-phase more than once — then upgrade or move local |

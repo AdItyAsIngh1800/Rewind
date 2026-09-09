@@ -287,4 +287,14 @@ Tracked here rather than discovered during E1.1:
       — R18 in the risk register exists for this.
 - [ ] Confirm EEVEE Next renders the object-index pass needed for ground-truth bboxes.
 - [ ] Decide whether the robot is a purchased asset or a primitive box. A box is
-      probably fine and is one less thing to fail.
+      probably fine and is one less thing to fail. *(The P3 reference suggests a
+      simple box with a coloured status strip is enough, and the strip gives the
+      robot state channel a visible correlate.)*
+- [ ] **Resolve stored-pallet ambiguity.** Racking loaded with visible pallets means a
+      detector fires on stored goods that ground truth does not label. Preferred fix:
+      load racking with boxed and shrink-wrapped goods where the pallet itself is not
+      visible, and additionally define the `pallet` class as floor-level only
+      (`world_z < 0.5`). See `references/README.md`.
+- [ ] **Confirm detector class coverage.** A COCO-pretrained model provides `person`
+      only; `robot`, `forklift` and `pallet` are not COCO classes. See the open
+      question raised at the end of Week 0.
