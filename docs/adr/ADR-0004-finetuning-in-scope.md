@@ -94,10 +94,46 @@ generalisation, which raises its value.
 **Schedule.** Adds roughly half a day to E3.1. The measured 10x throughput headroom
 absorbs the training cost comfortably.
 
+## Amendment, 2026-09-10: the zero-shot floor is uninformative on primitives
+
+Measured rather than assumed. The COCO-pretrained checkpoint detects **nothing** in
+the rendered scene — zero recall on all four classes, including `person`, which COCO
+does cover.
+
+The cause is not the missing classes this ADR was written about. It is that the
+entities are currently untextured primitives, and a rectangular box is not
+recognisable as a person. The same checkpoint on a photorealistic reference image of
+the same four entities returns `person`, `truck` and `car`, which confirms the model
+is working and isolates the cause to the geometry.
+
+**What this changes.** The zero-shot number is still recorded, but it is not a
+baseline in the sense this ADR originally intended. A comparison reading
+"0.00 → 0.95" would look like a spectacular result while measuring only that boxes
+are not people. Reporting it as baseline-versus-improved would overstate what
+fine-tuning contributed.
+
+**The honest claim.** Fine-tuning is measured as *detection ability* on the four
+entity classes — precision, recall and F1 per class against ground truth — not as
+adaptation over a pretrained baseline. The final report must say so in those terms.
+
+**This is not a permanent limitation.** Nothing about the fine-tuning method depends
+on it: only the input images change. The moment realistic assets replace the
+primitives, whether from the stretch backlog or later, the zero-shot floor becomes
+meaningful again and the original baseline-versus-improved comparison works exactly
+as written above, with no methodological change and no retraining design to redo.
+
+**Why the primitives stay for now.** Bringing the asset swap forward would reverse
+the decision made deliberately in E1: primitives exist so that a
+render-to-ground-truth-to-validate bug costs an afternoon rather than two weeks. That
+protection is still wanted, and the evidence graph in weeks 13 and 14 is where the
+schedule needs to be spent.
+
 ## Validation plan
 
 - Fine-tuned model meets the Gate 1 recall floor (≥ 0.90 for `person` and `robot`).
-- The benchmark table shows both the zero-shot baseline and the fine-tuned result.
+- The benchmark table shows both the zero-shot figure and the fine-tuned result, with
+  the zero-shot row annotated as uninformative on primitives rather than presented as
+  a baseline.
 - No golden-case frame appears in any training or validation split. This is checked by
   asserting on case IDs in the split manifest, not by inspection.
 

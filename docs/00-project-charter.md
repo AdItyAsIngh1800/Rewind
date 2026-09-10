@@ -113,7 +113,7 @@ experiment record showing why it was unreachable.
 | Dataset | Simulated, authored in Blender | §3 above |
 | Architecture | Modular monolith, containerized | `ADR-0001` |
 | Report generation | Deterministic template; LLM is stretch only | spec §D3 |
-| Detection | `yolo11n` fine-tuned on the four tuning cases; zero-shot baseline reported alongside | `ADR-0004` |
+| Detection | `yolo11n` fine-tuned on the four tuning cases. The zero-shot figure is reported but is uninformative while entities are primitives | `ADR-0004` |
 | Accelerator / environment | Apple M4, 16 GB unified memory, Metal/MPS | `docs/09-deployment.md` |
 | Database / storage / auth | Supabase (hosted Postgres, Storage, Auth + RLS, pgvector) | `ADR-0003` |
 | Licence | AGPL-3.0 (inherited from Ultralytics) | `ADR-0002` |
