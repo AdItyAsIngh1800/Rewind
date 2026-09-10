@@ -137,6 +137,64 @@ def check_monotonic_time(case: dict[str, Any]) -> list[str]:
 SPEED_LIMITS: dict[str, float] = {"person": 2.5, "robot": 2.0, "forklift": 3.5, "pallet": 3.5}
 
 
+#: Minimum OKLab separation between an entity colour and any surface colour. Below
+#: this an entity is effectively camouflaged against the thing it stands on.
+ENTITY_SURFACE_MIN = 0.15
+
+#: Minimum separation between two entity colours. Held lower than the surface floor
+#: because geometry already separates the classes: a 0.15 m slab and a 1.75 m upright
+#: are not confusable on shape alone, so colour carries less of that burden.
+ENTITY_ENTITY_MIN = 0.17
+
+
+def check_colour_separation(scene: dict[str, Any]) -> list[str]:
+    """Check every entity colour is distinguishable from surfaces and other entities.
+
+    Added after the hand-picked palette turned out to have nine collisions, the worst
+    being a forklift 0.013 OKLab from the floor paint beneath it. Nothing complained:
+    the render looked fine, ground truth is geometric and validated cleanly, and the
+    problem would only have surfaced as unexplained detector confusion in Week 6.
+
+    Surface-versus-surface pairs are deliberately not constrained. A floor and a wall
+    being similar greys is realistic and harms nothing, and constraining them made the
+    search unsatisfiable for reasons that had nothing to do with detectability.
+    """
+    from itertools import combinations
+
+    from packages.common.color import perceptual_distance
+
+    entities = {
+        name: tuple(spec["colour"])
+        for name, spec in scene["entities"].items()
+        if not name.startswith("_")
+    }
+    surfaces = {
+        name: tuple(value)
+        for name, value in scene.get("surfaces", {}).items()
+        if not name.startswith("_")
+    }
+    if not surfaces:
+        return ["scene config defines no surfaces, so entity colours cannot be checked"]
+
+    problems: list[str] = []
+    for a, b in combinations(entities, 2):
+        distance = perceptual_distance(entities[a], entities[b])
+        if distance < ENTITY_ENTITY_MIN:
+            problems.append(
+                f"entities {a} and {b} are {distance:.3f} apart, below "
+                f"{ENTITY_ENTITY_MIN}; a detector would confuse them on colour"
+            )
+    for entity, colour in entities.items():
+        for surface, surface_colour in surfaces.items():
+            distance = perceptual_distance(colour, surface_colour)
+            if distance < ENTITY_SURFACE_MIN:
+                problems.append(
+                    f"{entity} is {distance:.3f} from surface {surface}, below "
+                    f"{ENTITY_SURFACE_MIN}; it is camouflaged against it"
+                )
+    return problems
+
+
 def validate(scene: dict[str, Any], cases: dict[str, Any]) -> dict[str, list[str]]:
     """Validate every case, returning problems keyed by case id."""
     blocks = scene["racking"]["blocks"]
@@ -144,6 +202,12 @@ def validate(scene: dict[str, Any], cases: dict[str, Any]) -> dict[str, list[str
     duration = cases["duration_s"]
 
     found: dict[str, list[str]] = {}
+
+    # Scene-wide rather than per-case, so it is reported once under its own key.
+    colour_problems = check_colour_separation(scene)
+    if colour_problems:
+        found["scene colours"] = colour_problems
+
     for case in cases["cases"]:
         problems = (
             check_solid_geometry(case, blocks, duration)
