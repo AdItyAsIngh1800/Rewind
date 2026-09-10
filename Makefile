@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies verify-security verify-contrast tokens migrate scene validate-cases gt render render-fg render-watch render-status scenes render-stop validate-gt manifest clean
+.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies verify-security verify-contrast tokens migrate scene validate-cases gt render render-fg render-watch render-eta render-status scenes render-stop validate-gt manifest clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -75,6 +75,9 @@ render-watch:  ## Follow the render log
 
 scenes:  ## Build a scrubbable .blend per case, to open and inspect in Blender
 	blender --background data/scene/warehouse.blend --python scripts/dataset/render_cases.py -- --case all --save-blend
+
+render-eta:  ## Overall render progress and estimated time remaining
+	uv run python scripts/dataset/render_eta.py
 
 render-status:  ## How many cases are rendered, and what is running
 	@for c in data/samples/case_*; do \
