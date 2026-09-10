@@ -7,9 +7,12 @@ against in Week 4 cannot drift without a test failing.
 
 from __future__ import annotations
 
+import pathlib
+
 import pytest
 from fastapi.testclient import TestClient
 
+from apps.api import main
 from apps.api.main import PREFIX, app
 from packages.database.session import get_session
 from packages.schemas import SCHEMA_VERSION
@@ -96,21 +99,31 @@ def test_creating_a_case_for_unknown_media_returns_404() -> None:
     assert "case_99" in r.json()["detail"]
 
 
-def test_creating_a_case_without_rendered_video_returns_409() -> None:
+def test_creating_a_case_without_rendered_video_returns_409(
+    tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Assert a case with ground truth but no video is a conflict, not a 404.
 
     The distinction is useful to the caller: 404 means the case does not exist, 409
     means it exists and is not ready. Collapsing them would send someone hunting for
     a missing directory that is right there.
+
+    The case directory is fabricated rather than borrowed from ``data/samples``. An
+    earlier version of this test pointed at a real unrendered case and started
+    failing the moment that case was rendered, which made a passing suite depend on
+    how far the render had progressed.
     """
+    unrendered = tmp_path / "case_pending"
+    unrendered.mkdir()
+    (unrendered / "observations_gt.json").write_text("[]")
+    monkeypatch.setattr(main, "SAMPLES", tmp_path)
+
     r = client.post(
         f"{PREFIX}/cases",
-        json={"dataset_version": "v1", "case_ref": "case_04", "config_version": "v0.1.0"},
+        json={"dataset_version": "v1", "case_ref": "case_pending", "config_version": "v0.1.0"},
     )
-    # case_04 has ground truth committed but has not been rendered to video yet.
-    assert r.status_code in (409, 404)
-    if r.status_code == 409:
-        assert "make render" in r.json()["detail"]
+    assert r.status_code == 409
+    assert "make render" in r.json()["detail"]
 
 
 def test_openapi_covers_every_specification_endpoint() -> None:
