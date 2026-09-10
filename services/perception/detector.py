@@ -1,0 +1,185 @@
+"""Object detection over sampled frames.
+
+Wraps a YOLO checkpoint and emits :class:`Observation` records. Knows nothing about
+tracking, zones or incidents: its only job is turning pixels into boxes with classes.
+
+THE CLASS MAPPING IS THE INTERESTING PART. A COCO-pretrained checkpoint has 80
+classes, and only one of the project's four entity classes is among them. ``robot``
+and ``pallet`` do not exist in COCO at all, and ``forklift`` is reachable only through
+``truck``, which is a poor stand-in for a warehouse forklift. That gap is why
+ADR-0004 permits fine-tuning, and why the zero-shot number is recorded first: without
+it, a fine-tuned score has nothing honest to be compared against.
+"""
+
+from __future__ import annotations
+
+import logging
+from collections.abc import Iterator
+from dataclasses import dataclass
+from typing import Any
+
+from packages.schemas import SCHEMA_VERSION, BBox, EntityClass, Observation
+
+log = logging.getLogger(__name__)
+
+
+class DetectorError(RuntimeError):
+    """Raised when a checkpoint cannot be loaded or run."""
+
+
+#: How COCO class names map onto the project's four entity classes.
+#:
+#: ``truck`` to ``forklift`` is a deliberate, documented stretch. A warehouse forklift
+#: is not a truck, and treating it as one will produce poor recall and some confusion
+#: with other vehicles. It is included so the baseline reports a real number for
+#: forklift rather than a structural zero, which would understate what a pretrained
+#: model can do and overstate what fine-tuning added.
+COCO_TO_ENTITY: dict[str, EntityClass] = {
+    "person": EntityClass.PERSON,
+    "truck": EntityClass.FORKLIFT,
+}
+
+#: Entity classes COCO cannot express at all. Reported explicitly so a reader of the
+#: baseline sees "no class exists" rather than inferring "the model failed".
+UNREACHABLE_ZERO_SHOT: frozenset[EntityClass] = frozenset({EntityClass.ROBOT, EntityClass.PALLET})
+
+
+@dataclass(frozen=True)
+class DetectorConfig:
+    """Everything that affects a detector's output, recorded on the run.
+
+    Held together in one object so a processing run can store it verbatim. A
+    benchmark that cannot say which confidence threshold produced it is not
+    reproducible.
+    """
+
+    checkpoint: str = "yolo11n.pt"
+    confidence: float = 0.25
+    iou: float = 0.7
+    device: str = "mps"
+    #: Fine-tuned checkpoints predict the project's classes directly, so the COCO
+    #: name mapping is bypassed. Set by the training run, not guessed at inference.
+    native_classes: bool = False
+
+    @property
+    def version(self) -> str:
+        """Identifier recorded in ``ProcessingRun.model_versions``."""
+        suffix = "native" if self.native_classes else "coco"
+        return f"{self.checkpoint}:{suffix}:conf{self.confidence}"
+
+
+class Detector:
+    """A loaded YOLO checkpoint, ready to run over frames."""
+
+    def __init__(self, config: DetectorConfig | None = None) -> None:
+        """Load the checkpoint described by ``config``.
+
+        Args:
+            config: Detector settings. Defaults to the compact COCO baseline.
+
+        Raises:
+            DetectorError: if ultralytics is unavailable or the checkpoint fails to load.
+
+        """
+        self.config = config or DetectorConfig()
+        try:
+            from ultralytics import YOLO
+        except ImportError as exc:
+            raise DetectorError("ultralytics is not installed; run `uv sync --all-extras`") from exc
+        try:
+            self._model = YOLO(self.config.checkpoint)
+        except Exception as exc:
+            raise DetectorError(f"could not load {self.config.checkpoint}: {exc}") from exc
+        log.info("loaded %s on %s", self.config.checkpoint, self.config.device)
+
+    @property
+    def class_names(self) -> dict[int, str]:
+        """The checkpoint's own class index to name mapping."""
+        names: dict[int, str] = self._model.names
+        return names
+
+    def _to_entity_class(self, label: str) -> EntityClass | None:
+        """Map a predicted label onto an entity class, or ``None`` to discard it.
+
+        Returning ``None`` rather than raising matters: a COCO model detects chairs
+        and handbags in a warehouse, and those are correct predictions of things the
+        project simply does not track. Treating them as errors would make precision
+        meaningless.
+        """
+        if self.config.native_classes:
+            try:
+                return EntityClass(label)
+            except ValueError:
+                return None
+        return COCO_TO_ENTITY.get(label)
+
+    def detect(
+        self,
+        frames: list[Any],
+        *,
+        run_id: str,
+        camera_id: str,
+        frame_indices: list[int],
+        timestamps: list[float],
+    ) -> Iterator[Observation]:
+        """Run detection over a batch of frames and yield observations.
+
+        Args:
+            frames: Decoded frames as numpy arrays, in BGR order as OpenCV returns them.
+            run_id: Processing run these observations belong to.
+            camera_id: Which camera produced the frames.
+            frame_indices: Source frame index for each frame, for traceability.
+            timestamps: Shared-timebase timestamp for each frame.
+
+        Yields:
+            One observation per accepted detection.
+
+        Raises:
+            DetectorError: if the frame, index and timestamp lists disagree in length.
+
+        """
+        if not (len(frames) == len(frame_indices) == len(timestamps)):
+            raise DetectorError(
+                "frames, frame_indices and timestamps must be the same length; "
+                f"got {len(frames)}, {len(frame_indices)}, {len(timestamps)}"
+            )
+
+        results = self._model.predict(
+            frames,
+            conf=self.config.confidence,
+            iou=self.config.iou,
+            device=self.config.device,
+            verbose=False,
+        )
+
+        for position, result in enumerate(results):
+            source_index = frame_indices[position]
+            timestamp = timestamps[position]
+            boxes = getattr(result, "boxes", None)
+            if boxes is None:
+                continue
+
+            for detection_index, box in enumerate(boxes):
+                label = self.class_names[int(box.cls.item())]
+                entity_class = self._to_entity_class(label)
+                if entity_class is None:
+                    continue
+
+                x1, y1, x2, y2 = (float(v) for v in box.xyxy[0].tolist())
+                # A checkpoint can emit a zero-area box at the frame edge. The BBox
+                # contract rejects those, so they are dropped here rather than
+                # crashing a 450-frame run on one degenerate prediction.
+                if x2 - x1 < 1.0 or y2 - y1 < 1.0:
+                    continue
+
+                yield Observation(
+                    schema_version=SCHEMA_VERSION,
+                    observation_id=f"{run_id}-{camera_id}-{source_index:05d}-{detection_index:02d}",
+                    run_id=run_id,
+                    camera_id=camera_id,
+                    frame_index=source_index,
+                    timestamp_s=timestamp,
+                    entity_class=entity_class,
+                    bbox=BBox(x1=x1, y1=y1, x2=x2, y2=y2),
+                    confidence=float(box.conf.item()),
+                )

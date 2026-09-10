@@ -95,3 +95,11 @@ exclude = ["ml/notebooks", "apps/web"]
 [[tool.mypy.overrides]]
 module = ["supervision.*", "motmetrics.*", "cv2.*", "shapely.*"]
 ignore_missing_imports = true
+
+# Ultralytics ships type information but no `__all__`, so strict mode's
+# no-implicit-reexport rejects `from ultralytics import YOLO` even though the symbol
+# is public and documented. Relaxed for this module only, rather than globally.
+[[tool.mypy.overrides]]
+module = ["ultralytics.*"]
+ignore_missing_imports = true
+implicit_reexport = true
