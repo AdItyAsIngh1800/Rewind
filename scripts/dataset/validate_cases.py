@@ -52,7 +52,9 @@ def interpolate(waypoints: list[dict[str, Any]], t: float) -> tuple[float, float
 
 def inside_block(x: float, y: float, block: dict[str, Any]) -> bool:
     """Whether a world point falls inside a racking block's footprint."""
-    return block["x"][0] <= x <= block["x"][1] and block["y"][0] <= y <= block["y"][1]
+    inside_x = bool(block["x"][0] <= x <= block["x"][1])
+    inside_y = bool(block["y"][0] <= y <= block["y"][1])
+    return inside_x and inside_y
 
 
 def check_solid_geometry(

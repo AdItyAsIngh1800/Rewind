@@ -13,14 +13,14 @@ test:  ## Run the test suite
 lint:  ## Lint, format and docstring/annotation check
 	uv run ruff check .
 	uv run ruff format --check .
-	uv run mypy packages services apps/api apps/worker
+	uv run mypy packages services apps/api apps/worker scripts
 
 fmt:  ## Auto-format
 	uv run ruff format .
 	uv run ruff check --fix .
 
 typecheck:  ## Static type check
-	uv run mypy packages services apps/api apps/worker
+	uv run mypy packages services apps/api apps/worker scripts
 
 openapi:  ## Regenerate the frozen API contract
 	uv run python scripts/export_openapi.py

@@ -63,7 +63,9 @@ def oklch(value: tuple[float, float, float]) -> str:
 
 
 def block(
-    palette: dict[str, tuple[float, float, float]], evidence: dict, indent: str = "  "
+    palette: dict[str, tuple[float, float, float]],
+    evidence: dict[str, tuple[float, float, float]],
+    indent: str = "  ",
 ) -> str:
     """Render one theme's custom properties."""
     lines = [f"{indent}--{name}: {oklch(v)};" for name, v in palette.items()]

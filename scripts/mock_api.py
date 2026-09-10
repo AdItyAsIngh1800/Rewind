@@ -151,7 +151,8 @@ def get_timeline(case_id: str) -> dict[str, Any]:
 @app.get(f"{PREFIX}/cases/{{case_id}}/evidence", tags=["cases"])
 def get_evidence(case_id: str) -> dict[str, Any]:
     """Return the evidence graph, nodes and edges together."""
-    return fixture("60_evidence_graph.json")
+    graph: dict[str, Any] = fixture("60_evidence_graph.json")
+    return graph
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}/replay", tags=["cases"])

@@ -87,7 +87,9 @@ def rows(
     return "\n".join(out)
 
 
-def inline_theme(palette: dict, evidence: dict) -> str:
+def inline_theme(
+    palette: dict[str, tuple[float, float, float]], evidence: dict[str, tuple[float, float, float]]
+) -> str:
     """Render a theme as inline custom properties.
 
     The token selectors in tokens.css are :root-scoped, which is correct for the real

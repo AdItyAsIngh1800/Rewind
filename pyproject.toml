@@ -91,6 +91,10 @@ python_version = "3.12"
 strict = true
 warn_unused_ignores = true
 exclude = ["ml/notebooks", "apps/web"]
+# scripts/ holds entry points rather than a package, so there are no __init__.py
+# files for mypy to anchor module names to.
+explicit_package_bases = true
+mypy_path = "."
 
 [[tool.mypy.overrides]]
 module = ["supervision.*", "motmetrics.*", "cv2.*", "shapely.*"]
@@ -99,6 +103,12 @@ ignore_missing_imports = true
 # Ultralytics ships type information but no `__all__`, so strict mode's
 # no-implicit-reexport rejects `from ultralytics import YOLO` even though the symbol
 # is public and documented. Relaxed for this module only, rather than globally.
+# Blender's Python modules ship only with Blender and cannot be installed into this
+# environment. The two scripts that use them run inside Blender, never here.
+[[tool.mypy.overrides]]
+module = ["bpy.*", "bpy", "mathutils.*", "mathutils", "bpy_extras.*"]
+ignore_missing_imports = true
+
 [[tool.mypy.overrides]]
 module = ["ultralytics.*"]
 ignore_missing_imports = true

@@ -69,7 +69,7 @@ jobs:
       # Blocking, not advisory. A type error is a defect, and `|| true` on a
       # quality gate means the gate does not exist.
       - name: Type check
-        run: uv run mypy packages services apps/api apps/worker
+        run: uv run mypy packages services apps/api apps/worker scripts
 
       - name: Migrations apply cleanly
         run: uv run alembic upgrade head
