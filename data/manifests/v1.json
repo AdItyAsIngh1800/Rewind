@@ -3,8 +3,23 @@
   "cases": [
     {
       "case": "case_01",
-      "file_count": 5,
+      "file_count": 8,
       "files": [
+        {
+          "bytes": 1708066,
+          "path": "case_01/CAM_A.mp4",
+          "sha256": "b68cbea7101690ce0670b5402dd7a8f5d3e611f43bf34d8bf2949dd86035415e"
+        },
+        {
+          "bytes": 1764018,
+          "path": "case_01/CAM_B.mp4",
+          "sha256": "c13395bbc5dd3ce9fa39a2b7c8b46cce3ee15a4567cc599f4ebefb106cb51ca5"
+        },
+        {
+          "bytes": 2044044,
+          "path": "case_01/CAM_C.mp4",
+          "sha256": "42e6f77ee035551420994917869a30c73c60cbaf3fd224b31a15efba5777f626"
+        },
         {
           "bytes": 119,
           "path": "case_01/cause_gt.json",
@@ -32,12 +47,27 @@
         }
       ],
       "split": "tune",
-      "total_bytes": 924638
+      "total_bytes": 6440766
     },
     {
       "case": "case_02",
-      "file_count": 5,
+      "file_count": 8,
       "files": [
+        {
+          "bytes": 1731828,
+          "path": "case_02/CAM_A.mp4",
+          "sha256": "1997feeef125e8188d5bcd837937e04d201750be21aa37f7960453ee602526fe"
+        },
+        {
+          "bytes": 1745373,
+          "path": "case_02/CAM_B.mp4",
+          "sha256": "3e56184408444c0ee67af4ff46000356e30a4f9958a9b0bf9e760c5d8ded93f9"
+        },
+        {
+          "bytes": 1945974,
+          "path": "case_02/CAM_C.mp4",
+          "sha256": "15f5a619198499df43e295b6d855bb2105b2db984c4b920488ad662459eddfa1"
+        },
         {
           "bytes": 151,
           "path": "case_02/cause_gt.json",
@@ -65,12 +95,27 @@
         }
       ],
       "split": "golden",
-      "total_bytes": 828574
+      "total_bytes": 6251749
     },
     {
       "case": "case_03",
-      "file_count": 5,
+      "file_count": 8,
       "files": [
+        {
+          "bytes": 1708105,
+          "path": "case_03/CAM_A.mp4",
+          "sha256": "0d8e89215bae336f5a242ba6f3a60a5e457a73e232fdf691b1ca5649b197e6ea"
+        },
+        {
+          "bytes": 1807595,
+          "path": "case_03/CAM_B.mp4",
+          "sha256": "8df34b80c21a6fc64e9283b18b48dfb60401db4b84181b2c1428f7f812b33a66"
+        },
+        {
+          "bytes": 1942529,
+          "path": "case_03/CAM_C.mp4",
+          "sha256": "4101d1244f57976bcf90fa80daae5bd497de8bd2c189def9608a330ee5489457"
+        },
         {
           "bytes": 127,
           "path": "case_03/cause_gt.json",
@@ -98,12 +143,27 @@
         }
       ],
       "split": "tune",
-      "total_bytes": 1100331
+      "total_bytes": 6558560
     },
     {
       "case": "case_04",
-      "file_count": 5,
+      "file_count": 8,
       "files": [
+        {
+          "bytes": 1703212,
+          "path": "case_04/CAM_A.mp4",
+          "sha256": "4b826d8234b5bdf85738b7786c45d113bde15dcede20b0207775a9d18576ea8d"
+        },
+        {
+          "bytes": 1737239,
+          "path": "case_04/CAM_B.mp4",
+          "sha256": "ee0b1a1e0ab95ff84c9f6f5c75f8db0cb6c71cbe4224471e137f8205bf497dc7"
+        },
+        {
+          "bytes": 1964759,
+          "path": "case_04/CAM_C.mp4",
+          "sha256": "30b9fb9647eb1e5147c3cbf82b130692855d97e0ecb69efcba02972216baaeb2"
+        },
         {
           "bytes": 114,
           "path": "case_04/cause_gt.json",
@@ -131,12 +191,27 @@
         }
       ],
       "split": "tune",
-      "total_bytes": 613006
+      "total_bytes": 6018216
     },
     {
       "case": "case_05",
-      "file_count": 5,
+      "file_count": 8,
       "files": [
+        {
+          "bytes": 1692972,
+          "path": "case_05/CAM_A.mp4",
+          "sha256": "a905b0be6373c5e9073475891179ddb4c7b7aca3fb5a0e5bd765d6d99f35becd"
+        },
+        {
+          "bytes": 1740411,
+          "path": "case_05/CAM_B.mp4",
+          "sha256": "3e8d46f1089cfdfd66f333ebe658ba8b6e2d4c69246b23efc5e77565f24c6515"
+        },
+        {
+          "bytes": 1961032,
+          "path": "case_05/CAM_C.mp4",
+          "sha256": "709f1e80f98e92f246bf433f8284d8028da4bee51a63f80044e3b92e1712d099"
+        },
         {
           "bytes": 46,
           "path": "case_05/cause_gt.json",
@@ -164,12 +239,27 @@
         }
       ],
       "split": "tune",
-      "total_bytes": 637824
+      "total_bytes": 6032239
     },
     {
       "case": "case_06",
-      "file_count": 5,
+      "file_count": 8,
       "files": [
+        {
+          "bytes": 1716520,
+          "path": "case_06/CAM_A.mp4",
+          "sha256": "a79868117e68c144d88592b801873b15c5fb88107fbac7891f63f07c1c12a0c9"
+        },
+        {
+          "bytes": 1734326,
+          "path": "case_06/CAM_B.mp4",
+          "sha256": "cd4a89a4f7e9592364f269b541d6ca9dcf43d08a624130173b7ae5b62f330247"
+        },
+        {
+          "bytes": 2028632,
+          "path": "case_06/CAM_C.mp4",
+          "sha256": "69f771ffae0eb0eda5d152da1ec5bbbcca3c66d644621629d976e5dec7179704"
+        },
         {
           "bytes": 110,
           "path": "case_06/cause_gt.json",
@@ -197,11 +287,11 @@
         }
       ],
       "split": "golden",
-      "total_bytes": 899914
+      "total_bytes": 6379392
     }
   ],
   "dataset_version": "v1",
-  "generated_at": "2026-09-09T14:39:23.769009+00:00",
+  "generated_at": "2026-09-10T08:25:12.341448+00:00",
   "provenance": {
     "consent_required": "no",
     "contains_real_people": "no",
@@ -222,6 +312,6 @@
       "case_05"
     ]
   },
-  "total_bytes": 5004287,
+  "total_bytes": 37680922,
   "warnings": []
 }
