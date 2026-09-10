@@ -279,7 +279,15 @@
     "_comment": [
       "Primitives are authored at the real object's footprint, not at a convenient box",
       "size. A CC0 asset dropped in later scales into the same bounding volume, so zone",
-      "polygons and camera coverage never need re-checking because of the swap."
+      "polygons and camera coverage never need re-checking because of the swap.",
+      "",
+      "Colours are not decorative. They were chosen by searching OKLCH space under two",
+      "constraints: every entity at least 0.15 OKLab from every surface, and at least",
+      "0.17 from every other entity. The original hand-picked set had nine collisions,",
+      "including a hi-vis worker 0.025 from the floor paint and a forklift 0.013 from",
+      "it, which made both nearly invisible against the floor they stood on.",
+      "Hues are restricted to plausible warehouse colours: an unconstrained search",
+      "returned a magenta forklift, which separates well and looks absurd."
     ],
     "person": {
       "footprint": [
@@ -288,9 +296,9 @@
       ],
       "height": 1.75,
       "colour": [
-        0.85,
-        0.75,
-        0.1
+        0.139,
+        0.517,
+        0.014
       ]
     },
     "robot": {
@@ -300,9 +308,9 @@
       ],
       "height": 1.2,
       "colour": [
-        0.9,
-        0.9,
-        0.92
+        0.873,
+        0.881,
+        0.944
       ]
     },
     "forklift": {
@@ -312,9 +320,9 @@
       ],
       "height": 2.2,
       "colour": [
-        0.9,
-        0.65,
-        0.05
+        0.675,
+        0.041,
+        0.002
       ]
     },
     "pallet": {
@@ -324,9 +332,9 @@
       ],
       "height": 0.15,
       "colour": [
-        0.6,
-        0.42,
-        0.22
+        0.065,
+        0.032,
+        0.017
       ]
     }
   },
@@ -341,5 +349,33 @@
     "type": "overhead_area",
     "colour_temperature_k": 4000,
     "_comment": "Constant across all six cases so a detection failure is attributable to the scene rather than to the light. No skylights, no daylight, whatever the visual reference shows."
+  },
+  "surfaces": {
+    "_comment": [
+      "Surface colours, shared with the separation check. The wall is deliberately",
+      "darker than a real warehouse: a near-white AMR against a pale wall cannot be",
+      "separated at all (best achievable 0.109 against a 0.15 floor), and darkening",
+      "the wall was the only fix that kept the robot a plausible colour."
+    ],
+    "concrete": [
+      0.22,
+      0.23,
+      0.23
+    ],
+    "wall": [
+      0.4,
+      0.41,
+      0.44
+    ],
+    "racking": [
+      0.1,
+      0.3,
+      0.7
+    ],
+    "floor_paint": [
+      0.92,
+      0.74,
+      0.05
+    ]
   }
 }

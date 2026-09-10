@@ -241,11 +241,15 @@ def main() -> int:
 
     clear_scene()
 
+    # Read from the config rather than hardcoded here. These were previously literals
+    # in this file, which is why they were never checked against the entity colours
+    # and why a forklift ended up 0.013 OKLab from the floor paint it stood on.
+    surfaces = config["surfaces"]
     materials = {
-        "concrete": make_material("CONCRETE", (0.32, 0.32, 0.31), roughness=0.9),
-        "wall": make_material("WALL", (0.55, 0.56, 0.57), roughness=0.85),
-        "racking": make_material("RACKING", (0.08, 0.16, 0.38), roughness=0.6),
-        "paint": make_material("FLOOR_PAINT", (0.85, 0.68, 0.05), roughness=0.7),
+        "concrete": make_material("CONCRETE", tuple(surfaces["concrete"]), roughness=0.9),
+        "wall": make_material("WALL", tuple(surfaces["wall"]), roughness=0.85),
+        "racking": make_material("RACKING", tuple(surfaces["racking"]), roughness=0.6),
+        "paint": make_material("FLOOR_PAINT", tuple(surfaces["floor_paint"]), roughness=0.7),
     }
 
     build_shell(config, materials)
