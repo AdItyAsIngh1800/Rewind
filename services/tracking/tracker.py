@@ -178,34 +178,49 @@ class Tracker:
 
     def segments(self, run_id: str) -> list[TrackSegment]:
         """Collapse every track seen so far into a segment record."""
-        result: list[TrackSegment] = []
-        for track, rows in sorted(self._history.items()):
-            rows.sort(key=lambda o: o.timestamp_s)
-            classes = {o.entity_class for o in rows}
-            # A track that changed class mid-way is a tracker error worth surfacing
-            # rather than silently taking the majority.
-            if len(classes) > 1:
-                log.warning(
-                    "%s track %d spans classes %s; taking the first",
-                    self.camera_id,
-                    track,
-                    sorted(c.value for c in classes),
-                )
-            result.append(
-                TrackSegment(
-                    schema_version=SCHEMA_VERSION,
-                    segment_id=f"SEG-{run_id}-{self.camera_id}-T{track:03d}",
-                    run_id=run_id,
-                    camera_id=self.camera_id,
-                    local_track_id=f"{self.camera_id}-T{track:03d}",
-                    entity_class=rows[0].entity_class,
-                    start_time_s=rows[0].timestamp_s,
-                    end_time_s=rows[-1].timestamp_s,
-                    observation_ids=[o.observation_id for o in rows],
-                    mean_confidence=float(np.mean([o.confidence for o in rows])),
-                )
+        return segments_from_observations(
+            run_id, [o for rows in self._history.values() for o in rows]
+        )
+
+
+def segments_from_observations(run_id: str, observations: list[Observation]) -> list[TrackSegment]:
+    """One segment per (camera, track id), spanning the observations that carry it.
+
+    Shared by the live tracker and by evaluation code that rebuilds segments from a
+    persisted or relabelled observation list, so both produce identical ids.
+    """
+    grouped: dict[tuple[str, str], list[Observation]] = defaultdict(list)
+    for o in observations:
+        if o.track_id:
+            grouped[(o.camera_id, o.track_id)].append(o)
+    result: list[TrackSegment] = []
+    for (camera_id, track_id), rows in sorted(grouped.items()):
+        rows.sort(key=lambda o: o.timestamp_s)
+        classes = {o.entity_class for o in rows}
+        # A track that changed class mid-way is a tracker error worth surfacing
+        # rather than silently taking the majority.
+        if len(classes) > 1:
+            log.warning(
+                "%s track %s spans classes %s; taking the first",
+                camera_id,
+                track_id,
+                sorted(c.value for c in classes),
             )
-        return result
+        result.append(
+            TrackSegment(
+                schema_version=SCHEMA_VERSION,
+                segment_id=f"SEG-{run_id}-{track_id}",
+                run_id=run_id,
+                camera_id=camera_id,
+                local_track_id=track_id,
+                entity_class=rows[0].entity_class,
+                start_time_s=rows[0].timestamp_s,
+                end_time_s=rows[-1].timestamp_s,
+                observation_ids=[o.observation_id for o in rows],
+                mean_confidence=float(np.mean([o.confidence for o in rows])),
+            )
+        )
+    return result
 
 
 @dataclass

@@ -9,6 +9,14 @@ from .tracker import (
     TrackerError,
     TrackingReport,
     score_against_truth,
+    segments_from_observations,
 )
 
-__all__ = ["Tracker", "TrackerConfig", "TrackerError", "TrackingReport", "score_against_truth"]
+__all__ = [
+    "Tracker",
+    "TrackerConfig",
+    "TrackerError",
+    "TrackingReport",
+    "score_against_truth",
+    "segments_from_observations",
+]
