@@ -7,6 +7,7 @@ from services.events.extractor import (
     extract_events,
     load_zones,
     localise,
+    localise_all,
     merge_across_cameras,
 )
 from services.events.persistence import events_for_run, to_contract, write_events
@@ -19,6 +20,7 @@ __all__ = [
     "extract_events",
     "load_zones",
     "localise",
+    "localise_all",
     "merge_across_cameras",
     "to_contract",
     "write_events",

@@ -132,6 +132,18 @@ def localise(
         return None
 
 
+def localise_all(
+    observations: list[Observation], cameras: dict[str, CameraModel], heights: dict[str, float]
+) -> dict[str, tuple[float, float]]:
+    """World-plane position per observation id, omitting any that cannot be placed."""
+    out: dict[str, tuple[float, float]] = {}
+    for o in observations:
+        xy = localise(o, cameras, heights)
+        if xy is not None:
+            out[o.observation_id] = xy
+    return out
+
+
 def _tracks(
     observations: list[Observation], cameras: dict[str, CameraModel], heights: dict[str, float]
 ) -> list[_Track]:

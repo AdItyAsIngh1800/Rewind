@@ -287,7 +287,8 @@
       "including a hi-vis worker 0.025 from the floor paint and a forklift 0.013 from",
       "it, which made both nearly invisible against the floor they stood on.",
       "Hues are restricted to plausible warehouse colours: an unconstrained search",
-      "returned a magenta forklift, which separates well and looks absurd."
+      "returned a magenta forklift, which separates well and looks absurd.",
+      "max_speed_mps is the top speed from scene spec 5; E5.3 uses it to bound how far a hand-over between cameras can travel in the blind interval."
     ],
     "person": {
       "footprint": [
@@ -295,6 +296,7 @@
         0.35
       ],
       "height": 1.75,
+      "max_speed_mps": 1.5,
       "colour": [
         0.139,
         0.517,
@@ -307,6 +309,7 @@
         0.6
       ],
       "height": 1.2,
+      "max_speed_mps": 1.0,
       "colour": [
         0.873,
         0.881,
@@ -319,6 +322,7 @@
         1.1
       ],
       "height": 2.2,
+      "max_speed_mps": 2.0,
       "colour": [
         0.675,
         0.041,
@@ -331,6 +335,7 @@
         1.0
       ],
       "height": 0.15,
+      "max_speed_mps": 0.0,
       "colour": [
         0.065,
         0.032,
