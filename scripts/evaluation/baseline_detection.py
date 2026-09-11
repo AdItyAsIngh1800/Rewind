@@ -234,10 +234,43 @@ def main() -> int:
     report = render_markdown(result)
     REPORTS.mkdir(parents=True, exist_ok=True)
     stamp = result.generated_at.strftime("%Y-%m-%dT%H%M%SZ")
-    path = REPORTS / f"detection-baseline-{args.case}-{stamp}.md"
+    label = "finetuned" if args.native_classes else "baseline"
+    path = REPORTS / f"detection-{label}-{args.case}-{stamp}.md"
     path.write_text(report)
+
+    # A machine-readable twin of the report, so the model card and the experiment
+    # record are generated from the same numbers rather than retyped from a table.
+    path.with_suffix(".json").write_text(
+        json.dumps(
+            {
+                "case_id": result.case_id,
+                "model_version": result.model_version,
+                "checkpoint": args.checkpoint,
+                "device": result.device,
+                "generated_at": result.generated_at.isoformat(),
+                "frames_processed": result.frames_processed,
+                "per_class": {
+                    row.entity_class.value: {
+                        "truth": row.truth,
+                        "predicted": row.predicted,
+                        "tp": row.counts.tp,
+                        "fp": row.counts.fp,
+                        "fn": row.counts.fn,
+                        "precision": round(row.counts.precision, 4),
+                        "recall": round(row.counts.recall, 4),
+                        "f1": round(row.counts.f1, 4),
+                        "reachable": row.reachable,
+                        "note": row.note,
+                    }
+                    for row in result.per_class
+                },
+            },
+            indent=2,
+        )
+        + "\n"
+    )
     log.info("\n%s", report)
-    log.info("written to %s", path)
+    log.info("written to %s and %s", path, path.with_suffix(".json"))
     return 0
 
 
