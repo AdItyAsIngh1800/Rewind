@@ -31,6 +31,7 @@ from services.events import (
     merge_across_cameras,
     write_events,
 )
+from services.identity import estimate_offsets, misaligned
 from services.ingestion import Frame, decode_frames, plan_sampling, probe, transition
 from services.perception.persistence import write_observations, write_segments
 from services.tracking import Tracker, TrackerConfig
@@ -76,6 +77,9 @@ class PipelineResult:
     segments_written: int = 0
     events: int = 0
     events_written: int = 0
+    #: Residual clock offset per camera against the first camera, from shared zone
+    #: crossings (E5.1). A value beyond tolerance means the configured offset is wrong.
+    clock_residuals_s: dict[str, float] = field(default_factory=dict)
 
 
 def process_camera(
@@ -192,17 +196,26 @@ def process_run(
             log.warning("run %s: no scene config, skipping event extraction", run_id)
         else:
             config_events = EventConfig()
-            events = merge_across_cameras(
-                extract_events(
-                    run_id,
-                    all_observations,
-                    load_zones(scene),
-                    {c["id"]: CameraModel.from_scene(scene, c["id"]) for c in scene["cameras"]},
-                    class_heights(scene),
-                    config_events,
-                ),
-                config_events.merge_tolerance_s,
+            raw_events = extract_events(
+                run_id,
+                all_observations,
+                load_zones(scene),
+                {c["id"]: CameraModel.from_scene(scene, c["id"]) for c in scene["cameras"]},
+                class_heights(scene),
+                config_events,
             )
+            if result.cameras:
+                estimates = estimate_offsets(raw_events, reference=result.cameras[0])
+                result.clock_residuals_s = {c: e.residual_s for c, e in estimates.items()}
+                for camera_id in misaligned(estimates):
+                    log.warning(
+                        "run %s: %s is %.2f s off %s; check its clock_offset_s",
+                        run_id,
+                        camera_id,
+                        estimates[camera_id].residual_s,
+                        result.cameras[0],
+                    )
+            events = merge_across_cameras(raw_events, config_events.merge_tolerance_s)
             result.events = len(events)
             result.events_written = write_events(session, events)
         transition(session, run_id, RunStatus.COMPLETE)

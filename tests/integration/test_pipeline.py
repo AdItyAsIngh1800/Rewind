@@ -28,7 +28,11 @@ from services.perception import (
 from tests.integration.conftest import needs_db
 
 CASE_DIR = pathlib.Path("data/samples/case_01")
+#: Deliberately wrong offsets. The clips are frame-synchronous (scene spec §4.1), so
+#: applying these shifts CAM_B and CAM_C off the true clock by exactly these amounts;
+#: the tests below assert both that the shift is applied and that E5.1 catches it.
 OFFSETS = {"CAM_A": 0.0, "CAM_B": 0.4, "CAM_C": -0.2}
+NO_OFFSETS = {"CAM_A": 0.0, "CAM_B": 0.0, "CAM_C": 0.0}
 
 
 class GroundTruthDetector:
@@ -137,7 +141,7 @@ def test_pipeline_extracts_and_persists_events(session: Session, queued_run: Pro
         session,
         run_id=queued_run.run_id,
         case_dir=CASE_DIR,
-        camera_offsets=OFFSETS,
+        camera_offsets=NO_OFFSETS,
         detector=GroundTruthDetector(queued_run.run_id),
         scene=scene,
     )
@@ -151,6 +155,28 @@ def test_pipeline_extracts_and_persists_events(session: Session, queued_run: Pro
     assert {"zone_entry", "zone_exit", "stop"} <= kinds
     assert events_for_run(session, queued_run.run_id, start_s=10.0, end_s=14.0)
     assert not events_for_run(session, queued_run.run_id, start_s=900.0)
+    # The clips are synchronous and no offset was applied, so no camera shows a residual.
+    assert set(result.clock_residuals_s) == {"CAM_B", "CAM_C"}
+    assert all(abs(r) <= 0.3 for r in result.clock_residuals_s.values())
+
+
+@needs_db
+def test_wrong_clock_offsets_are_detected_from_the_events(
+    session: Session, queued_run: ProcessingRun
+) -> None:
+    """Assert E5.1 recovers an injected clock error from shared zone crossings."""
+    scene = json.loads(pathlib.Path("ml/configs/scene_v1.json").read_text())
+    result = process_run(
+        session,
+        run_id=queued_run.run_id,
+        case_dir=CASE_DIR,
+        camera_offsets=OFFSETS,
+        detector=GroundTruthDetector(queued_run.run_id),
+        scene=scene,
+    )
+    # Subtracting a spurious +0.4 s makes CAM_B stamp everything 0.4 s early.
+    assert result.clock_residuals_s["CAM_B"] == pytest.approx(-0.4, abs=0.15)
+    assert result.clock_residuals_s["CAM_C"] == pytest.approx(0.2, abs=0.15)
 
 
 @needs_db
