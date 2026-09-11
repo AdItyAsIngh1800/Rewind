@@ -8,7 +8,7 @@
 | Hypothesis | Given exact tracks, the event extractor recovers every zone crossing a camera could have seen, within 0.5 s; localising from boxes instead of truth positions costs precision only where the single-point model is known to be biased |
 | Dataset version | `v1`, the four tune cases; golden pair sealed (see the ledger row for the breach on this date) |
 | Preprocessing | Ground-truth observations with `track_id := entity_id`. Run A keeps `world_xyz`; run B strips it so positions come from `CameraModel.back_project` at half class height |
-| Model / tracker version | `events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5`, merge rule "type+zone+class within 0.5 s" |
+| Model / tracker version | `events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5`, merge rule "type+zone+class within 0.5 s" (widened to 1.0 s and stamped at the median camera time in EXP-0006; the truth-position rows below are unchanged by that, the projected rows improve by one event) |
 | Hyperparameters | Swept `turn_min_speed` ∈ {0.2…0.8} (no effect) and `turn_baseline_s` ∈ {frame, 0.5, 1.0} |
 | Hardware | Apple M4, CPU |
 | Config version | `v0.1.0` |
