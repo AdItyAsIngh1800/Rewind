@@ -368,7 +368,7 @@
         "type": "object"
       },
       "Timeline": {
-        "description": "The event stream of one run with the tracks behind it, clipped if asked.\n\nSegments are included because the timeline view draws an entity lane per track\nand an event lane on top; serving them together saves the UI a second round trip\nfor every seek. Identity links are empty until E5 links segments across cameras.",
+        "description": "The event stream of one run with the tracks behind it, clipped if asked.\n\nSegments are included because the timeline view draws an entity lane per track\nand an event lane on top; serving them together saves the UI a second round trip\nfor every seek. Identity links carry every cross-camera comparison the run made,\nrefusals included, so the UI can show why two lanes are or are not one entity.",
         "properties": {
           "end_s": {
             "anyOf": [

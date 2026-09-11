@@ -24,6 +24,7 @@ from packages.database.models import Incident, ProcessingRun
 from packages.database.session import get_session
 from packages.schemas import SCHEMA_VERSION, IdentityLink, SemanticEvent, TrackSegment
 from services.events import events_for_run, to_contract
+from services.identity import link_to_contract, links_for_run
 from services.ingestion import create_run
 from services.perception.persistence import segment_to_contract, segments_for_run
 
@@ -217,7 +218,8 @@ class Timeline(BaseModel):
 
     Segments are included because the timeline view draws an entity lane per track
     and an event lane on top; serving them together saves the UI a second round trip
-    for every seek. Identity links are empty until E5 links segments across cameras.
+    for every seek. Identity links carry every cross-camera comparison the run made,
+    refusals included, so the UI can show why two lanes are or are not one entity.
     """
 
     run_id: str
@@ -265,7 +267,7 @@ def get_timeline(
         end_s=end_s,
         events=events,
         segments=segments,
-        identity_links=[],
+        identity_links=[link_to_contract(r) for r in links_for_run(session, run_id)],
     )
 
 

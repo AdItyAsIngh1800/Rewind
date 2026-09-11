@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from packages.database.models import Camera, ProcessingRun
 from packages.schemas import Observation, RunStatus
 from services.events import events_for_run
+from services.identity import links_for_run
 from services.ingestion import Frame, RunConflictError
 from services.perception import (
     observations_in_window,
@@ -158,6 +159,11 @@ def test_pipeline_extracts_and_persists_events(session: Session, queued_run: Pro
     # The clips are synchronous and no offset was applied, so no camera shows a residual.
     assert set(result.clock_residuals_s) == {"CAM_B", "CAM_C"}
     assert all(abs(r) <= 0.3 for r in result.clock_residuals_s.values())
+    # Cross-camera identity ran and every comparison was persisted, refusals included.
+    links = links_for_run(session, queued_run.run_id)
+    assert len(links) == result.links > 0
+    assert all(link.decision in ("linked", "unknown") for link in links)
+    assert all(link.evidence_refs for link in links)
 
 
 @needs_db

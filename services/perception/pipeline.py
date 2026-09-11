@@ -30,10 +30,17 @@ from services.events import (
     class_heights,
     extract_events,
     load_zones,
+    localise_all,
     merge_across_cameras,
     write_events,
 )
-from services.identity import estimate_offsets, misaligned
+from services.identity import (
+    associate,
+    build_segment_tracks,
+    estimate_offsets,
+    misaligned,
+    write_links,
+)
 from services.identity.appearance import TrackDescriptors
 from services.ingestion import Frame, decode_frames, plan_sampling, probe, transition
 from services.perception.persistence import write_observations, write_segments
@@ -95,6 +102,8 @@ class PipelineResult:
     #: Residual clock offset per camera against the first camera, from shared zone
     #: crossings (E5.1). A value beyond tolerance means the configured offset is wrong.
     clock_residuals_s: dict[str, float] = field(default_factory=dict)
+    links: int = 0
+    links_linked: int = 0
 
 
 def process_camera(
@@ -192,6 +201,7 @@ def process_run(
     try:
         all_observations: list[Observation] = []
         all_segments: list[TrackSegment] = []
+        descriptors: dict[str, NDArray[np.float64]] = {}
         for clip in sorted(case_dir.glob("*.mp4")):
             camera_id = clip.stem
             log.info("run %s: %s", run_id, camera_id)
@@ -208,6 +218,7 @@ def process_run(
             result.frames_processed += out.frames
             all_observations.extend(out.observations)
             all_segments.extend(out.segments)
+            descriptors.update(out.descriptors)
 
         result.observations = len(all_observations)
         result.segments = len(all_segments)
@@ -217,12 +228,14 @@ def process_run(
             log.warning("run %s: no scene config, skipping event extraction", run_id)
         else:
             config_events = EventConfig()
+            cameras = {c["id"]: CameraModel.from_scene(scene, c["id"]) for c in scene["cameras"]}
+            heights = class_heights(scene)
             raw_events = extract_events(
                 run_id,
                 all_observations,
                 load_zones(scene),
-                {c["id"]: CameraModel.from_scene(scene, c["id"]) for c in scene["cameras"]},
-                class_heights(scene),
+                cameras,
+                heights,
                 config_events,
             )
             if result.cameras:
@@ -239,6 +252,25 @@ def process_run(
             events = merge_across_cameras(raw_events, config_events.merge_tolerance_s)
             result.events = len(events)
             result.events_written = write_events(session, events)
+            # Cross-camera identity (E5): links and refusals, both persisted.
+            speeds = {
+                k: float(v["max_speed_mps"])
+                for k, v in scene["entities"].items()
+                if not k.startswith("_") and "max_speed_mps" in v
+            }
+            links = associate(
+                run_id,
+                build_segment_tracks(
+                    all_segments,
+                    all_observations,
+                    localise_all(all_observations, cameras, heights),
+                    descriptors,
+                ),
+                speeds,
+            )
+            result.links = len(links)
+            result.links_linked = sum(link.decision.value == "linked" for link in links)
+            write_links(session, links)
         transition(session, run_id, RunStatus.COMPLETE)
         session.commit()
     except Exception as exc:
