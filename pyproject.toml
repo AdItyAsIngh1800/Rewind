@@ -114,6 +114,14 @@ module = ["bpy.*", "bpy", "mathutils.*", "mathutils", "bpy_extras.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["ultralytics.*"]
+module = ["ultralytics.*", "torch.*"]
 ignore_missing_imports = true
 implicit_reexport = true
+
+# CI installs only the `dev` extra: a CPU torch wheel is gigabytes and the ML code
+# is not exercised there. With ultralytics absent its symbols resolve to Any, so the
+# `no-untyped-call` ignore that is required locally reads as unused on CI. Relaxing
+# the warning for this one module keeps the two runs from contradicting each other.
+[[tool.mypy.overrides]]
+module = ["services.tracking.tracker"]
+warn_unused_ignores = false
