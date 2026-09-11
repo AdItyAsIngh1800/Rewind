@@ -76,8 +76,10 @@ class EventConfig:
     turn_baseline_s: float = 0.5
     #: Cameras time the same crossing differently because each localises with its
     #: own bias direction; the window has to cover that spread or one crossing
-    #: becomes two events. Set from the spread measured in EXP-0006.
-    merge_tolerance_s: float = 1.0
+    #: becomes two events. EXP-0006 first measured 0.7 s of spread and set 1.0; that
+    #: spread was mostly spurious clock offsets (scene spec §4.1). With correct clocks
+    #: the real spread is under 0.5 s and 0.8 is the smallest window that covers it.
+    merge_tolerance_s: float = 0.8
 
     @property
     def version(self) -> str:
