@@ -18,11 +18,13 @@ label and the pixels disagree, and nothing trained on them can be trusted.
 from __future__ import annotations
 
 import argparse
+import colorsys
 import json
 import logging
 import pathlib
 from dataclasses import dataclass
 
+import cv2
 import numpy as np
 
 from packages.common.color import linear_to_srgb
@@ -51,6 +53,19 @@ MIN_MATCH_FRACTION = 0.35
 #: for and reads as a 0% match either way.
 TOLERANCE = 100
 
+#: Hue window, degrees either side of the entity's configured hue, for the second
+#: match path. Shading moves a surface's brightness and saturation but barely its
+#: hue: a forklift filling the near field renders a washed-out pink top and a
+#: near-black flank, both outside ±100 RGB of the base red and both within 8 degrees
+#: of its hue. Measured on the first correct render, 8 passed every box (worst 0.58)
+#: while 4 did not; 12 would let forklift (13 deg) and pallet (24 deg) share a centre.
+HUE_TOLERANCE_DEG = 8
+
+#: Saturation floor (0-1) below which a pixel has no meaningful hue and the hue path
+#: is skipped. Excludes concrete, wall and every shadow; disables the path entirely
+#: for the achromatic robot, which keeps the RGB tolerance alone.
+MIN_SATURATION = 0.25
+
 
 @dataclass
 class Mismatch:
@@ -70,7 +85,28 @@ def srgb8(linear: list[float]) -> np.ndarray:
     return np.array(rgb[::-1], dtype=np.int16)
 
 
-def check_case(case_id: str, colours: dict[str, np.ndarray]) -> list[Mismatch]:
+def hue_sat(linear: list[float]) -> tuple[float, float]:
+    """Hue in OpenCV's 0-180 scale and saturation 0-1 of a config colour."""
+    h, s, _ = colorsys.rgb_to_hsv(*(min(1.0, linear_to_srgb(c)) for c in linear[:3]))
+    return h * 180.0, s
+
+
+def matches(crop: np.ndarray, target_bgr: np.ndarray, target_hs: tuple[float, float]) -> np.ndarray:
+    """Per-pixel mask of pixels that read as the entity, by RGB closeness or by hue."""
+    close = np.all(np.abs(crop.astype(np.int16) - target_bgr) <= TOLERANCE, axis=2)
+    hue, sat = target_hs
+    if sat < MIN_SATURATION:
+        return np.asarray(close)
+    hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV).astype(np.int16)
+    # OpenCV hue wraps at 180; fold the difference into [-90, 90) before taking abs.
+    d_hue = np.abs((hsv[..., 0] - hue + 90) % 180 - 90)
+    by_hue = (d_hue <= HUE_TOLERANCE_DEG / 2) & (hsv[..., 1] >= MIN_SATURATION * 255)
+    return np.asarray(close | by_hue)
+
+
+def check_case(
+    case_id: str, colours: dict[str, np.ndarray], hues: dict[str, tuple[float, float]]
+) -> list[Mismatch]:
     """Check one case, returning every box whose entity colour is absent."""
     case_dir = SAMPLES / case_id
     truth = json.loads((case_dir / "observations_gt.json").read_text())
@@ -88,12 +124,11 @@ def check_case(case_id: str, colours: dict[str, np.ndarray]) -> list[Mismatch]:
                 assert isinstance(box, dict)
                 x1, y1 = int(box["x1"]), int(box["y1"])
                 x2, y2 = int(box["x2"]) + 1, int(box["y2"]) + 1
-                crop = frame[y1:y2, x1:x2].astype(np.int16)
+                crop = frame[y1:y2, x1:x2]
                 if crop.size == 0:
                     continue
-                target = colours[str(row["entity_class"])]
-                close = np.all(np.abs(crop - target) <= TOLERANCE, axis=2)
-                fraction = float(close.mean())
+                cls = str(row["entity_class"])
+                fraction = float(matches(crop, colours[cls], hues[cls]).mean())
                 if fraction < MIN_MATCH_FRACTION:
                     mismatches.append(
                         Mismatch(
@@ -116,11 +151,9 @@ def main() -> int:
     args = parser.parse_args()
 
     scene = json.loads(SCENE.read_text())
-    colours = {
-        name: srgb8(spec["colour"])
-        for name, spec in scene["entities"].items()
-        if not name.startswith("_")
-    }
+    entities = {n: s for n, s in scene["entities"].items() if not n.startswith("_")}
+    colours = {name: srgb8(spec["colour"]) for name, spec in entities.items()}
+    hues = {name: hue_sat(spec["colour"]) for name, spec in entities.items()}
 
     case_ids = args.cases or sorted(d.name for d in SAMPLES.glob("case_*") if any(d.glob("*.mp4")))
     if not case_ids:
@@ -129,7 +162,7 @@ def main() -> int:
 
     total = 0
     for case_id in case_ids:
-        mismatches = check_case(case_id, colours)
+        mismatches = check_case(case_id, colours, hues)
         if mismatches:
             log.info("%s  FAIL  %d box(es) do not contain their entity", case_id, len(mismatches))
             for m in mismatches[:6]:
