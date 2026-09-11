@@ -32,11 +32,11 @@ def _no_database() -> object:
 
 app.dependency_overrides[get_session] = _no_database
 
-#: Endpoints still awaiting their phase. `POST /cases` left this list in E2.2.
+#: Endpoints still awaiting their phase. `POST /cases` left this list in E2.2 and
+#: the timeline in E4.3.
 PENDING_ENDPOINTS = [
     ("post", f"{PREFIX}/cases/abc/reprocess"),
     ("get", f"{PREFIX}/cases/abc"),
-    ("get", f"{PREFIX}/cases/abc/timeline"),
     ("get", f"{PREFIX}/cases/abc/evidence"),
     ("get", f"{PREFIX}/cases/abc/replay"),
     ("get", f"{PREFIX}/cases/abc/report"),

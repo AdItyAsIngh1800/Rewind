@@ -66,6 +66,32 @@
         "title": "CreateCaseResponse",
         "type": "object"
       },
+      "EntityClass": {
+        "description": "The four entity classes frozen in the charter. Not five.",
+        "enum": [
+          "person",
+          "robot",
+          "forklift",
+          "pallet"
+        ],
+        "title": "EntityClass",
+        "type": "string"
+      },
+      "EventType": {
+        "description": "Semantic events extracted from trajectories.",
+        "enum": [
+          "zone_entry",
+          "zone_exit",
+          "stop",
+          "direction_change",
+          "proximity",
+          "occlusion_start",
+          "occlusion_end",
+          "state_change"
+        ],
+        "title": "EventType",
+        "type": "string"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -108,6 +134,83 @@
         ],
         "title": "Health",
         "type": "object"
+      },
+      "IdentityLink": {
+        "additionalProperties": false,
+        "description": "A cross-camera identity comparison and its outcome.\n\nA record is written whether or not a link was made. `UNKNOWN` with a low score\nis a real, useful result \u2014 it is what stops the evidence graph from inventing a\ntrajectory across a coverage gap.",
+        "properties": {
+          "components": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "Per-signal contributions: temporal, appearance, geometric",
+            "title": "Components",
+            "type": "object"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/LinkDecision"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "link_id": {
+            "title": "Link Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "score": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          },
+          "segment_a": {
+            "title": "Segment A",
+            "type": "string"
+          },
+          "segment_b": {
+            "title": "Segment B",
+            "type": "string"
+          },
+          "threshold": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Threshold",
+            "type": "number"
+          }
+        },
+        "required": [
+          "link_id",
+          "run_id",
+          "segment_a",
+          "segment_b",
+          "decision",
+          "score",
+          "threshold"
+        ],
+        "title": "IdentityLink",
+        "type": "object"
+      },
+      "LinkDecision": {
+        "description": "The outcome of a cross-camera identity comparison.\n\nUNKNOWN is a first-class result, not a failure. Refusing to link two segments\nis frequently the correct answer, and a system that always links has simply\nmoved its error rate somewhere less visible.",
+        "enum": [
+          "linked",
+          "unknown"
+        ],
+        "title": "LinkDecision",
+        "type": "string"
       },
       "Metrics": {
         "description": "The metric set from specification \u00a7N.\n\nZeroed until the pipeline runs. The shape is fixed now so the System Health\nscreen can be built against it.",
@@ -178,6 +281,216 @@
           }
         },
         "title": "Metrics",
+        "type": "object"
+      },
+      "SemanticEvent": {
+        "additionalProperties": false,
+        "description": "A trajectory turned into something an investigator would recognise.",
+        "properties": {
+          "camera_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None if cross-camera",
+            "title": "Camera Id"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "entity_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Entity Ids",
+            "type": "array"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/EventType"
+          },
+          "evidence_refs": {
+            "description": "Observation or segment IDs supporting this",
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "timestamp_s": {
+            "title": "Timestamp S",
+            "type": "number"
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Id"
+          }
+        },
+        "required": [
+          "event_id",
+          "run_id",
+          "event_type",
+          "timestamp_s",
+          "confidence"
+        ],
+        "title": "SemanticEvent",
+        "type": "object"
+      },
+      "Timeline": {
+        "description": "The event stream of one run with the tracks behind it, clipped if asked.\n\nSegments are included because the timeline view draws an entity lane per track\nand an event lane on top; serving them together saves the UI a second round trip\nfor every seek. Identity links are empty until E5 links segments across cameras.",
+        "properties": {
+          "end_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End S"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/SemanticEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "identity_links": {
+            "items": {
+              "$ref": "#/components/schemas/IdentityLink"
+            },
+            "title": "Identity Links",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/TrackSegment"
+            },
+            "title": "Segments",
+            "type": "array"
+          },
+          "start_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start S"
+          }
+        },
+        "required": [
+          "run_id",
+          "start_s",
+          "end_s",
+          "events",
+          "segments",
+          "identity_links"
+        ],
+        "title": "Timeline",
+        "type": "object"
+      },
+      "TrackSegment": {
+        "additionalProperties": false,
+        "description": "A contiguous run of observations of one entity in one camera.",
+        "properties": {
+          "camera_id": {
+            "title": "Camera Id",
+            "type": "string"
+          },
+          "end_time_s": {
+            "title": "End Time S",
+            "type": "number"
+          },
+          "entity_class": {
+            "$ref": "#/components/schemas/EntityClass"
+          },
+          "local_track_id": {
+            "title": "Local Track Id",
+            "type": "string"
+          },
+          "mean_confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Mean Confidence",
+            "type": "number"
+          },
+          "observation_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Observation Ids",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "segment_id": {
+            "title": "Segment Id",
+            "type": "string"
+          },
+          "start_time_s": {
+            "title": "Start Time S",
+            "type": "number"
+          }
+        },
+        "required": [
+          "segment_id",
+          "run_id",
+          "camera_id",
+          "local_track_id",
+          "entity_class",
+          "start_time_s",
+          "end_time_s",
+          "observation_ids",
+          "mean_confidence"
+        ],
+        "title": "TrackSegment",
         "type": "object"
       },
       "ValidationError": {
@@ -585,7 +898,7 @@
     },
     "/api/v1/cases/{case_id}/timeline": {
       "get": {
-        "description": "Return the cross-camera semantic event timeline.\n\nNot yet implemented \u2014 delivered by E4.3.",
+        "description": "Return the cross-camera semantic event timeline of a case's run.",
         "operationId": "get_timeline_api_v1_cases__case_id__timeline_get",
         "parameters": [
           {
@@ -598,6 +911,42 @@
               "title": "Case Id",
               "type": "string"
             }
+          },
+          {
+            "description": "Window start, seconds",
+            "in": "query",
+            "name": "start_s",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Window start, seconds",
+              "title": "Start S"
+            }
+          },
+          {
+            "description": "Window end, seconds",
+            "in": "query",
+            "name": "end_s",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Window end, seconds",
+              "title": "End S"
+            }
           }
         ],
         "responses": {
@@ -605,9 +954,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Timeline Api V1 Cases  Case Id  Timeline Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/Timeline"
                 }
               }
             },

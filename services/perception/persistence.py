@@ -144,6 +144,21 @@ def observations_in_window(
     return list(session.scalars(statement))
 
 
+def segment_to_contract(row: TrackSegmentRow) -> TrackSegment:
+    """Rehydrate a segment row as the frozen contract."""
+    return TrackSegment(
+        segment_id=row.segment_id,
+        run_id=row.run_id,
+        camera_id=row.camera_id,
+        local_track_id=row.local_track_id,
+        entity_class=row.entity_class,  # type: ignore[arg-type]
+        start_time_s=row.start_time_s,
+        end_time_s=row.end_time_s,
+        observation_ids=list(row.observation_ids),
+        mean_confidence=row.mean_confidence,
+    )
+
+
 def segments_for_run(session: Session, run_id: str) -> list[TrackSegmentRow]:
     """Every track segment a run produced, across all cameras."""
     statement = (

@@ -12,6 +12,7 @@ from .detector import (
 )
 from .persistence import (
     observations_in_window,
+    segment_to_contract,
     segments_for_run,
     timed_window_query,
     write_observations,
@@ -30,6 +31,7 @@ __all__ = [
     "observations_in_window",
     "process_camera",
     "process_run",
+    "segment_to_contract",
     "segments_for_run",
     "timed_window_query",
     "write_observations",

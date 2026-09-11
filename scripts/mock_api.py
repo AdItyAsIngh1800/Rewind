@@ -142,6 +142,9 @@ def get_case(case_id: str) -> dict[str, Any]:
 def get_timeline(case_id: str) -> dict[str, Any]:
     """Return the semantic event timeline plus the track segments behind it."""
     return {
+        "run_id": fixture("01_run.json")["run_id"],
+        "start_s": None,
+        "end_s": None,
         "events": fixture("40_events.json"),
         "segments": fixture("20_track_segments.json"),
         "identity_links": fixture("30_identity_links.json"),

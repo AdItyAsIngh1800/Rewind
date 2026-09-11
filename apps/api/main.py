@@ -15,14 +15,17 @@ import pathlib
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Path, status
+from fastapi import Depends, FastAPI, HTTPException, Path, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from apps.api.queue import enqueue_run
+from packages.database.models import Incident, ProcessingRun
 from packages.database.session import get_session
-from packages.schemas import SCHEMA_VERSION
+from packages.schemas import SCHEMA_VERSION, IdentityLink, SemanticEvent, TrackSegment
+from services.events import events_for_run, to_contract
 from services.ingestion import create_run
+from services.perception.persistence import segment_to_contract, segments_for_run
 
 #: Where rendered case media lives. A case reference resolves to a directory here
 #: rather than to arbitrary caller-supplied paths, so the API cannot be pointed at
@@ -209,13 +212,61 @@ def get_case(case_id: CaseId) -> dict[str, object]:
     raise _pending("E6.2")
 
 
-@app.get(f"{PREFIX}/cases/{{case_id}}/timeline", tags=["cases"])
-def get_timeline(case_id: CaseId) -> dict[str, object]:
-    """Return the cross-camera semantic event timeline.
+class Timeline(BaseModel):
+    """The event stream of one run with the tracks behind it, clipped if asked.
 
-    Not yet implemented — delivered by E4.3.
+    Segments are included because the timeline view draws an entity lane per track
+    and an event lane on top; serving them together saves the UI a second round trip
+    for every seek. Identity links are empty until E5 links segments across cameras.
     """
-    raise _pending("E4.3")
+
+    run_id: str
+    start_s: float | None
+    end_s: float | None
+    events: list[SemanticEvent]
+    segments: list[TrackSegment]
+    identity_links: list[IdentityLink]
+
+
+def _run_for_case(session: Session, case_id: str) -> str:
+    """Resolve a case id to the run whose data backs it.
+
+    A case is an incident (E6). Until incidents exist, and for debugging after, a run
+    id is accepted in the same position so the timeline of any processed run can be
+    read. Unknown ids are a 404, never an empty timeline.
+    """
+    incident = session.get(Incident, case_id)
+    if incident is not None:
+        return incident.run_id
+    if session.get(ProcessingRun, case_id) is not None:
+        return case_id
+    raise HTTPException(status.HTTP_404_NOT_FOUND, f"no case or run {case_id!r}")
+
+
+@app.get(f"{PREFIX}/cases/{{case_id}}/timeline", tags=["cases"])
+def get_timeline(
+    case_id: CaseId,
+    session: DbSession,
+    start_s: Annotated[float | None, Query(description="Window start, seconds")] = None,
+    end_s: Annotated[float | None, Query(description="Window end, seconds")] = None,
+) -> Timeline:
+    """Return the cross-camera semantic event timeline of a case's run."""
+    run_id = _run_for_case(session, case_id)
+    events = [to_contract(r) for r in events_for_run(session, run_id, start_s=start_s, end_s=end_s)]
+    segments = [
+        segment_to_contract(s)
+        for s in segments_for_run(session, run_id)
+        if (end_s is None or s.start_time_s <= end_s)
+        and (start_s is None or s.end_time_s >= start_s)
+    ]
+    return Timeline(
+        run_id=run_id,
+        start_s=start_s,
+        end_s=end_s,
+        events=events,
+        segments=segments,
+        identity_links=[],
+    )
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}/evidence", tags=["cases"])
