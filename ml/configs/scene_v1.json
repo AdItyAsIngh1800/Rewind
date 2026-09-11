@@ -251,7 +251,7 @@
         8.0,
         0.8
       ],
-      "clock_offset_s": 0.4
+      "clock_offset_s": 0.0
     },
     {
       "id": "CAM_C",
@@ -265,7 +265,7 @@
         7.0,
         0.0
       ],
-      "clock_offset_s": -0.2
+      "clock_offset_s": 0.0
     }
   ],
   "camera_optics": {

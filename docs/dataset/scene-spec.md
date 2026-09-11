@@ -167,18 +167,18 @@ one frame.
 
 ### 4.1 Camera timing offsets
 
-Cameras are rendered frame-synchronous, then **deliberately desynchronised at
-manifest time** by a per-camera offset, so that E5.1 has something real to correct:
+Cameras are rendered frame-synchronous and their configured `clock_offset_s` is
+**zero**. The original plan desynchronised them at manifest time (`CAM_B` +0.4 s,
+`CAM_C` -0.2 s) so E5.1 would have something real to correct, but the offsets were
+only ever written into the config, never into the clips, so applying them at
+ingestion *introduced* a 0.4 s error instead of removing one. The E5.1 clock check
+(`services/identity/alignment.py`) found it on the first run that carried it.
 
-| Camera | Offset written into the manifest |
-|---|---|
-| `CAM_A` | `+0.0 s` (reference clock) |
-| `CAM_B` | `+0.4 s` |
-| `CAM_C` | `-0.2 s` |
-
-The ground truth is stored on the **true** clock. A pipeline that ignores the offsets
-will produce visibly wrong event ordering, and the E5.1 synchronization test asserts
-exactly that.
+The ground truth is stored on the **true** clock, which the frame-synchronous clips
+also are. The E5.1 requirement, a synchronization test that injects a 500 ms offset
+and asserts detection, is met by `tests/unit/test_alignment.py` on ground-truth
+tracks and by `tests/integration/test_pipeline.py` on the real pipeline, both with
+the offset injected rather than baked into the data. (Amended 2026-09-12.)
 
 ## 5. Entities
 
