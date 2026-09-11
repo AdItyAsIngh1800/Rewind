@@ -58,6 +58,11 @@ class RenderProgress:
         The in-flight camera contributes only its unfinished frames; the ones after
         it contribute a full pass each.
         """
+        if self.cameras_done >= self.cameras_total:
+            # Every camera reported finished. Without this, the last camera's
+            # counters reset to zero on its "finished" line and it was counted as
+            # a phantom in-flight camera with a full pass still to go.
+            return 0
         after_current = max(0, self.cameras_total - self.cameras_done - 1)
         in_flight = max(0, self.frames_total - self.frames_done)
         return after_current * FRAMES_PER_CAMERA + in_flight
@@ -110,8 +115,10 @@ def parse(text: str) -> RenderProgress:
     return progress
 
 
-def human(seconds: float) -> str:
+def human(seconds: float, done: bool = False) -> str:
     """Format a duration the way someone waiting for it would read it."""
+    if done:
+        return "done"
     if seconds <= 0:
         return "unknown"
     minutes = int(seconds // 60)
@@ -148,7 +155,10 @@ def main() -> int:
         )
     log.info("  overall      %s%%", progress.percent)
     log.info("  rate         %.1f frames/sec", progress.fps)
-    log.info("  TIME LEFT    %s", human(progress.seconds_remaining))
+    log.info(
+        "  TIME LEFT    %s",
+        human(progress.seconds_remaining, done=progress.percent >= 100),
+    )
 
     if not progress.running:
         log.info("")
