@@ -1,0 +1,38 @@
+"""Worker configuration: which detector to run and where the queue lives."""
+
+from __future__ import annotations
+
+import pathlib
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class WorkerSettings(BaseSettings):
+    """Runtime settings for the perception worker, read from the environment.
+
+    The checkpoint path is the important one. A run records the detector version it
+    used, so changing this changes the run identity, which is exactly right: a
+    different model is a different experiment.
+    """
+
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="REWIND_", extra="ignore")
+
+    redis_url: str = "redis://localhost:6379/0"
+    detector_checkpoint: pathlib.Path = pathlib.Path("ml/models/yolo11n-rewind-v1/best.pt")
+    detector_confidence: float = 0.25
+    detector_device: str = "mps"
+    samples_dir: pathlib.Path = pathlib.Path("data/samples")
+    scene_config: pathlib.Path = pathlib.Path("ml/configs/scene_v1.json")
+
+    @property
+    def detector_native_classes(self) -> bool:
+        """Whether the checkpoint predicts the project's classes directly.
+
+        The fine-tuned checkpoint does; a bare COCO checkpoint does not and must go
+        through the COCO name mapping. Decided by whether the fine-tuned file exists
+        rather than by a separate flag that could disagree with the path.
+        """
+        return self.detector_checkpoint.exists() and "rewind" in self.detector_checkpoint.name
+
+
+worker_settings = WorkerSettings()
