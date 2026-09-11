@@ -31,8 +31,13 @@ class WorkerSettings(BaseSettings):
         The fine-tuned checkpoint does; a bare COCO checkpoint does not and must go
         through the COCO name mapping. Decided by whether the fine-tuned file exists
         rather than by a separate flag that could disagree with the path.
+
+        The marker is searched in the whole path, not the filename: Ultralytics
+        always writes ``best.pt``, and the run name lives in the directory above it.
+        Testing the filename alone once routed the fine-tuned model through the COCO
+        map, which silently discarded every robot, forklift and pallet.
         """
-        return self.detector_checkpoint.exists() and "rewind" in self.detector_checkpoint.name
+        return self.detector_checkpoint.exists() and "rewind" in str(self.detector_checkpoint)
 
 
 worker_settings = WorkerSettings()
