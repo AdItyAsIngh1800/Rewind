@@ -21,6 +21,12 @@ import subprocess
 from collections.abc import Iterator
 from dataclasses import dataclass
 
+import numpy as np
+from numpy.typing import NDArray
+
+#: A decoded frame: height x width x 3, BGR, as OpenCV returns it.
+Frame = NDArray[np.uint8]
+
 
 class IngestionError(RuntimeError):
     """Raised when a video cannot be read or its metadata is unusable."""
@@ -210,7 +216,7 @@ def plan_sampling(
     return frames
 
 
-def decode_frames(path: pathlib.Path, indices: list[int]) -> Iterator[tuple[int, object]]:
+def decode_frames(path: pathlib.Path, indices: list[int]) -> Iterator[tuple[int, Frame]]:
     """Yield ``(source_index, frame)`` for the requested indices.
 
     Decodes sequentially and keeps the frames it was asked for, rather than seeking.
@@ -239,7 +245,10 @@ def decode_frames(path: pathlib.Path, indices: list[int]) -> Iterator[tuple[int,
                 break
             if index in wanted:
                 remaining -= 1
-                yield index, frame
+                # OpenCV's stub types the frame as a union of Mat and a generic
+                # ndarray. For a decoded BGR video frame it is always uint8 HxWx3,
+                # and narrowing here keeps every downstream consumer honestly typed.
+                yield index, np.asarray(frame, dtype=np.uint8)
             index += 1
     finally:
         capture.release()

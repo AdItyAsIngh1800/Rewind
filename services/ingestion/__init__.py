@@ -12,6 +12,7 @@ from .registry import (
     transition,
 )
 from .video import (
+    Frame,
     IngestionError,
     SampledFrame,
     VideoMetadata,
@@ -25,6 +26,7 @@ from .video import (
 )
 
 __all__ = [
+    "Frame",
     "IngestionError",
     "RunConflictError",
     "SampledFrame",
