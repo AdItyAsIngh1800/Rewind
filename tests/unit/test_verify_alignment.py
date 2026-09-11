@@ -9,7 +9,7 @@ import pytest
 # install; the guard itself only ever runs on a machine that rendered the clips.
 pytest.importorskip("cv2")
 
-from scripts.dataset import verify_alignment as va  # noqa: E402
+from scripts.dataset import verify_alignment as va
 
 FORKLIFT = [0.8, 0.05, 0.02]  # linear RGB, hue ~13 deg
 ROBOT = [0.95, 0.9, 0.9]  # near-white, no usable hue

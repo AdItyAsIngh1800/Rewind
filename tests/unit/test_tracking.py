@@ -12,6 +12,10 @@ import pytest
 from packages.schemas import BBox, EntityClass, Observation
 from services.tracking import Tracker, TrackerConfig, TrackerError, score_against_truth
 
+# ByteTrack lives in the `ml` extra, which CI does not install (a CPU torch wheel is
+# gigabytes per run). These tests run on the build machine under `make test`.
+pytest.importorskip("ultralytics")
+
 
 def obs(
     frame: int, x: float, y: float, entity: str = "P01", camera: str = "CAM_A", size: float = 60.0
