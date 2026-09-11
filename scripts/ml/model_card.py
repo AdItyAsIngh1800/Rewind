@@ -37,7 +37,14 @@ def render(
     per_class = evaluation["per_class"]
 
     rows = []
+    unmeasured: list[str] = []
     for cls, m in per_class.items():
+        # 0/0 truth scores as a perfect 1.000 in the evaluation JSON. Printing that
+        # would claim a measurement that never happened; the row says so instead.
+        if m["truth"] == 0:
+            unmeasured.append(cls)
+            rows.append(f"| `{cls}` | 0 | — | — | — | not present in the evaluation case |")
+            continue
         zs = ""
         if zero_shot is not None and cls in zero_shot["per_class"]:
             zs = f"{zero_shot['per_class'][cls]['recall']:.3f}"
@@ -46,6 +53,14 @@ def render(
             f"{m['f1']:.3f} | {zs} |"
         )
     table = "\n".join(rows)
+    unmeasured_note = ""
+    if unmeasured:
+        names = ", ".join(f"`{c}`" for c in unmeasured)
+        unmeasured_note = (
+            f"\n\n**Unmeasured classes: {names}.** The evaluation case contains none of "
+            "them, so this card makes no claim about their detection at all. The first "
+            "independent number for them arrives in E9.1 from the golden cases."
+        )
 
     zero_shot_note = ""
     if zero_shot is not None:
@@ -136,8 +151,8 @@ highest validation mAP, so `case_05` is not a fully independent test. The unbias
 number arrives in E9.1 from the golden cases.
 
 **Class balance is uneven.** `forklift` and `pallet` appear in far fewer frames than
-`person` and `robot`, because only two of four training cases contain them. Their
-scores rest on less evidence.
+`person` and `robot`, because only one of the three training cases contains them.
+Their scores rest on less evidence.{unmeasured_note}
 
 ## Provenance
 
