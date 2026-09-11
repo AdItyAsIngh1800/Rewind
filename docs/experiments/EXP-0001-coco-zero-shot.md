@@ -46,6 +46,7 @@ assets replace the primitives, since only the input images change.
 
 ## Next experiment
 
-`EXP-0002`: fine-tune `yolo11n` on the four tuning cases with native entity classes,
+`EXP-0003`: fine-tune `yolo11n` on the four tuning cases with native entity classes,
 validate on `case_05`, and report per-class precision, recall and F1. Golden cases
-`case_02` and `case_06` are not opened.
+`case_02` and `case_06` are not opened. (`EXP-0002` tuned the tracker on perfect
+boxes while the re-render ran.)
