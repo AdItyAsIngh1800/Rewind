@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
-from scripts.dataset import verify_alignment as va
+# The guard reads video through OpenCV, which ships with the `ml` extra CI does not
+# install; the guard itself only ever runs on a machine that rendered the clips.
+pytest.importorskip("cv2")
+
+from scripts.dataset import verify_alignment as va  # noqa: E402
 
 FORKLIFT = [0.8, 0.05, 0.02]  # linear RGB, hue ~13 deg
 ROBOT = [0.95, 0.9, 0.9]  # near-white, no usable hue
