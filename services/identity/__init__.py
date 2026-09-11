@@ -1,4 +1,5 @@
-"""Cross-camera identity association.
+"""Cross-camera identity: temporal alignment, appearance, association (E5)."""
 
-Produces IdentityLink records, including explicit refusals to link.
-"""
+from services.identity.alignment import OffsetEstimate, estimate_offsets, misaligned
+
+__all__ = ["OffsetEstimate", "estimate_offsets", "misaligned"]
