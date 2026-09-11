@@ -55,7 +55,11 @@ class DetectorConfig:
 
     checkpoint: str = "yolo11n.pt"
     confidence: float = 0.25
-    iou: float = 0.7
+    #: NMS IoU. Ultralytics' default of 0.7 let a partially occluded person produce
+    #: two surviving boxes, one for the visible part and one for the full extent, at
+    #: IoU ~0.65 between them; the duplicate seeded phantom tracks (EXP-0004). 0.5
+    #: removes those while leaving two people who genuinely overlap less than half.
+    iou: float = 0.5
     device: str = "mps"
     #: Fine-tuned checkpoints predict the project's classes directly, so the COCO
     #: name mapping is bypassed. Set by the training run, not guessed at inference.
@@ -65,7 +69,7 @@ class DetectorConfig:
     def version(self) -> str:
         """Identifier recorded in ``ProcessingRun.model_versions``."""
         suffix = "native" if self.native_classes else "coco"
-        return f"{self.checkpoint}:{suffix}:conf{self.confidence}"
+        return f"{self.checkpoint}:{suffix}:conf{self.confidence}:iou{self.iou}"
 
 
 class Detector:
