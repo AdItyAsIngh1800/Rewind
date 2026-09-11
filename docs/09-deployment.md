@@ -175,6 +175,22 @@ Unchanged by the hardware decision — see `ADR-0001`.
 | `redis` | Container | Job queue and transient investigation state |
 | `web` | Vite dev server / static build | Investigator dashboard |
 
+### Query latency against the specification's 500 ms target
+
+Measured 2026-09-11 with `timed_window_query` on 2,113 real observations from
+`case_01`, over the Supavisor session pooler to `ap-southeast-1`:
+
+| Query | Rows | Local Postgres | Supabase (cold) | Supabase (warm) |
+|---|---|---|---|---|
+| 1 s window, one camera | 22 | 3.4 ms | 135 ms | 48 ms |
+| Full 45 s case, one camera | 800 | 6.2 ms | 207 ms | — |
+| Bulk write, whole case | 2,113 | — | 1,809 ms | — |
+
+Every read is inside the 500 ms budget. The steady state is roughly 45–50 ms and is
+network round-trip to Singapore, not query cost: the local number shows the index
+does its job in single-digit milliseconds. The bulk write runs in the worker off the
+request path, where 1.8 s per case is irrelevant.
+
 ### Security posture
 
 RLS is **enabled and forced** on all 12 application tables with no policies attached,
