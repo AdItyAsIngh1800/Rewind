@@ -4,22 +4,14 @@ Idempotency is the property under test. A worker that dies mid-job and has its
 message redelivered must not create a second run and process everything twice, and a
 retried worker must not be able to move a finished run backwards.
 
-These need a real PostgreSQL because the models use JSONB. The fixture requires an
-explicit ``DATABASE_URL`` and deliberately does **not** fall back to the configured
-Supabase connection: a test suite that silently pointed at the project's real
-database would create and mutate rows in it.
+Database fixtures live in ``conftest.py``.
 """
 
 from __future__ import annotations
 
-import os
 import pathlib
-import subprocess
-import sys
-from collections.abc import Iterator
 
 import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from packages.database.models import ProcessingRun
@@ -31,51 +23,7 @@ from services.ingestion import (
     run_identity,
     transition,
 )
-
-DATABASE_URL = os.environ.get("DATABASE_URL", "")
-needs_db = pytest.mark.skipif(
-    not DATABASE_URL,
-    reason="set DATABASE_URL to an ephemeral Postgres; it never falls back to Supabase",
-)
-
-
-@pytest.fixture(scope="session")
-def migrated_database() -> str:
-    """Bring the test database up to head using Alembic, once per session.
-
-    Deliberately Alembic rather than ``Base.metadata.create_all``. The two build the
-    schema from different sources: ``create_all`` from the models, Alembic from the
-    migration files. Using the shortcut would mean a migration that is wrong while
-    the model is right passes every test and fails only in production, which defeats
-    the contract-to-model-to-migration chain the project relies on.
-    """
-    if not DATABASE_URL:
-        pytest.skip("no DATABASE_URL")
-    result = subprocess.run(
-        [sys.executable, "-m", "alembic", "upgrade", "head"],
-        capture_output=True,
-        text=True,
-        env={**os.environ, "DATABASE_URL": DATABASE_URL},
-    )
-    if result.returncode != 0:
-        pytest.fail(f"alembic upgrade failed:\n{result.stderr}")
-    return DATABASE_URL
-
-
-@pytest.fixture
-def session(migrated_database: str) -> Iterator[Session]:
-    """Give each test an isolated session that is rolled back afterwards."""
-    engine = create_engine(migrated_database, future=True)
-    connection = engine.connect()
-    transaction = connection.begin()
-    db = Session(bind=connection)
-    try:
-        yield db
-    finally:
-        db.close()
-        transaction.rollback()
-        connection.close()
-        engine.dispose()
+from tests.integration.conftest import needs_db
 
 
 @pytest.fixture
