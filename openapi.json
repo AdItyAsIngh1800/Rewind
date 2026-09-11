@@ -34,6 +34,11 @@
             "title": "Created",
             "type": "boolean"
           },
+          "dispatched": {
+            "default": false,
+            "title": "Dispatched",
+            "type": "boolean"
+          },
           "incident_id": {
             "anyOf": [
               {
@@ -303,7 +308,7 @@
         ]
       },
       "post": {
-        "description": "Create a processing run for a case, or return the run that already covers it.\n\nIdempotent by design. Submitting the same case, dataset and config twice returns\nthe first run rather than starting a second, which is what makes a redelivered\nmessage safe to handle.\n\nDispatch to a worker arrives with the perception pipeline in E3. Until then a run\nis created and left queued, which is the honest state: the work is accepted and\nrecorded, and nothing is processing it yet.",
+        "description": "Create a processing run for a case, or return the run that already covers it.\n\nIdempotent by design. Submitting the same case, dataset and config twice returns\nthe first run rather than starting a second, which is what makes a redelivered\nmessage safe to handle.\n\nAfter the run is recorded a job is enqueued for the worker. Dispatch is\nbest-effort: if the queue is down the run still exists as QUEUED and the response\nsays so, rather than the request failing after the run was already written.",
         "operationId": "create_case_api_v1_cases_post",
         "requestBody": {
           "content": {

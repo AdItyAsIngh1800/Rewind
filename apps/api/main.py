@@ -19,6 +19,7 @@ from fastapi import Depends, FastAPI, HTTPException, Path, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from apps.api.queue import enqueue_run
 from packages.database.session import get_session
 from packages.schemas import SCHEMA_VERSION
 from services.ingestion import create_run
@@ -119,6 +120,9 @@ class CreateCaseResponse(BaseModel):
     #: work was already accepted rather than being told, misleadingly, that a second
     #: run was started.
     created: bool = True
+    #: False when the run exists but no worker was told about it, because the queue
+    #: was unreachable. The run is still QUEUED and can be dispatched later.
+    dispatched: bool = False
 
 
 NOT_IMPLEMENTED = "Pending — see ROADMAP.md for the phase that delivers this."
@@ -137,16 +141,16 @@ def _pending(phase: str) -> HTTPException:
     status_code=status.HTTP_202_ACCEPTED,
     tags=["cases"],
 )
-def create_case(body: CreateCaseRequest, session: DbSession) -> CreateCaseResponse:
+async def create_case(body: CreateCaseRequest, session: DbSession) -> CreateCaseResponse:
     """Create a processing run for a case, or return the run that already covers it.
 
     Idempotent by design. Submitting the same case, dataset and config twice returns
     the first run rather than starting a second, which is what makes a redelivered
     message safe to handle.
 
-    Dispatch to a worker arrives with the perception pipeline in E3. Until then a run
-    is created and left queued, which is the honest state: the work is accepted and
-    recorded, and nothing is processing it yet.
+    After the run is recorded a job is enqueued for the worker. Dispatch is
+    best-effort: if the queue is down the run still exists as QUEUED and the response
+    says so, rather than the request failing after the run was already written.
     """
     case_dir = SAMPLES / body.case_ref
     if not case_dir.is_dir():
@@ -172,7 +176,10 @@ def create_case(body: CreateCaseRequest, session: DbSession) -> CreateCaseRespon
         config_version=body.config_version,
     )
     session.commit()
-    return CreateCaseResponse(run_id=run.run_id, status=run.status, created=created)
+    dispatched = await enqueue_run(run.run_id, body.case_ref) if created else True
+    return CreateCaseResponse(
+        run_id=run.run_id, status=run.status, created=created, dispatched=dispatched
+    )
 
 
 @app.get(f"{PREFIX}/cases", tags=["cases"])

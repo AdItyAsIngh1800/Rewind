@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev test lint fmt typecheck openapi bench mock up down db-url db-policies verify-security verify-contrast tokens migrate scene validate-cases gt render render-fg render-watch render-eta render-status scenes render-stop validate-gt manifest clean
+.PHONY: help dev test lint fmt typecheck openapi bench worker worker-burst api mock up down db-url db-policies verify-security verify-contrast tokens migrate scene validate-cases gt render render-fg render-watch render-eta render-status scenes render-stop validate-gt manifest clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -27,6 +27,15 @@ openapi:  ## Regenerate the frozen API contract
 
 bench:  ## Run the evaluation harness and emit a benchmark report
 	uv run python scripts/evaluation/run_benchmark.py
+
+worker:  ## Run the perception worker (needs redis: make up)
+	uv run arq apps.worker.main.WorkerSettings
+
+worker-burst:  ## Process whatever is queued, then exit
+	uv run arq apps.worker.main.WorkerSettings --burst
+
+api:  ## Run the API with reload
+	uv run uvicorn apps.api.main:app --reload --port 8000
 
 mock:  ## Serve golden fixtures at the real API endpoints
 	uv run uvicorn scripts.mock_api:app --reload --port 8000
