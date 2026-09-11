@@ -62,3 +62,23 @@ acceptable because E5 replaces the rule with identity links.
 
 E5.2: colour-histogram appearance baseline for cross-camera association, which also
 enables averaging positions across cameras and retiring both residual failure modes.
+
+## Correction, 2026-09-12
+
+The E5.1 clock check found that the configured camera offsets (`CAM_B` +0.4 s,
+`CAM_C` -0.2 s) were never baked into the clips, so applying them at ingestion had
+shifted CAM_B 0.4 s early and CAM_C 0.2 s late in every "real detections" row above.
+The 0.7 s camera spread in the failure table is that error, not localisation. The
+offsets are now zero (scene spec §4.1, amended) and the sweep was repeated:
+
+| Merge window | TP | FP | FN | P | R | Max timing |
+|---|---|---|---|---|---|---|
+| 0.3 s | 23 | 8 | 2 | 0.74 | 0.92 | 0.1 s |
+| 0.5 s | 23 | 4 | 2 | 0.85 | 0.92 | 0.2 s |
+| **0.8 s** | 23 | 3 | 2 | **0.88** | **0.92** | **0.2 s** |
+| 1.0 s | 23 | 3 | 2 | 0.88 | 0.92 | 0.2 s |
+
+Same precision and recall as before, timing error halved to 0.2 s, and the genuine
+cross-camera spread is under 0.5 s. **Decision amended: `merge_tolerance_s = 0.8`**,
+the smallest window that covers the real spread. The residual three false positives
+and two misses are unchanged and remain the two localisation limits.

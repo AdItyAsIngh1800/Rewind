@@ -10,7 +10,7 @@
 |---|---|---|---|
 | Zone-event precision | 0.88 (23 TP, 3 FP) | not set at charter time | EXP-0006 |
 | Zone-event recall on observable truth | 0.92 (2 FN) | not set | EXP-0006 |
-| Event timing error | max 0.4 s, mean ≤ 0.1 s | ≤ 0.5 s | EXP-0006 |
+| Event timing error | max 0.2 s (0.4 s before the clock-offset correction) | ≤ 0.5 s | EXP-0006, correction |
 | Timing error with exact positions | max 0.1 s | | EXP-0005 |
 | Truth events no camera could see | 13 of 38, reported as coverage gaps | | EXP-0005 |
 | Timeline endpoint | real, windowed, 404 on unknown case | | `tests/integration/test_timeline.py` |
@@ -55,8 +55,13 @@ Catalogued in EXP-0005 and EXP-0006. The three that remain after tuning:
    fragment box whose centre lands a metre off, producing one confident wrong exit.
    Owner: E5 with a visibility-aware confidence; the detector would need to report
    partial visibility.
-3. **Same-class merge.** Two people entering one zone within a second from
+3. **Same-class merge.** Two people entering one zone within 0.8 s from
    different cameras would become one event. Owner: E5 identity links.
+
+**Found while closing this gate:** the configured camera clock offsets were wrong
+for the rendered clips and had been silently applied since E2. The E5.1 clock check,
+built the day after this gate was first written, caught it on its first run; the
+merge window was re-tuned and this document updated (EXP-0006, correction).
 
 ## What this phase got right by design
 
@@ -79,7 +84,7 @@ it produces (`payload.merge_rule`).
 |---|---|---|
 | Zone-event precision, real pipeline | ≥ 0.85 | Measured 0.88 with the two known limits still present |
 | Zone-event recall on observable truth | ≥ 0.90 | Measured 0.92 |
-| Event timing error, max | ≤ 0.5 s | Provisional floor kept; measured 0.4 s |
+| Event timing error, max | ≤ 0.5 s | Provisional floor kept; measured 0.2 s |
 
 ## Honest verdict
 
