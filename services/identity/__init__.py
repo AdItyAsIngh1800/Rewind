@@ -6,6 +6,7 @@ from services.identity.association import (
     SegmentTrack,
     associate,
     build_segment_tracks,
+    entity_groups,
 )
 from services.identity.persistence import link_to_contract, links_for_run, write_links
 
@@ -15,6 +16,7 @@ __all__ = [
     "SegmentTrack",
     "associate",
     "build_segment_tracks",
+    "entity_groups",
     "estimate_offsets",
     "link_to_contract",
     "links_for_run",

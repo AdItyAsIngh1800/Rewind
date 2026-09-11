@@ -22,6 +22,7 @@ from __future__ import annotations
 import itertools
 import logging
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -339,15 +340,30 @@ def extract_events(
     return out.events
 
 
+def _identity_key(groups: dict[str, str] | None) -> Callable[[SemanticEvent], object]:
+    """How two events are judged to be about the same entity.
+
+    With groups, the first entity id's group (proximity events name two entities;
+    the first is the track the event was emitted for). Without, the entity class.
+    """
+    if groups is None:
+        return lambda e: e.payload.get("entity_class")
+    return lambda e: groups.get(e.entity_ids[0], e.entity_ids[0]) if e.entity_ids else None
+
+
 def merge_across_cameras(
-    events: list[SemanticEvent], tolerance_s: float = EventConfig().merge_tolerance_s
+    events: list[SemanticEvent],
+    tolerance_s: float = EventConfig().merge_tolerance_s,
+    groups: dict[str, str] | None = None,
 ) -> list[SemanticEvent]:
     """Collapse the same physical event seen from several cameras into one record.
 
-    The rule is naive on purpose: same type, same zone, same entity class, within
-    ``tolerance_s``. It cannot tell two people entering one zone together apart, and
-    says so in ``payload["merge"]``. E5 replaces it with identity-linked merging.
+    With ``groups`` (local track id to cross-camera entity, from E5.3) two events
+    merge only when their tracks are the same entity. Without it the rule falls back
+    to "same class", which cannot tell two people entering one zone together apart;
+    the rule used is named in every merged event's payload.
     """
+    identity = _identity_key(groups)
     merged: list[tuple[SemanticEvent, list[str]]] = []
     stamps: list[list[float]] = []
     # Zone occupancy by class, so a camera that first sees an entity already inside a
@@ -355,7 +371,7 @@ def merge_across_cameras(
     # inventing a second one. Cleared by the matching exit.
     occupied: dict[tuple[str | None, object], int] = {}
     for event in sorted(events, key=lambda e: e.timestamp_s):
-        key = (event.zone_id, event.payload.get("entity_class"))
+        key = (event.zone_id, identity(event))
         if event.event_type is EventType.ZONE_EXIT:
             occupied.pop(key, None)
         first_sight = bool(event.payload.get("at_first_sight"))
@@ -371,7 +387,7 @@ def merge_across_cameras(
             if (
                 target.event_type == event.event_type
                 and target.zone_id == event.zone_id
-                and target.payload.get("entity_class") == event.payload.get("entity_class")
+                and identity(target) == identity(event)
                 and abs(target.timestamp_s - event.timestamp_s) <= tolerance_s
                 and event.camera_id not in cameras
             ):
@@ -393,7 +409,11 @@ def merge_across_cameras(
                             "evidence_refs": list(event.evidence_refs),
                             "payload": {
                                 **event.payload,
-                                "merge_rule": "type+zone+class within tolerance",
+                                "merge_rule": (
+                                    "type+zone+identity within tolerance"
+                                    if groups
+                                    else "type+zone+class within tolerance"
+                                ),
                                 "merged_from_cameras": cameras,
                             },
                         }

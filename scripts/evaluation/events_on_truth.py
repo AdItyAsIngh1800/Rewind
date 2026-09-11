@@ -70,7 +70,12 @@ def score_case(case_id: str, config: EventConfig, *, projected: bool) -> dict[st
 
 
 def score_events(
-    case_id: str, observations: list[Observation], config: EventConfig, *, label: str
+    case_id: str,
+    observations: list[Observation],
+    config: EventConfig,
+    *,
+    label: str,
+    groups: dict[str, str] | None = None,
 ) -> dict[str, object]:
     """Extract, merge and score events from any tracked observation set.
 
@@ -86,6 +91,7 @@ def score_events(
             "eval", observations, load_zones(scene), cameras, class_heights(scene), config
         ),
         config.merge_tolerance_s,
+        groups,
     )
     truth = json.loads((case_dir / "events_gt.json").read_text())
     seen = observed_times(perfect_tracks(case_dir, projected=False))

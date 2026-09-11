@@ -19,9 +19,11 @@ import numpy as np
 from numpy.typing import NDArray
 
 from apps.worker.tasks import build_detector, camera_offsets
+from packages.common.camera import CameraModel
 from packages.schemas import Observation, TrackSegment
-from scripts.evaluation.events_on_truth import REPORTS, SAMPLES, log_result, score_events
-from services.events import EventConfig
+from scripts.evaluation.events_on_truth import REPORTS, SAMPLES, SCENE, log_result, score_events
+from services.events import EventConfig, class_heights, localise_all
+from services.identity import associate, build_segment_tracks, entity_groups
 from services.observability.logging import configure_logging
 from services.perception.pipeline import process_camera
 from services.tracking import TrackerConfig
@@ -68,9 +70,28 @@ def main() -> int:
     config = EventConfig()
     log.info("config: %s", config.version)
 
+    scene = json.loads(SCENE.read_text())
+    cameras = {c["id"]: CameraModel.from_scene(scene, c["id"]) for c in scene["cameras"]}
+    speeds = {
+        k: float(v["max_speed_mps"]) for k, v in scene["entities"].items() if not k.startswith("_")
+    }
     results = []
     for case_id in args.cases:
-        r = score_events(case_id, tracked_observations(case_id), config, label="detections")
+        observations, segments, descriptors = run_perception(case_id)
+        # The same identity step a processing run performs, so merged events here
+        # are the events a run would persist.
+        links = associate(
+            "eval",
+            build_segment_tracks(
+                segments,
+                observations,
+                localise_all(observations, cameras, class_heights(scene)),
+                descriptors,
+            ),
+            speeds,
+        )
+        groups = entity_groups(links, segments)
+        r = score_events(case_id, observations, config, label="detections", groups=groups)
         results.append(r)
         log_result(r)
     out = REPORTS / f"events-on-detections-{datetime.now(UTC):%Y-%m-%dT%H%M%SZ}.json"

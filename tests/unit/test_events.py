@@ -123,3 +123,18 @@ def test_merge_collapses_the_same_crossing_from_two_cameras() -> None:
     assert len(entries) == 1
     assert sorted(entries[0].payload["merged_from_cameras"]) == ["CAM_A", "CAM_B"]
     assert sorted(entries[0].entity_ids) == ["CAM_A-T001", "CAM_B-T003"]
+
+
+def test_identity_groups_keep_two_entities_apart_and_join_one() -> None:
+    """With groups, same-entity crossings merge and different-entity ones do not."""
+    a = walk([-1, 1, 2], camera="CAM_A", track="CAM_A-T001")
+    b = [
+        obs(0.0, -1, 5, camera="CAM_B", track="CAM_B-T003"),
+        obs(0.2, 1, 5, camera="CAM_B", track="CAM_B-T003"),
+    ]
+    raw = events_of(a + b)
+    same = merge_across_cameras(raw, 0.8, {"CAM_A-T001": "CAM_A-T001", "CAM_B-T003": "CAM_A-T001"})
+    assert len([e for e in same if e.event_type is EventType.ZONE_ENTRY]) == 1
+    assert same[0].payload["merge_rule"] == "type+zone+identity within tolerance"
+    apart = merge_across_cameras(raw, 0.8, {"CAM_A-T001": "CAM_A-T001", "CAM_B-T003": "CAM_B-T003"})
+    assert len([e for e in apart if e.event_type is EventType.ZONE_ENTRY]) == 2

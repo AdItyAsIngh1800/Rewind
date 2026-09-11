@@ -249,3 +249,33 @@ def associate(
         sum(link.decision is LinkDecision.UNKNOWN for link in links),
     )
     return links
+
+
+def entity_groups(links: list[IdentityLink], segments: list[TrackSegment]) -> dict[str, str]:
+    """Local track id to a cross-camera entity id, from the LINKED pairs.
+
+    Union-find over links: two segments linked directly or through a chain of links
+    are one entity. Segments no link touches are their own entity, so every track
+    gets a group and a consumer never has to special-case the unlinked ones. The
+    group id is the smallest local track id in the group, which makes it stable
+    across runs that produce the same links.
+    """
+    track_of = {s.segment_id: s.local_track_id for s in segments}
+    parent: dict[str, str] = {t: t for t in track_of.values()}
+
+    def find(x: str) -> str:
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    for link in links:
+        if link.decision is not LinkDecision.LINKED:
+            continue
+        a, b = track_of.get(link.segment_a), track_of.get(link.segment_b)
+        if a is None or b is None:
+            continue
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[max(ra, rb)] = min(ra, rb)
+    return {t: find(t) for t in parent}

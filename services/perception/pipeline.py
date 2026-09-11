@@ -37,6 +37,7 @@ from services.events import (
 from services.identity import (
     associate,
     build_segment_tracks,
+    entity_groups,
     estimate_offsets,
     misaligned,
     write_links,
@@ -249,10 +250,8 @@ def process_run(
                         estimates[camera_id].residual_s,
                         result.cameras[0],
                     )
-            events = merge_across_cameras(raw_events, config_events.merge_tolerance_s)
-            result.events = len(events)
-            result.events_written = write_events(session, events)
-            # Cross-camera identity (E5): links and refusals, both persisted.
+            # Cross-camera identity (E5) decides which per-camera events are one
+            # physical event, so it runs before the merge. Links and refusals persist.
             speeds = {
                 k: float(v["max_speed_mps"])
                 for k, v in scene["entities"].items()
@@ -271,6 +270,13 @@ def process_run(
             result.links = len(links)
             result.links_linked = sum(link.decision.value == "linked" for link in links)
             write_links(session, links)
+            events = merge_across_cameras(
+                raw_events,
+                config_events.merge_tolerance_s,
+                entity_groups(links, all_segments),
+            )
+            result.events = len(events)
+            result.events_written = write_events(session, events)
         transition(session, run_id, RunStatus.COMPLETE)
         session.commit()
     except Exception as exc:
