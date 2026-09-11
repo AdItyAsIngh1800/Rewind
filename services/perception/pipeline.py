@@ -19,6 +19,8 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+import numpy as np
+from numpy.typing import NDArray
 from sqlalchemy.orm import Session
 
 from packages.common.camera import CameraModel
@@ -32,6 +34,7 @@ from services.events import (
     write_events,
 )
 from services.identity import estimate_offsets, misaligned
+from services.identity.appearance import TrackDescriptors
 from services.ingestion import Frame, decode_frames, plan_sampling, probe, transition
 from services.perception.persistence import write_observations, write_segments
 from services.tracking import Tracker, TrackerConfig
@@ -65,6 +68,18 @@ class DetectorLike(Protocol):
 
 
 @dataclass
+class CameraOutput:
+    """Everything one camera's pass produced."""
+
+    observations: list[Observation]
+    segments: list[TrackSegment]
+    frames: int
+    #: Mean appearance descriptor per local track id (E5.2), an intermediate for
+    #: cross-camera association within the same run; not persisted.
+    descriptors: dict[str, NDArray[np.float64]]
+
+
+@dataclass
 class PipelineResult:
     """What one run produced, for the caller to log or assert on."""
 
@@ -91,12 +106,13 @@ def process_camera(
     target_fps: float,
     detector: DetectorLike,
     tracker_config: TrackerConfig,
-) -> tuple[list[Observation], list[TrackSegment], int]:
-    """Detect and track one camera's clip.
+) -> CameraOutput:
+    """Detect, track and describe one camera's clip.
 
-    Returns the tracked observations, the segments, and the frame count. Frames are
-    decoded sequentially and fed to the tracker in order, including frames where the
-    detector found nothing, so lost tracks age at the true rate.
+    Frames are decoded sequentially and fed to the tracker in order, including frames
+    where the detector found nothing, so lost tracks age at the true rate. Appearance
+    descriptors are taken in the same pass because the frames are in hand here and
+    nowhere else.
     """
     metadata = probe(clip)
     plan = plan_sampling(
@@ -104,6 +120,7 @@ def process_camera(
     )
     by_index = {frame.source_index: frame for frame in plan}
     tracker = Tracker(camera_id, tracker_config)
+    descriptors = TrackDescriptors()
 
     tracked: list[Observation] = []
     batch_frames: list[Frame] = []
@@ -127,8 +144,12 @@ def process_camera(
         by_frame: dict[int, list[Observation]] = {i: [] for i in batch_indices}
         for observation in detected:
             by_frame[observation.frame_index].append(observation)
-        for index in batch_indices:
-            tracked.extend(tracker.update(by_frame[index]))
+        for frame, index in zip(batch_frames, batch_indices, strict=True):
+            assigned = tracker.update(by_frame[index])
+            tracked.extend(assigned)
+            for o in assigned:
+                if o.track_id:
+                    descriptors.add(frame, o.track_id, o.bbox)
         batch_frames.clear()
         batch_indices.clear()
 
@@ -140,7 +161,7 @@ def process_camera(
             flush()
     flush()
 
-    return tracked, tracker.segments(run_id), processed
+    return CameraOutput(tracked, tracker.segments(run_id), processed, descriptors.result())
 
 
 def process_run(
@@ -174,7 +195,7 @@ def process_run(
         for clip in sorted(case_dir.glob("*.mp4")):
             camera_id = clip.stem
             log.info("run %s: %s", run_id, camera_id)
-            observations, segments, frames = process_camera(
+            out = process_camera(
                 clip,
                 run_id=run_id,
                 camera_id=camera_id,
@@ -184,9 +205,9 @@ def process_run(
                 tracker_config=config,
             )
             result.cameras.append(camera_id)
-            result.frames_processed += frames
-            all_observations.extend(observations)
-            all_segments.extend(segments)
+            result.frames_processed += out.frames
+            all_observations.extend(out.observations)
+            all_segments.extend(out.segments)
 
         result.observations = len(all_observations)
         result.segments = len(all_segments)

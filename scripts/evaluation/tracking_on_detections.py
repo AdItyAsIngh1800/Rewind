@@ -120,7 +120,7 @@ def main() -> int:
         cameras: dict[str, object] = {}
         for clip in sorted((SAMPLES / case_id).glob("*.mp4")):
             camera_id = clip.stem
-            tracked, _segments, _frames = process_camera(
+            out = process_camera(
                 clip,
                 run_id="eval",
                 camera_id=camera_id,
@@ -129,6 +129,7 @@ def main() -> int:
                 detector=detector,
                 tracker_config=config,
             )
+            tracked = out.observations
             relabelled, spurious = assign_identities(
                 tracked, [t for t in truth if t.camera_id == camera_id]
             )
@@ -160,9 +161,9 @@ def main() -> int:
         "total id switches across %d cases, real detections: %d", len(args.cases), total_switches
     )
 
-    out = REPORTS / f"tracking-on-detections-{datetime.now(UTC):%Y-%m-%dT%H%M%SZ}.json"
-    out.write_text(json.dumps(results, indent=2))
-    log.info("written to %s", out)
+    report_path = REPORTS / f"tracking-on-detections-{datetime.now(UTC):%Y-%m-%dT%H%M%SZ}.json"
+    report_path.write_text(json.dumps(results, indent=2))
+    log.info("written to %s", report_path)
     return 0
 
 

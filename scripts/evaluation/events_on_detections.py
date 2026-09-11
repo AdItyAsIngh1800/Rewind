@@ -32,7 +32,7 @@ def tracked_observations(case_id: str) -> list[Observation]:
     offsets = camera_offsets()
     rows: list[Observation] = []
     for clip in sorted((SAMPLES / case_id).glob("*.mp4")):
-        tracked, _segments, _frames = process_camera(
+        out = process_camera(
             clip,
             run_id="eval",
             camera_id=clip.stem,
@@ -41,7 +41,7 @@ def tracked_observations(case_id: str) -> list[Observation]:
             detector=detector,
             tracker_config=TrackerConfig(),
         )
-        rows.extend(tracked)
+        rows.extend(out.observations)
     return rows
 
 
