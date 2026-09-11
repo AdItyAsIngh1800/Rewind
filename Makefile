@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help dev test lint fmt typecheck openapi bench worker worker-burst api mock up down db-url db-policies verify-security verify-contrast tokens migrate scene validate-cases gt render render-fg render-watch render-eta render-status scenes render-stop validate-gt manifest clean
+.PHONY: help dev test lint fmt typecheck openapi bench worker worker-burst api web web-build mock up down db-url db-policies verify-security verify-contrast tokens migrate scene validate-cases gt render render-fg render-watch render-eta render-status scenes render-stop validate-gt manifest clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -36,6 +36,12 @@ worker-burst:  ## Process whatever is queued, then exit
 
 api:  ## Run the API with reload
 	uv run uvicorn apps.api.main:app --reload --port 8000
+
+web:  ## Run the investigator UI dev server (proxies /api to :8000 — run make mock or make api)
+	cd apps/web && pnpm dev
+
+web-build:  ## Type-check and bundle the UI (the CI gate)
+	cd apps/web && pnpm build
 
 mock:  ## Serve golden fixtures at the real API endpoints
 	uv run uvicorn scripts.mock_api:app --reload --port 8000

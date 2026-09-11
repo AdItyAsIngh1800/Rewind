@@ -1,0 +1,50 @@
+@import "tailwindcss";
+@import "./tokens.css";
+@import "@fontsource/fira-sans/400.css";
+@import "@fontsource/fira-sans/500.css";
+@import "@fontsource/fira-sans/600.css";
+@import "@fontsource/fira-mono/400.css";
+@import "@fontsource/fira-mono/500.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* shadcn/ui reads these names. They alias PS-8 tokens rather than introduce a second
+ * palette, so the generated components inherit the verified colours unchanged. */
+@theme inline {
+  --color-background: var(--ground);
+  --color-foreground: var(--text);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--surface-raised);
+  --color-popover-foreground: var(--text);
+  --color-primary: var(--text);
+  --color-primary-foreground: var(--ground);
+  --color-secondary: var(--surface-raised);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--surface-raised);
+  --color-muted-foreground: var(--text-muted);
+  --color-accent: var(--surface-raised);
+  --color-accent-foreground: var(--text);
+  --color-destructive: var(--evidence-conflicting);
+  --color-input: var(--border);
+  --color-ring: var(--focus);
+  --radius: var(--radius-md);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/60;
+  }
+  html {
+    font-family: var(--font-ui);
+    font-size: 14px;
+  }
+  body {
+    @apply bg-ground text-text;
+    line-height: 1.5;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+}

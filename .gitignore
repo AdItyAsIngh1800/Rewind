@@ -47,3 +47,4 @@ data/yolo/
 artifacts/training-runs/
 runs/
 artifacts/train.log
+*.tsbuildinfo
