@@ -17,6 +17,7 @@ from .persistence import (
     write_observations,
     write_segments,
 )
+from .pipeline import DetectorLike, PipelineResult, process_camera, process_run
 
 __all__ = [
     "COCO_TO_ENTITY",
@@ -24,7 +25,11 @@ __all__ = [
     "Detector",
     "DetectorConfig",
     "DetectorError",
+    "DetectorLike",
+    "PipelineResult",
     "observations_in_window",
+    "process_camera",
+    "process_run",
     "segments_for_run",
     "timed_window_query",
     "write_observations",
