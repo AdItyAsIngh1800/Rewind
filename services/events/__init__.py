@@ -1,5 +1,21 @@
-"""Trajectory-to-semantic-event conversion.
+"""Trajectory-to-semantic-event conversion (E4.2)."""
 
-Emits zone entry and exit, stop, direction change, proximity and occlusion events.
-Occlusion is a first-class event here, not an error case.
-"""
+from services.events.extractor import (
+    EventConfig,
+    Zone,
+    class_heights,
+    extract_events,
+    load_zones,
+    localise,
+    merge_across_cameras,
+)
+
+__all__ = [
+    "EventConfig",
+    "Zone",
+    "class_heights",
+    "extract_events",
+    "load_zones",
+    "localise",
+    "merge_across_cameras",
+]
