@@ -1,0 +1,149 @@
+{
+  "detector": "ml/models/yolo11n-rewind-v1/best.pt",
+  "tracker": "bytetrack:buf30:match0.9:fps10",
+  "cases": {
+    "case_01": {
+      "CAM_A": {
+        "tracked": 566,
+        "spurious": 10,
+        "id_switches": 1,
+        "tracks_created": 4,
+        "true_entities": 2,
+        "fragmentation": {
+          "P01": 2,
+          "R12": 1
+        }
+      },
+      "CAM_B": {
+        "tracked": 800,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "R12": 1,
+          "P01": 1
+        }
+      },
+      "CAM_C": {
+        "tracked": 757,
+        "spurious": 2,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "R12": 1,
+          "P01": 1
+        }
+      }
+    },
+    "case_03": {
+      "CAM_A": {
+        "tracked": 1288,
+        "spurious": 4,
+        "id_switches": 0,
+        "tracks_created": 4,
+        "true_entities": 3,
+        "fragmentation": {
+          "P02": 1,
+          "P01": 1,
+          "R12": 1
+        }
+      },
+      "CAM_B": {
+        "tracked": 1064,
+        "spurious": 25,
+        "id_switches": 1,
+        "tracks_created": 6,
+        "true_entities": 3,
+        "fragmentation": {
+          "P01": 1,
+          "R12": 1,
+          "P02": 2
+        }
+      },
+      "CAM_C": {
+        "tracked": 173,
+        "spurious": 2,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "R12": 1,
+          "P01": 1
+        }
+      }
+    },
+    "case_04": {
+      "CAM_A": {
+        "tracked": 413,
+        "spurious": 3,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "F01": 1,
+          "PL3": 1
+        }
+      },
+      "CAM_B": {
+        "tracked": 393,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "F01": 1,
+          "PL3": 1
+        }
+      },
+      "CAM_C": {
+        "tracked": 588,
+        "spurious": 4,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "F01": 1,
+          "PL3": 1
+        }
+      }
+    },
+    "case_05": {
+      "CAM_A": {
+        "tracked": 513,
+        "spurious": 5,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "P01": 1,
+          "R12": 1
+        }
+      },
+      "CAM_B": {
+        "tracked": 536,
+        "spurious": 1,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "R12": 1,
+          "P01": 1
+        }
+      },
+      "CAM_C": {
+        "tracked": 406,
+        "spurious": 3,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "P01": 1,
+          "R12": 1
+        }
+      }
+    }
+  },
+  "id_switches": 2
+}
