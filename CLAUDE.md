@@ -47,6 +47,11 @@ make test
 Report per-check pass/fail explicitly. Do not chain gates behind `&&` where a silent
 failure looks like success — that has already let a red CI through once.
 
+After every push, check the run (`gh run list --limit 1`) and report its conclusion.
+"Pushed" is not a result. CI once stayed red for twelve commits because the local
+gate passed with the `ml` extra installed and CI runs without it; the difference was
+only visible in the Actions log nobody read.
+
 ## Schema authority
 
 `packages/schemas/` is frozen. Schema flows one way:
