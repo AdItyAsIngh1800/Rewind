@@ -10,6 +10,13 @@ from .detector import (
     DetectorConfig,
     DetectorError,
 )
+from .persistence import (
+    observations_in_window,
+    segments_for_run,
+    timed_window_query,
+    write_observations,
+    write_segments,
+)
 
 __all__ = [
     "COCO_TO_ENTITY",
@@ -17,4 +24,9 @@ __all__ = [
     "Detector",
     "DetectorConfig",
     "DetectorError",
+    "observations_in_window",
+    "segments_for_run",
+    "timed_window_query",
+    "write_observations",
+    "write_segments",
 ]
