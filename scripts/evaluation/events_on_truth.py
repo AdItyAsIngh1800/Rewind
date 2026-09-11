@@ -53,7 +53,9 @@ def perfect_tracks(case_dir: pathlib.Path, *, projected: bool) -> list[Observati
     rows = json.loads((case_dir / "observations_gt.json").read_text())
     out = []
     for row in rows:
-        row = {**row, "track_id": row["entity_id"]}
+        # Per-camera track ids, as the tracker would assign them, so segments built
+        # from these do not collide across cameras; entity_id keeps the truth.
+        row = {**row, "track_id": f"{row['camera_id']}-{row['entity_id']}"}
         if projected:
             row["world_xyz"] = None
         out.append(Observation.model_validate(row))
@@ -133,7 +135,7 @@ def observed_times(observations: list[Observation]) -> dict[str, list[float]]:
     """Timestamps at which each entity was observed by any camera."""
     seen: dict[str, list[float]] = defaultdict(list)
     for o in observations:
-        seen[str(o.track_id)].append(o.timestamp_s)
+        seen[str(o.entity_id)].append(o.timestamp_s)
     return seen
 
 

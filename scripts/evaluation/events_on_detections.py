@@ -15,8 +15,11 @@ import json
 import logging
 from datetime import UTC, datetime
 
+import numpy as np
+from numpy.typing import NDArray
+
 from apps.worker.tasks import build_detector, camera_offsets
-from packages.schemas import Observation
+from packages.schemas import Observation, TrackSegment
 from scripts.evaluation.events_on_truth import REPORTS, SAMPLES, log_result, score_events
 from services.events import EventConfig
 from services.observability.logging import configure_logging
@@ -26,11 +29,15 @@ from services.tracking import TrackerConfig
 log = logging.getLogger(__name__)
 
 
-def tracked_observations(case_id: str) -> list[Observation]:
-    """Run detector and tracker over every clip of a case, as the worker would."""
+def run_perception(
+    case_id: str,
+) -> tuple[list[Observation], list[TrackSegment], dict[str, NDArray[np.float64]]]:
+    """Run detector, tracker and descriptors over every clip, as the worker would."""
     detector = build_detector()
     offsets = camera_offsets()
     rows: list[Observation] = []
+    segments: list[TrackSegment] = []
+    descriptors: dict[str, NDArray[np.float64]] = {}
     for clip in sorted((SAMPLES / case_id).glob("*.mp4")):
         out = process_camera(
             clip,
@@ -42,7 +49,14 @@ def tracked_observations(case_id: str) -> list[Observation]:
             tracker_config=TrackerConfig(),
         )
         rows.extend(out.observations)
-    return rows
+        segments.extend(out.segments)
+        descriptors.update(out.descriptors)
+    return rows, segments, descriptors
+
+
+def tracked_observations(case_id: str) -> list[Observation]:
+    """Just the tracked observations, for harnesses that need nothing else."""
+    return run_perception(case_id)[0]
 
 
 def main() -> int:
