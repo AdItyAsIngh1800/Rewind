@@ -555,8 +555,16 @@ def render_case(
         if frame % 50 == 0:
             log.info(f"    frame {frame}/{frames}  observations {len(observations)}")
 
-    if save_blend:
+    # Keyframe the actors before ANY animated output, not only when saving a
+    # scrubbable scene. The ground-truth loop above positions actors directly per
+    # frame and never keyframes them, so an animation render without this step plays
+    # 450 frames of actors parked wherever the loop last left them. That exact bug
+    # shipped: the labels moved, the video did not, and the first sign was a
+    # fine-tuned detector scoring 0.08 mAP on boxes.
+    if save_blend or not gt_only:
         keyframe_actors(case, actors, scene_cfg, fps, frames)
+
+    if save_blend:
         scene.frame_start = 1
         scene.frame_end = frames
         scene.camera = cameras[0]
