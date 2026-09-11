@@ -37,6 +37,10 @@ ml = [
     "torch>=2.5",
     "torchvision>=0.20",
     "ultralytics>=8.3",          # AGPL-3.0 — see LICENSE and ADR-0002
+    # Linear assignment for ByteTrack. Ultralytics tries to pip-install it at import
+    # time when missing, which fails under uv and would be an undeclared dependency
+    # even if it succeeded. Declared here so the lockfile is the truth.
+    "lap>=0.5",
     "opencv-python-headless>=4.10",
     "supervision>=0.25",
     "motmetrics>=1.4",
