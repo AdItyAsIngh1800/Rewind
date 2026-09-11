@@ -144,22 +144,17 @@ def count_id_switches(track: Sequence[tuple[float, str, str]]) -> int:
     return switches
 
 
-def match_events(
+def match_event_pairs(
     predicted: Sequence[Record],
     truth: Sequence[Record],
     tolerance_s: float = 0.5,
-) -> tuple[Counts, list[float]]:
-    """Match semantic events by type and timestamp, within a tolerance.
+) -> list[tuple[int, int, float]]:
+    """Pair predicted and true events by type, zone and time, closest first.
 
-    Returns the counts and the signed timing errors of the matched pairs, in
-    seconds. Timing error is reported separately from precision and recall because
-    an event found half a second late is a different failure from one not found at
-    all, and averaging them together hides which is happening.
+    Returns ``(predicted_index, truth_index, signed_error_s)`` triples. Exposed
+    separately from the counts so a caller can see *which* predictions went unmatched,
+    which matters when some predictions are deliberately hedged.
     """
-    errors: list[float] = []
-    matched_truth: set[int] = set()
-    tp = 0
-
     candidates: list[tuple[float, int, int]] = []
     for pi, p in enumerate(predicted):
         for ti, t in enumerate(truth):
@@ -173,17 +168,34 @@ def match_events(
 
     candidates.sort()
     matched_pred: set[int] = set()
+    matched_truth: set[int] = set()
+    pairs: list[tuple[int, int, float]] = []
     for _distance, pi, ti in candidates:
         if pi in matched_pred or ti in matched_truth:
             continue
         matched_pred.add(pi)
         matched_truth.add(ti)
-        tp += 1
-        errors.append(
-            float(predicted[pi]["timestamp_s"]) - float(truth[ti]["timestamp_s"])  # type: ignore[arg-type]
+        pairs.append(
+            (pi, ti, float(predicted[pi]["timestamp_s"]) - float(truth[ti]["timestamp_s"]))  # type: ignore[arg-type]
         )
+    return pairs
 
-    return Counts(tp=tp, fp=len(predicted) - tp, fn=len(truth) - tp), errors
+
+def match_events(
+    predicted: Sequence[Record],
+    truth: Sequence[Record],
+    tolerance_s: float = 0.5,
+) -> tuple[Counts, list[float]]:
+    """Match semantic events by type and timestamp, within a tolerance.
+
+    Returns the counts and the signed timing errors of the matched pairs, in
+    seconds. Timing error is reported separately from precision and recall because
+    an event found half a second late is a different failure from one not found at
+    all, and averaging them together hides which is happening.
+    """
+    pairs = match_event_pairs(predicted, truth, tolerance_s)
+    tp = len(pairs)
+    return Counts(tp=tp, fp=len(predicted) - tp, fn=len(truth) - tp), [e for _, _, e in pairs]
 
 
 def false_link_rate(predicted_links: Sequence[Record], true_pairs: set[frozenset[str]]) -> float:
