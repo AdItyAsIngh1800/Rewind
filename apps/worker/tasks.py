@@ -87,6 +87,7 @@ async def process_case(ctx: dict[str, Any], run_id: str, case_ref: str) -> dict[
                 case_dir=case_dir,
                 camera_offsets=camera_offsets(),
                 detector=build_detector(),
+                scene=json.loads(worker_settings.scene_config.read_text()),
             )
         except RunConflictError as exc:
             # A redelivered message for a run that already finished. Not an error:

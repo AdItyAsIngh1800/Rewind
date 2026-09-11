@@ -17,11 +17,19 @@ import logging
 import pathlib
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Any, Protocol
 
 from sqlalchemy.orm import Session
 
+from packages.common.camera import CameraModel
 from packages.schemas import Observation, RunStatus, TrackSegment
+from services.events import (
+    class_heights,
+    extract_events,
+    load_zones,
+    merge_across_cameras,
+    write_events,
+)
 from services.ingestion import Frame, decode_frames, plan_sampling, probe, transition
 from services.perception.persistence import write_observations, write_segments
 from services.tracking import Tracker, TrackerConfig
@@ -65,6 +73,8 @@ class PipelineResult:
     segments: int = 0
     observations_written: int = 0
     segments_written: int = 0
+    events: int = 0
+    events_written: int = 0
 
 
 def process_camera(
@@ -137,12 +147,16 @@ def process_run(
     detector: DetectorLike,
     tracker_config: TrackerConfig | None = None,
     target_fps: float = 10.0,
+    scene: dict[str, Any] | None = None,
 ) -> PipelineResult:
-    """Run the full perception stage for one processing run and persist the result.
+    """Run perception and event extraction for one run and persist the result.
 
     Moves the run to RUNNING first and to COMPLETE or FAILED at the end. A failure
     leaves the run marked FAILED with the error text, never silently QUEUED, so a
     stuck run is visible rather than indistinguishable from one that never started.
+
+    ``scene`` is the scene config with zones, cameras and entity heights. Without it
+    the run still produces observations and segments but no events, and says so.
     """
     config = tracker_config or TrackerConfig()
     result = PipelineResult(run_id=run_id)
@@ -173,6 +187,20 @@ def process_run(
         result.segments = len(all_segments)
         result.observations_written = write_observations(session, all_observations)
         result.segments_written = write_segments(session, all_segments)
+        if scene is None:
+            log.warning("run %s: no scene config, skipping event extraction", run_id)
+        else:
+            events = merge_across_cameras(
+                extract_events(
+                    run_id,
+                    all_observations,
+                    load_zones(scene),
+                    {c["id"]: CameraModel.from_scene(scene, c["id"]) for c in scene["cameras"]},
+                    class_heights(scene),
+                )
+            )
+            result.events = len(events)
+            result.events_written = write_events(session, events)
         transition(session, run_id, RunStatus.COMPLETE)
         session.commit()
     except Exception as exc:
@@ -182,10 +210,11 @@ def process_run(
         raise
 
     log.info(
-        "run %s complete: %d frames, %d observations, %d segments",
+        "run %s complete: %d frames, %d observations, %d segments, %d events",
         run_id,
         result.frames_processed,
         result.observations,
         result.segments,
+        result.events,
     )
     return result

@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from packages.database.models import Camera, ProcessingRun
 from packages.schemas import Observation, RunStatus
+from services.events import events_for_run
 from services.ingestion import Frame, RunConflictError
 from services.perception import (
     observations_in_window,
@@ -126,6 +127,30 @@ def test_pipeline_processes_a_case_end_to_end(session: Session, queued_run: Proc
     session.refresh(queued_run)
     assert queued_run.status == RunStatus.COMPLETE.value
     assert queued_run.started_at is not None and queued_run.finished_at is not None
+
+
+@needs_db
+def test_pipeline_extracts_and_persists_events(session: Session, queued_run: ProcessingRun) -> None:
+    """Assert a run given the scene config ends with an event stream in the database."""
+    scene = json.loads(pathlib.Path("ml/configs/scene_v1.json").read_text())
+    result = process_run(
+        session,
+        run_id=queued_run.run_id,
+        case_dir=CASE_DIR,
+        camera_offsets=OFFSETS,
+        detector=GroundTruthDetector(queued_run.run_id),
+        scene=scene,
+    )
+    assert result.events > 0
+    assert result.events_written == result.events
+    rows = events_for_run(session, queued_run.run_id)
+    assert len(rows) == result.events
+    assert all(r.evidence_refs for r in rows), "an event without evidence must not exist"
+    # The e-stop case: the robot stops inside the intersection after the person enters.
+    kinds = {r.event_type for r in rows}
+    assert {"zone_entry", "zone_exit", "stop"} <= kinds
+    assert events_for_run(session, queued_run.run_id, start_s=10.0, end_s=14.0)
+    assert not events_for_run(session, queued_run.run_id, start_s=900.0)
 
 
 @needs_db
