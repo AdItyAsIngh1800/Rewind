@@ -338,6 +338,28 @@
       ]
     }
   },
+  "actor_colours": {
+    "_comment": [
+      "Per-actor colour overrides, keyed by entity id (ids are stable across cases).",
+      "Any actor not listed renders in its class colour. Scene spec 5 requires a",
+      "distinct vest colour per actor so appearance features (E5.2) have signal;",
+      "the first render shipped one colour per class and P01/P02 were pixel-identical.",
+      "Chosen by the same constrained OKLCH search as the class palette: at least 0.15",
+      "from every surface, 0.17 from every other class, 0.12 from the actor's own class,",
+      "within a plausible hue band (hi-vis orange vest; navy forklift, yellow collides",
+      "with the floor paint)."
+    ],
+    "P02": [
+      0.978,
+      0.294,
+      0.011
+    ],
+    "F02": [
+      0.003,
+      0.07,
+      0.422
+    ]
+  },
   "render": {
     "engine": "BLENDER_EEVEE",
     "fps": 10,

@@ -101,7 +101,11 @@ def already_rendered(case_id: str, camera_count: int) -> bool:
 
 
 def spawn_actor(
-    entity_id: str, entity_class: str, spec: dict[str, Any], index: int
+    entity_id: str,
+    entity_class: str,
+    spec: dict[str, Any],
+    index: int,
+    colour: list[float] | None = None,
 ) -> BlenderObject:
     """Create one actor primitive at its real-world footprint.
 
@@ -119,8 +123,9 @@ def spawn_actor(
 
     material = bpy.data.materials.new(f"MAT_{entity_id}")
     material.use_nodes = True
+    # Per-actor colour where the scene config gives one, otherwise the class colour.
     material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (
-        *spec["colour"],
+        *(colour or spec["colour"]),
         1.0,
     )
     actor.data.materials.append(material)
@@ -481,9 +486,14 @@ def render_case(
     out_dir = SAMPLES / case["id"]
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    actor_colours = scene_cfg.get("actor_colours", {})
     actors = {
         track["entity_id"]: spawn_actor(
-            track["entity_id"], track["class"], scene_cfg["entities"][track["class"]], index
+            track["entity_id"],
+            track["class"],
+            scene_cfg["entities"][track["class"]],
+            index,
+            actor_colours.get(track["entity_id"]),
         )
         for index, track in enumerate(case["actors"])
     }

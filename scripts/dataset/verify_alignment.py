@@ -127,8 +127,10 @@ def check_case(
                 crop = frame[y1:y2, x1:x2]
                 if crop.size == 0:
                     continue
-                cls = str(row["entity_class"])
-                fraction = float(matches(crop, colours[cls], hues[cls]).mean())
+                key = str(row["entity_id"])
+                if key not in colours:
+                    key = str(row["entity_class"])
+                fraction = float(matches(crop, colours[key], hues[key]).mean())
                 if fraction < MIN_MATCH_FRACTION:
                     mismatches.append(
                         Mismatch(
@@ -154,6 +156,12 @@ def main() -> int:
     entities = {n: s for n, s in scene["entities"].items() if not n.startswith("_")}
     colours = {name: srgb8(spec["colour"]) for name, spec in entities.items()}
     hues = {name: hue_sat(spec["colour"]) for name, spec in entities.items()}
+    # Actor overrides are keyed by entity id; the lookup in check_case tries the
+    # entity id first and falls back to the class.
+    for actor, value in scene.get("actor_colours", {}).items():
+        if not actor.startswith("_"):
+            colours[actor] = srgb8(value)
+            hues[actor] = hue_sat(value)
 
     case_ids = args.cases or sorted(d.name for d in SAMPLES.glob("case_*") if any(d.glob("*.mp4")))
     if not case_ids:

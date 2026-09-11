@@ -148,6 +148,11 @@ ENTITY_SURFACE_MIN = 0.15
 #: are not confusable on shape alone, so colour carries less of that burden.
 ENTITY_ENTITY_MIN = 0.17
 
+#: Two actors of one class must be tellable apart by colour, or E5.2's appearance
+#: features have nothing to work with; but they stay closer than two classes so the
+#: detector still reads them as the same class.
+ACTOR_ACTOR_MIN = 0.12
+
 
 def check_colour_separation(scene: dict[str, Any]) -> list[str]:
     """Check every entity colour is distinguishable from surfaces and other entities.
@@ -194,6 +199,28 @@ def check_colour_separation(scene: dict[str, Any]) -> list[str]:
                     f"{entity} is {distance:.3f} from surface {surface}, below "
                     f"{ENTITY_SURFACE_MIN}; it is camouflaged against it"
                 )
+
+    # Per-actor overrides face the same constraints as their class, plus separation
+    # from that class so two actors of one class are distinguishable.
+    class_of = {"P": "person", "R": "robot", "F": "forklift", "PL": "pallet"}
+    for actor, value in scene.get("actor_colours", {}).items():
+        if actor.startswith("_"):
+            continue
+        colour = tuple(value)
+        own = class_of["PL" if actor.startswith("PL") else actor[0]]
+        for surface, surface_colour in surfaces.items():
+            distance = perceptual_distance(colour, surface_colour)
+            if distance < ENTITY_SURFACE_MIN:
+                problems.append(f"actor {actor} is {distance:.3f} from surface {surface}")
+        for other, other_colour in entities.items():
+            distance = perceptual_distance(colour, other_colour)
+            if other == own and distance < ACTOR_ACTOR_MIN:
+                problems.append(
+                    f"actor {actor} is {distance:.3f} from its class {own}, below "
+                    f"{ACTOR_ACTOR_MIN}; indistinguishable from the default actor"
+                )
+            if other != own and distance < ENTITY_ENTITY_MIN:
+                problems.append(f"actor {actor} is {distance:.3f} from class {other}")
     return problems
 
 
