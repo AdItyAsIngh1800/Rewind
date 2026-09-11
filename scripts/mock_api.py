@@ -16,9 +16,9 @@ from __future__ import annotations
 import json
 import pathlib
 from datetime import UTC, datetime
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.main import API_VERSION, PREFIX
@@ -103,7 +103,7 @@ def metrics() -> dict[str, object]:
 @app.get(f"{PREFIX}/cases", tags=["cases"])
 def list_cases(
     severity: str | None = None,
-    status_filter: str | None = None,
+    status_filter: Annotated[str | None, Query(alias="status")] = None,
     limit: int = 50,
 ) -> dict[str, Any]:
     """List incidents for the case inbox, applying the filters the UI sends."""
