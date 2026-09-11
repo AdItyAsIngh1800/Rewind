@@ -74,6 +74,10 @@ class EventConfig:
     #: over half a second a walking person has moved far enough for the heading to
     #: mean something.
     turn_baseline_s: float = 0.5
+    #: Cameras time the same crossing differently because each localises with its
+    #: own bias direction; the window has to cover that spread or one crossing
+    #: becomes two events. Set from the spread measured in EXP-0006.
+    merge_tolerance_s: float = 1.0
 
     @property
     def version(self) -> str:
@@ -81,7 +85,7 @@ class EventConfig:
         return (
             f"events:stop{self.stop_max_speed}/{self.stop_min_duration}"
             f":turn{self.turn_min_angle_deg}/{self.turn_baseline_s}:prox{self.proximity_distance}"
-            f":occ{self.occlusion_gap_s}"
+            f":occ{self.occlusion_gap_s}:merge{self.merge_tolerance_s}"
         )
 
 
@@ -322,7 +326,7 @@ def extract_events(
 
 
 def merge_across_cameras(
-    events: list[SemanticEvent], tolerance_s: float = 0.5
+    events: list[SemanticEvent], tolerance_s: float = EventConfig().merge_tolerance_s
 ) -> list[SemanticEvent]:
     """Collapse the same physical event seen from several cameras into one record.
 
@@ -331,6 +335,7 @@ def merge_across_cameras(
     says so in ``payload["merge"]``. E5 replaces it with identity-linked merging.
     """
     merged: list[tuple[SemanticEvent, list[str]]] = []
+    stamps: list[list[float]] = []
     # Zone occupancy by class, so a camera that first sees an entity already inside a
     # zone another camera watched it enter adds evidence to that entry rather than
     # inventing a second one. Cleared by the matching exit.
@@ -348,7 +353,7 @@ def merge_across_cameras(
                     r for r in event.evidence_refs if r not in target.evidence_refs
                 )
             continue
-        for target, cameras in merged:
+        for idx, (target, cameras) in enumerate(merged):
             if (
                 target.event_type == event.event_type
                 and target.zone_id == event.zone_id
@@ -357,6 +362,7 @@ def merge_across_cameras(
                 and event.camera_id not in cameras
             ):
                 cameras.append(str(event.camera_id))
+                stamps[idx].append(event.timestamp_s)
                 target.entity_ids.extend(i for i in event.entity_ids if i not in target.entity_ids)
                 target.evidence_refs.extend(
                     r for r in event.evidence_refs if r not in target.evidence_refs
@@ -381,6 +387,13 @@ def merge_across_cameras(
                     cameras,
                 )
             )
+            stamps.append([event.timestamp_s])
             if event.event_type is EventType.ZONE_ENTRY:
                 occupied[key] = len(merged) - 1
-    return [event for event, _ in merged]
+    # The median camera time is the estimate least moved by one camera's bias. It
+    # is applied after merging so the window test above always compared against the
+    # first sighting, which keeps the merge order-independent.
+    return [
+        event.model_copy(update={"timestamp_s": float(np.median(times))})
+        for (event, _), times in zip(merged, stamps, strict=True)
+    ]

@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from packages.common.camera import CameraModel
 from packages.schemas import Observation, RunStatus, TrackSegment
 from services.events import (
+    EventConfig,
     class_heights,
     extract_events,
     load_zones,
@@ -190,6 +191,7 @@ def process_run(
         if scene is None:
             log.warning("run %s: no scene config, skipping event extraction", run_id)
         else:
+            config_events = EventConfig()
             events = merge_across_cameras(
                 extract_events(
                     run_id,
@@ -197,7 +199,9 @@ def process_run(
                     load_zones(scene),
                     {c["id"]: CameraModel.from_scene(scene, c["id"]) for c in scene["cameras"]},
                     class_heights(scene),
-                )
+                    config_events,
+                ),
+                config_events.merge_tolerance_s,
             )
             result.events = len(events)
             result.events_written = write_events(session, events)

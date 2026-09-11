@@ -61,18 +61,32 @@ def perfect_tracks(case_dir: pathlib.Path, *, projected: bool) -> list[Observati
 
 
 def score_case(case_id: str, config: EventConfig, *, projected: bool) -> dict[str, object]:
-    """Extract, merge and score one case; returns the numbers for the report."""
+    """Extract, merge and score one case on perfect tracks."""
+    observations = perfect_tracks(SAMPLES / case_id, projected=projected)
+    label = "projected" if projected else "truth-xy"
+    return score_events(case_id, observations, config, label=label)
+
+
+def score_events(
+    case_id: str, observations: list[Observation], config: EventConfig, *, label: str
+) -> dict[str, object]:
+    """Extract, merge and score events from any tracked observation set.
+
+    Observability is always judged from ground truth, not from ``observations``: the
+    question is whether a camera *could* have seen the event, which does not depend on
+    how good the tracker that produced ``observations`` was.
+    """
     scene = json.loads(SCENE.read_text())
     cameras = {c["id"]: CameraModel.from_scene(scene, c["id"]) for c in scene["cameras"]}
     case_dir = SAMPLES / case_id
-    observations = perfect_tracks(case_dir, projected=projected)
     events = merge_across_cameras(
         extract_events(
             "eval", observations, load_zones(scene), cameras, class_heights(scene), config
-        )
+        ),
+        config.merge_tolerance_s,
     )
     truth = json.loads((case_dir / "events_gt.json").read_text())
-    seen = observed_times(observations)
+    seen = observed_times(perfect_tracks(case_dir, projected=False))
     # A truth event is observable only if some camera saw the entity within the
     # tolerance of it. The rest are coverage gaps: a property of the camera layout,
     # reported on its own line so it is not misread as an extraction miss.
@@ -99,7 +113,7 @@ def score_case(case_id: str, config: EventConfig, *, projected: bool) -> dict[st
     by_type = Counter(e.event_type.value for e in events)
     return {
         "case_id": case_id,
-        "projected": projected,
+        "positions": label,
         "tp": counts.tp,
         "fp": counts.fp,
         "fn": counts.fn,
@@ -136,31 +150,35 @@ def main() -> int:
 
     results = []
     for projected in (False, True):
-        label = "projected" if projected else "truth-xy"
         for case_id in args.cases:
             r = score_case(case_id, config, projected=projected)
             results.append(r)
-            log.info(
-                "%-9s %s  tp %2d fp %2d fn %2d  P %.2f R %.2f  timing max %.2fs  "
-                "unobservable %d  telemetry %d  bounded %d (%d unmatched)",
-                label,
-                case_id,
-                r["tp"],
-                r["fp"],
-                r["fn"],
-                r["precision"],
-                r["recall"],
-                r["max_abs_timing_error_s"] or 0.0,
-                r["truth_unobservable"],
-                r["truth_telemetry_only"],
-                r["predicted_bounded"],
-                r["predicted_bounded_unmatched"],
-            )
-            log.info("            %s", r["events_by_type"])
+            log_result(r)
     out = REPORTS / f"events-on-truth-{datetime.now(UTC):%Y-%m-%dT%H%M%SZ}.json"
     out.write_text(json.dumps({"config": config.version, "results": results}, indent=2))
     log.info("written to %s", out)
     return 0
+
+
+def log_result(r: dict[str, object]) -> None:
+    """One line per case, the same in every harness that scores events."""
+    log.info(
+        "%-10s %s  tp %2d fp %2d fn %2d  P %.2f R %.2f  timing max %.2fs  "
+        "unobservable %d  telemetry %d  bounded %d (%d unmatched)",
+        r["positions"],
+        r["case_id"],
+        r["tp"],
+        r["fp"],
+        r["fn"],
+        r["precision"],
+        r["recall"],
+        r["max_abs_timing_error_s"] or 0.0,
+        r["truth_unobservable"],
+        r["truth_telemetry_only"],
+        r["predicted_bounded"],
+        r["predicted_bounded_unmatched"],
+    )
+    log.info("            %s", r["events_by_type"])
 
 
 if __name__ == "__main__":
