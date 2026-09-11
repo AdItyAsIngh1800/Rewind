@@ -97,6 +97,9 @@ validate-cases:  ## Lint case waypoints against the scene geometry, before rende
 gt:  ## Export ground truth for every case without rendering video (about 40s)
 	blender --background data/scene/warehouse.blend --python scripts/dataset/render_cases.py -- --case all --gt-only
 
+verify-alignment:  ## Assert rendered video and ground truth describe the same motion
+	uv run python scripts/dataset/verify_alignment.py
+
 validate-gt:  ## Validate rendered ground truth against the frozen contracts
 	uv run python scripts/dataset/validate_ground_truth.py data/samples/case_*
 
