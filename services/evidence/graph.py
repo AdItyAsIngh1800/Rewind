@@ -330,12 +330,18 @@ def build_graph(
             )
 
     track_group = {s.segment_id: groups.get(s.local_track_id, s.local_track_id) for s in segments}
+    track_of = {s.segment_id: s.local_track_id for s in segments}
     for conflict in identity_conflicts(links, segments, start, end):
         a, c = track_group[conflict.segment_a], track_group[conflict.segment_b]
+        # Named by track, not group: a refused pair can still share a group when both
+        # tracks were linked to a third, and naming the group would say "X and X".
+        # That case is the stronger conflict (two links contradict a direct refusal).
+        joined = " (joined through other cameras)" if a == c else ""
         conflict_node = b.node(
             "C",
             NodeType.CONFLICT,
-            f"Cannot determine whether {a} and {c} are the same {conflict.entity_class}",
+            f"Cannot determine whether {track_of[conflict.segment_a]} and "
+            f"{track_of[conflict.segment_b]} are the same {conflict.entity_class}{joined}",
             derived_from=[conflict.link_id, conflict.segment_a, conflict.segment_b],
             interval_s=(conflict.start_s, conflict.end_s),
             source_ref=conflict.link_id,

@@ -225,3 +225,18 @@ def test_entity_never_seen_in_window_is_all_gap(missing: str) -> None:
     """An entity asked about but unseen throughout is one gap spanning the window."""
     gaps = coverage_gaps([], {}, 3.4, 23.4, entities={missing})
     assert [(g.start_s, g.end_s, g.bounded_by) for g in gaps] == [(3.4, 23.4, ())]
+
+
+def test_conflict_names_both_tracks_even_when_other_links_joined_them() -> None:
+    """A refusal inside one identity group must not read as "X and X"."""
+    apart = [n.label for n in _build(**_scene()).of_type(NodeType.CONFLICT)]
+    assert apart == ["Cannot determine whether CAM_A-T001 and CAM_C-T001 are the same person"]
+
+    scene = _scene()
+    groups = scene["groups"]
+    assert isinstance(groups, dict)
+    scene["groups"] = groups | {"CAM_C-T001": "CAM_A-T001"}
+    [joined] = [n.label for n in _build(**scene).of_type(NodeType.CONFLICT)]
+    assert joined.endswith(
+        "CAM_A-T001 and CAM_C-T001 are the same person (joined through other cameras)"
+    )
