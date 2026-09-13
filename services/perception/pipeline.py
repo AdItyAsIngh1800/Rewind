@@ -48,6 +48,8 @@ from services.identity.appearance import TrackDescriptors
 from services.incidents import IncidentConfig, detect_incidents, write_incidents
 from services.ingestion import Frame, decode_frames, plan_sampling, probe, transition
 from services.perception.persistence import write_observations, write_segments
+from services.reasoning.hypotheses import rank_hypotheses
+from services.reasoning.persistence import write_hypotheses
 from services.tracking import Tracker, TrackerConfig
 
 log = logging.getLogger(__name__)
@@ -111,6 +113,7 @@ class PipelineResult:
     incidents: int = 0
     #: Nodes across every incident's evidence graph built by the run (E7.1).
     evidence_nodes: int = 0
+    hypotheses: int = 0
 
 
 def process_camera(
@@ -312,7 +315,11 @@ def process_run(
                     created_at=built_at,
                     event_version=config_events.version,
                 )
+                # Ranked before the graph is stored: ranking adds the candidate-cause
+                # and contradiction edges, and they belong in the same stored graph.
+                hypotheses = rank_hypotheses(incident, graph, events, zones, built_at)
                 write_graph(session, graph)
+                result.hypotheses += write_hypotheses(session, hypotheses)
                 result.evidence_nodes += len(graph.nodes)
         transition(session, run_id, RunStatus.COMPLETE)
         session.commit()

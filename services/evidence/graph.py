@@ -52,6 +52,17 @@ UNCERTAINTY_VERSION = "uncertainty-0.1.0"
 _ID_LIMIT = 64
 
 
+def id_base(incident_id: str) -> str:
+    """Return the prefix for ids derived from an incident, short enough for its columns.
+
+    Incident ids are short in practice (`INC-run-<16 hex>-01`); an unusually long one
+    is replaced by a stable hash so every node, edge and hypothesis id still fits.
+    """
+    if len(incident_id) > _ID_LIMIT - 12:
+        return "INC" + hashlib.sha1(incident_id.encode()).hexdigest()[:16]
+    return incident_id
+
+
 @dataclass
 class EvidenceGraph:
     """One incident's nodes and edges, as built or as loaded back from the database."""
@@ -77,10 +88,7 @@ class _Builder:
     """Assigns ids and fills the provenance every node and edge must carry."""
 
     def __init__(self, incident: Incident, created_at: datetime) -> None:
-        base = incident.incident_id
-        if len(base) > _ID_LIMIT - 12:
-            base = "INC" + hashlib.sha1(base.encode()).hexdigest()[:16]
-        self.base = base
+        self.base = id_base(incident.incident_id)
         self.incident = incident
         self.created_at = created_at
         self.graph = EvidenceGraph(incident.incident_id)

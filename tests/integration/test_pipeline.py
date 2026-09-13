@@ -28,6 +28,7 @@ from services.perception import (
     process_run,
     segments_for_run,
 )
+from services.reasoning.persistence import hypotheses_for_incident
 from tests.integration.conftest import needs_db
 
 CASE_DIR = pathlib.Path("data/samples/case_01")
@@ -187,6 +188,13 @@ def test_pipeline_extracts_and_persists_events(session: Session, queued_run: Pro
     assert graph.edges and all(
         e.from_node in node_ids and e.to_node in node_ids for e in graph.edges
     )
+    # The causes were ranked against that graph: the person ranks first, every
+    # reference resolves to a stored node, and the ranking left its edges behind.
+    top, *_ = hypotheses_for_incident(session, incident.incident_id)
+    assert result.hypotheses >= 1
+    assert top.description.startswith("Person") and top.evidence_level != "unknown"
+    assert set(top.support_refs) | set(top.contradiction_refs) <= node_ids
+    assert any(e.relation.value == "candidate_cause_of" for e in graph.edges)
 
 
 @needs_db
