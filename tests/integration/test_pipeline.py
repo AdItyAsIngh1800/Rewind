@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from packages.database.models import Camera, ProcessingRun
 from packages.schemas import Observation, RunStatus
 from services.events import events_for_run
+from services.evidence import graph_for_incident
 from services.identity import links_for_run
 from services.incidents import list_incidents, load_case_script, state_changes
 from services.ingestion import Frame, RunConflictError
@@ -176,6 +177,16 @@ def test_pipeline_extracts_and_persists_events(session: Session, queued_run: Pro
     assert incident.incident_class == "robot_estop_human_incursion"
     assert incident.trigger_event_id in {r.event_id for r in rows if r.event_type == "state_change"}
     assert incident.window_start_s < 13.4 == incident.detected_at_s < incident.window_end_s
+    # Its evidence graph was built in the same run: the window, the e-stop, the people
+    # and robot involved, and every edge resolving to a stored node.
+    graph = graph_for_incident(session, incident.incident_id)
+    assert result.evidence_nodes == len(graph.nodes) > 0
+    assert {"interval", "event", "entity"} <= {n.node_type.value for n in graph.nodes}
+    assert graph.node_for_source(incident.trigger_event_id) is not None
+    node_ids = {n.node_id for n in graph.nodes}
+    assert graph.edges and all(
+        e.from_node in node_ids and e.to_node in node_ids for e in graph.edges
+    )
 
 
 @needs_db

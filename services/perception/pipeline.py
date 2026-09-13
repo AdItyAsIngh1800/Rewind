@@ -17,6 +17,7 @@ import logging
 import pathlib
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 import numpy as np
@@ -34,6 +35,7 @@ from services.events import (
     merge_across_cameras,
     write_events,
 )
+from services.evidence import build_graph, write_graph
 from services.identity import (
     associate,
     build_segment_tracks,
@@ -107,6 +109,8 @@ class PipelineResult:
     links: int = 0
     links_linked: int = 0
     incidents: int = 0
+    #: Nodes across every incident's evidence graph built by the run (E7.1).
+    evidence_nodes: int = 0
 
 
 def process_camera(
@@ -276,24 +280,40 @@ def process_run(
             result.links = len(links)
             result.links_linked = sum(link.decision.value == "linked" for link in links)
             write_links(session, links)
-            events = merge_across_cameras(
-                raw_events,
-                config_events.merge_tolerance_s,
-                entity_groups(links, all_segments),
-            )
+            groups = entity_groups(links, all_segments)
+            events = merge_across_cameras(raw_events, config_events.merge_tolerance_s, groups)
             # Telemetry is stored beside the video events: an incident's trigger must be
             # a stored event, and the e-stop is only ever a telemetry event.
             events = [*events, *(telemetry or [])]
             result.events = len(events)
             result.events_written = write_events(session, events)
+            zones = load_zones(scene)
             incidents = detect_incidents(
                 run_id,
                 events,
-                load_zones(scene),
+                zones,
                 max((o.timestamp_s for o in all_observations), default=0.0),
                 IncidentConfig(),
             )
             result.incidents = write_incidents(session, incidents)
+            # Each incident's evidence graph is built now, from exactly the data that
+            # opened it, and stored with it: the graph an investigator reads later is
+            # the one the report was generated from, not a rebuild that could differ.
+            built_at = datetime.now(UTC)
+            for incident in incidents:
+                graph = build_graph(
+                    incident,
+                    events=events,
+                    observations=all_observations,
+                    segments=all_segments,
+                    links=links,
+                    groups=groups,
+                    zones=zones,
+                    created_at=built_at,
+                    event_version=config_events.version,
+                )
+                write_graph(session, graph)
+                result.evidence_nodes += len(graph.nodes)
         transition(session, run_id, RunStatus.COMPLETE)
         session.commit()
     except Exception as exc:
