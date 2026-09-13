@@ -27,8 +27,10 @@ from packages.schemas import (
     SCHEMA_VERSION,
     EvidenceEdge,
     EvidenceNode,
+    Hypothesis,
     IdentityLink,
     IncidentStatus,
+    Report,
     RunStatus,
     SemanticEvent,
     Severity,
@@ -43,6 +45,8 @@ from services.identity import link_to_contract, links_for_run
 from services.incidents import incident_to_contract, list_incidents
 from services.ingestion import create_run
 from services.perception.persistence import segment_to_contract, segments_for_run
+from services.reasoning.persistence import hypotheses_for_incident
+from services.reporting import report_for_incident
 
 #: Where rendered case media lives. A case reference resolves to a directory here
 #: rather than to arbitrary caller-supplied paths, so the API cannot be pointed at
@@ -376,13 +380,29 @@ def get_replay(case_id: CaseId) -> dict[str, object]:
     raise _pending("E8.2")
 
 
-@app.get(f"{PREFIX}/cases/{{case_id}}/report", tags=["cases"])
-def get_report(case_id: CaseId) -> dict[str, object]:
-    """Return the evidence-grounded report for this case.
+class CaseReport(BaseModel):
+    """A case's report together with the ranked hypotheses it draws on."""
 
-    Not yet implemented — delivered by E7.4.
+    report: Report
+    hypotheses: list[Hypothesis]
+
+
+@app.get(f"{PREFIX}/cases/{{case_id}}/report", response_model=CaseReport, tags=["cases"])
+def get_report(case_id: CaseId, session: DbSession) -> CaseReport:
+    """Return a case's evidence-grounded report, with the hypotheses it ranks.
+
+    Generated once, when the run that opened the incident finished (E7.4), and served
+    as issued. A case whose run predates the generator has no report: that is a 404
+    saying so, not an empty report that would read as "nothing to say".
     """
-    raise _pending("E7.4")
+    if session.get(Incident, case_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"no case {case_id!r}")
+    report = report_for_incident(session, case_id)
+    if report is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, f"case {case_id!r} has no report; reprocess its run"
+        )
+    return CaseReport(report=report, hypotheses=hypotheses_for_incident(session, case_id))
 
 
 @app.post(f"{PREFIX}/cases/{{case_id}}/reprocess", tags=["cases"])

@@ -114,6 +114,63 @@
         "title": "CaseList",
         "type": "object"
       },
+      "CaseReport": {
+        "description": "A case's report together with the ranked hypotheses it draws on.",
+        "properties": {
+          "hypotheses": {
+            "items": {
+              "$ref": "#/components/schemas/Hypothesis"
+            },
+            "title": "Hypotheses",
+            "type": "array"
+          },
+          "report": {
+            "$ref": "#/components/schemas/Report"
+          }
+        },
+        "required": [
+          "report",
+          "hypotheses"
+        ],
+        "title": "CaseReport",
+        "type": "object"
+      },
+      "Claim": {
+        "additionalProperties": false,
+        "description": "One material statement in a report.\n\nThe two validators here are the anti-hallucination mechanism. They make an\nunsupported claim structurally impossible to construct rather than merely\ndiscouraged: the object cannot be instantiated, so it cannot reach a report.",
+        "properties": {
+          "claim_id": {
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "evidence_level": {
+            "$ref": "#/components/schemas/EvidenceLevel"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "claim_id",
+          "text",
+          "evidence_level"
+        ],
+        "title": "Claim",
+        "type": "object"
+      },
       "CreateCaseRequest": {
         "description": "Body of a request to create a case and queue its processing run.",
         "properties": {
@@ -285,6 +342,18 @@
         "title": "EvidenceGraphResponse",
         "type": "object"
       },
+      "EvidenceLevel": {
+        "description": "How strongly the evidence supports a claim.\n\nThis is the spine of the whole system. Every claim in every report carries one\nof these, and the phrasing available to the report generator is derived from it\nrather than chosen freely.",
+        "enum": [
+          "confirmed",
+          "strongly_inferred",
+          "possible",
+          "conflicting",
+          "unknown"
+        ],
+        "title": "EvidenceLevel",
+        "type": "string"
+      },
       "EvidenceNode": {
         "additionalProperties": false,
         "description": "A single node in an incident's evidence graph.\n\nA ``GAP`` node represents an interval no camera could see. It is evidence in its\nown right \u2014 the thing that lets a report say \"cannot determine\" rather than\nquietly omitting the interval.",
@@ -420,6 +489,74 @@
           "checked_at"
         ],
         "title": "Health",
+        "type": "object"
+      },
+      "Hypothesis": {
+        "additionalProperties": false,
+        "description": "A candidate contributing cause, with what argues for and against it.",
+        "properties": {
+          "components": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "Score breakdown: temporal precedence, proximity, evidence strength",
+            "title": "Components",
+            "type": "object"
+          },
+          "contradiction_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Contradiction Refs",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "evidence_level": {
+            "$ref": "#/components/schemas/EvidenceLevel"
+          },
+          "hypothesis_id": {
+            "title": "Hypothesis Id",
+            "type": "string"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "score": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          },
+          "support_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Support Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "hypothesis_id",
+          "run_id",
+          "incident_id",
+          "description",
+          "evidence_level",
+          "score"
+        ],
+        "title": "Hypothesis",
         "type": "object"
       },
       "IdentityLink": {
@@ -809,6 +946,81 @@
         ],
         "title": "Relation",
         "type": "string"
+      },
+      "Report": {
+        "additionalProperties": false,
+        "description": "A generated investigation report.\n\n``limitations`` is required and must not be empty: there is always something a\nthree-camera reconstruction cannot establish, and a report that claims otherwise\nis misrepresenting its own evidence.",
+        "properties": {
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/Claim"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "gaps": {
+            "description": "GAP node IDs \u2014 intervals nothing could see",
+            "items": {
+              "type": "string"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "generator_version": {
+            "title": "Generator Version",
+            "type": "string"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "limitations": {
+            "description": "What this report cannot establish. Never empty; there is always something.",
+            "title": "Limitations",
+            "type": "string"
+          },
+          "ranked_hypotheses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ranked Hypotheses",
+            "type": "array"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "run_id",
+          "incident_id",
+          "generator_version",
+          "created_at",
+          "summary",
+          "claims",
+          "limitations"
+        ],
+        "title": "Report",
+        "type": "object"
       },
       "RunStatus": {
         "description": "Lifecycle of a processing run, from queued to terminal.",
@@ -1349,7 +1561,7 @@
     },
     "/api/v1/cases/{case_id}/report": {
       "get": {
-        "description": "Return the evidence-grounded report for this case.\n\nNot yet implemented \u2014 delivered by E7.4.",
+        "description": "Return a case's evidence-grounded report, with the hypotheses it ranks.\n\nGenerated once, when the run that opened the incident finished (E7.4), and served\nas issued. A case whose run predates the generator has no report: that is a 404\nsaying so, not an empty report that would read as \"nothing to say\".",
         "operationId": "get_report_api_v1_cases__case_id__report_get",
         "parameters": [
           {
@@ -1369,9 +1581,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Report Api V1 Cases  Case Id  Report Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/CaseReport"
                 }
               }
             },

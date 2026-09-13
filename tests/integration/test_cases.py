@@ -24,6 +24,9 @@ from packages.schemas import (
 from services.events import write_events
 from services.evidence import build_graph, write_graph
 from services.incidents import incident_to_contract, write_incidents
+from services.reasoning.hypotheses import rank_hypotheses
+from services.reasoning.persistence import write_hypotheses
+from services.reporting import generate_report, write_report
 from tests.integration.conftest import needs_db
 
 RUN = "run-cases-test"
@@ -165,3 +168,39 @@ def test_evidence_graph_is_served_with_provenance(client: TestClient, session: S
     assert len(body["edges"]) == len(graph.edges) > 0
     assert all(n["provenance"]["run_id"] == RUN for n in body["nodes"])
     assert client.get(f"{PREFIX}/cases/INC-nope/evidence").status_code == 404
+
+
+@needs_db
+@pytest.mark.usefixtures("cases")
+def test_report_is_served_with_its_ranked_hypotheses(client: TestClient, session: Session) -> None:
+    """Assert the stored report and its hypotheses come back together, and 404 without one."""
+    row = session.get(IncidentRow, ESTOP)
+    assert row is not None
+    incident = incident_to_contract(row)
+    built_at = datetime(2026, 9, 13, tzinfo=UTC)
+    events = [_event(2, EventType.STATE_CHANGE, 13.4)]
+    graph = build_graph(
+        incident,
+        events=events,
+        observations=[],
+        segments=[],
+        links=[],
+        groups={},
+        zones=[],
+        created_at=built_at,
+    )
+    hypotheses = rank_hypotheses(incident, graph, events, [], built_at)
+    write_graph(session, graph)
+    write_hypotheses(session, hypotheses)
+    write_report(session, generate_report(incident, graph, hypotheses, events, built_at))
+
+    body = client.get(f"{PREFIX}/cases/{ESTOP}/report").json()
+    assert (
+        body["report"]["claims"][0]["text"]
+        == "Observed: robot R12 reported an emergency stop at 13.4 s"
+    )
+    assert [h["hypothesis_id"] for h in body["hypotheses"]] == body["report"]["ranked_hypotheses"]
+    assert body["hypotheses"][0]["evidence_level"] == "unknown", (
+        "no candidate, so no cause is claimed"
+    )
+    assert client.get(f"{PREFIX}/cases/{BLOCKED}/report").status_code == 404

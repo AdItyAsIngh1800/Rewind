@@ -37,7 +37,6 @@ app.dependency_overrides[get_session] = _no_database
 PENDING_ENDPOINTS = [
     ("post", f"{PREFIX}/cases/abc/reprocess"),
     ("get", f"{PREFIX}/cases/abc/replay"),
-    ("get", f"{PREFIX}/cases/abc/report"),
 ]
 
 
