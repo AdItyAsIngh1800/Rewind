@@ -21,3 +21,10 @@ The investigator UI: React 19, TypeScript, Vite, Tailwind v4, shadcn/ui, TanStac
 - **Filters live in the URL.** A filtered inbox is a link a colleague can open.
 - **Motion explains state, never decorates.** `--motion-fast`/`--motion-base` collapse to
   zero under `prefers-reduced-motion`. No global transitions.
+- **A case page is one URL.** `view` (report, timeline, evidence) and `ref` (the
+  selected evidence id) are search parameters, so "look at this node" is a link and
+  back walks through what was inspected. Every view selects into the one inspector.
+- **Evidence patterns are `ev-<level>` classes** in `globals.css`, the same gradients as
+  `docs/ui/swatches.html`. Composed class names are invisible to Tailwind, hence plain CSS.
+- **The graph layout is fixed, not force-directed:** a node sits in the same place every
+  time a case opens. See the ledger row for E8.4.
