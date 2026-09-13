@@ -1,9 +1,9 @@
 {
   "case_id": "case_01",
-  "model_version": "yolo11n.pt:coco:conf0.25",
+  "model_version": "yolo11n.pt:coco:conf0.25:iou0.5",
   "checkpoint": "yolo11n.pt",
   "device": "mps",
-  "generated_at": "2026-09-11T14:33:45.868955+00:00",
+  "generated_at": "2026-09-13T11:09:42.818427+00:00",
   "frames_processed": 1350,
   "per_class": {
     "person": {

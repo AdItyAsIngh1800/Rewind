@@ -4,10 +4,10 @@
   "cases": {
     "case_01": {
       "CAM_A": {
-        "tracked": 566,
-        "spurious": 10,
+        "tracked": 564,
+        "spurious": 8,
         "id_switches": 1,
-        "tracks_created": 4,
+        "tracks_created": 3,
         "true_entities": 2,
         "fragmentation": {
           "P01": 2,
@@ -26,8 +26,8 @@
         }
       },
       "CAM_C": {
-        "tracked": 757,
-        "spurious": 2,
+        "tracked": 754,
+        "spurious": 0,
         "id_switches": 0,
         "tracks_created": 2,
         "true_entities": 2,
@@ -39,8 +39,8 @@
     },
     "case_03": {
       "CAM_A": {
-        "tracked": 1288,
-        "spurious": 4,
+        "tracked": 1292,
+        "spurious": 9,
         "id_switches": 0,
         "tracks_created": 4,
         "true_entities": 3,
@@ -51,20 +51,20 @@
         }
       },
       "CAM_B": {
-        "tracked": 1064,
-        "spurious": 25,
-        "id_switches": 1,
+        "tracked": 1062,
+        "spurious": 19,
+        "id_switches": 4,
         "tracks_created": 6,
         "true_entities": 3,
         "fragmentation": {
-          "P01": 1,
           "R12": 1,
-          "P02": 2
+          "P01": 1,
+          "P02": 4
         }
       },
       "CAM_C": {
-        "tracked": 173,
-        "spurious": 2,
+        "tracked": 170,
+        "spurious": 1,
         "id_switches": 0,
         "tracks_created": 2,
         "true_entities": 2,
@@ -76,18 +76,7 @@
     },
     "case_04": {
       "CAM_A": {
-        "tracked": 413,
-        "spurious": 3,
-        "id_switches": 0,
-        "tracks_created": 2,
-        "true_entities": 2,
-        "fragmentation": {
-          "F01": 1,
-          "PL3": 1
-        }
-      },
-      "CAM_B": {
-        "tracked": 393,
+        "tracked": 410,
         "spurious": 0,
         "id_switches": 0,
         "tracks_created": 2,
@@ -97,9 +86,20 @@
           "PL3": 1
         }
       },
+      "CAM_B": {
+        "tracked": 394,
+        "spurious": 1,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "F01": 1,
+          "PL3": 1
+        }
+      },
       "CAM_C": {
-        "tracked": 588,
-        "spurious": 4,
+        "tracked": 583,
+        "spurious": 0,
         "id_switches": 0,
         "tracks_created": 2,
         "true_entities": 2,
@@ -112,7 +112,7 @@
     "case_05": {
       "CAM_A": {
         "tracked": 513,
-        "spurious": 5,
+        "spurious": 6,
         "id_switches": 0,
         "tracks_created": 2,
         "true_entities": 2,
@@ -122,8 +122,8 @@
         }
       },
       "CAM_B": {
-        "tracked": 536,
-        "spurious": 1,
+        "tracked": 535,
+        "spurious": 0,
         "id_switches": 0,
         "tracks_created": 2,
         "true_entities": 2,
@@ -133,8 +133,8 @@
         }
       },
       "CAM_C": {
-        "tracked": 406,
-        "spurious": 3,
+        "tracked": 399,
+        "spurious": 0,
         "id_switches": 0,
         "tracks_created": 2,
         "true_entities": 2,
@@ -145,5 +145,5 @@
       }
     }
   },
-  "id_switches": 2
+  "id_switches": 5
 }

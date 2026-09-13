@@ -1,16 +1,16 @@
 # Detection baseline — case_05
 
-- **Generated:** 2026-09-11 14:55 UTC
+- **Generated:** 2026-09-13 11:09 UTC
 - **Model:** `ml/models/yolo11n-rewind-v1/best.pt:native:conf0.25:iou0.5`
 - **Device:** `mps`
 - **Frames processed:** 1350
 
 | Class | Truth | Predicted | TP | FP | FN | Precision | Recall | Note |
 |---|---|---|---|---|---|---|---|---|
-| `person` | 464 | 467 | 461 | 6 | 3 | 0.987 | 0.994 |  |
-| `robot` | 993 | 988 | 985 | 3 | 8 | 0.997 | 0.992 |  |
+| `person` | 464 | 463 | 459 | 4 | 5 | 0.991 | 0.989 |  |
+| `robot` | 993 | 982 | 982 | 0 | 11 | 1.000 | 0.989 |  |
 | `forklift` | 0 | 0 | 0 | 0 | 0 | 1.000 | 1.000 |  |
-| `pallet` | 0 | 0 | 0 | 0 | 0 | 1.000 | 1.000 |  |
+| `pallet` | 0 | 2 | 0 | 2 | 0 | 0.000 | 1.000 |  |
 
 ## Reading this
 

@@ -1,0 +1,149 @@
+{
+  "config": "assoc:thr0.75:amb0.1:w0.35/0.4/0.25:gap15.0",
+  "results": [
+    {
+      "case_id": "case_01",
+      "mode": "perfect",
+      "compared": 6,
+      "linked": 4,
+      "unknown": 2,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 6,
+      "recall": 0.6666666666666666,
+      "segments": 6
+    },
+    {
+      "case_id": "case_01",
+      "mode": "detections",
+      "compared": 6,
+      "linked": 5,
+      "unknown": 1,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 8,
+      "recall": 0.625,
+      "segments": 7
+    },
+    {
+      "case_id": "case_01",
+      "mode": "no-appear",
+      "compared": 6,
+      "linked": 6,
+      "unknown": 0,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 8,
+      "recall": 0.75,
+      "segments": 7
+    },
+    {
+      "case_id": "case_03",
+      "mode": "perfect",
+      "compared": 7,
+      "linked": 7,
+      "unknown": 0,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 7,
+      "recall": 1.0,
+      "segments": 8
+    },
+    {
+      "case_id": "case_03",
+      "mode": "detections",
+      "compared": 7,
+      "linked": 5,
+      "unknown": 2,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 10,
+      "recall": 0.5,
+      "segments": 11
+    },
+    {
+      "case_id": "case_03",
+      "mode": "no-appear",
+      "compared": 7,
+      "linked": 5,
+      "unknown": 2,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 10,
+      "recall": 0.5,
+      "segments": 11
+    },
+    {
+      "case_id": "case_04",
+      "mode": "perfect",
+      "compared": 6,
+      "linked": 6,
+      "unknown": 0,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 6,
+      "recall": 1.0,
+      "segments": 6
+    },
+    {
+      "case_id": "case_04",
+      "mode": "detections",
+      "compared": 6,
+      "linked": 4,
+      "unknown": 2,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 6,
+      "recall": 0.6666666666666666,
+      "segments": 6
+    },
+    {
+      "case_id": "case_04",
+      "mode": "no-appear",
+      "compared": 6,
+      "linked": 3,
+      "unknown": 3,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 6,
+      "recall": 0.5,
+      "segments": 6
+    },
+    {
+      "case_id": "case_05",
+      "mode": "perfect",
+      "compared": 6,
+      "linked": 6,
+      "unknown": 0,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 6,
+      "recall": 1.0,
+      "segments": 6
+    },
+    {
+      "case_id": "case_05",
+      "mode": "detections",
+      "compared": 6,
+      "linked": 6,
+      "unknown": 0,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 6,
+      "recall": 1.0,
+      "segments": 6
+    },
+    {
+      "case_id": "case_05",
+      "mode": "no-appear",
+      "compared": 6,
+      "linked": 5,
+      "unknown": 1,
+      "false_links": 0,
+      "false_link_rate": 0.0,
+      "true_pairs": 6,
+      "recall": 0.8333333333333334,
+      "segments": 6
+    }
+  ]
+}

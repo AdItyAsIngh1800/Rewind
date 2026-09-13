@@ -2,7 +2,7 @@
 
 - **Version:** `yolo11n-rewind-v1`
 - **Base checkpoint:** `yolo11n.pt`
-- **Trained:** 2026-09-11 14:46:39 UTC
+- **Trained:** 2026-09-13 11:09:20 UTC
 - **Platform:** Darwin arm64, mps
 - **Weights:** `ml/models/yolo11n-rewind-v1/best.pt`
 
@@ -13,7 +13,7 @@ frames from the three fixed warehouse cameras. It is the first stage of the
 perception pipeline; its boxes feed the tracker and everything downstream.
 
 It is a **fine-tuned** model, not one trained from scratch: pretrained initialisation,
-20 epochs, 827 seconds of compute (ADR-0004).
+20 epochs, 860 seconds of compute (ADR-0004).
 
 ## Data
 
@@ -45,7 +45,7 @@ untextured box at its real-world footprint. No real footage, no real people.
 | Seed | 0, deterministic |
 | Augmentation | HSV jitter, horizontal flip, mosaic |
 | Val mAP50 | 0.995 |
-| Val mAP50-95 | 0.987 |
+| Val mAP50-95 | 0.986 |
 
 ## Metrics
 
@@ -55,8 +55,8 @@ truth at IoU 0.5.
 
 | Class | Truth | Precision | Recall | F1 | Zero-shot recall |
 |---|---|---|---|---|---|
-| `person` | 464 | 0.987 | 0.994 | 0.990 | 0.000 |
-| `robot` | 993 | 0.997 | 0.992 | 0.994 | 0.000 |
+| `person` | 464 | 0.991 | 0.989 | 0.990 | 0.000 |
+| `robot` | 993 | 1.000 | 0.989 | 0.994 | 0.000 |
 | `forklift` | 0 | — | — | — | not present in the evaluation case |
 | `pallet` | 0 | — | — | — | not present in the evaluation case |
 
@@ -89,4 +89,4 @@ Their scores rest on less evidence.
 ## Provenance
 
 Training record: `ml/models/yolo11n-rewind-v1/training.json`
-Evaluation: `artifacts/benchmark-reports/detection-finetuned-case_05-2026-09-11T145522Z.json`
+Evaluation: `artifacts/benchmark-reports/detection-finetuned-case_05-2026-09-13T110953Z.json`
