@@ -36,7 +36,6 @@ app.dependency_overrides[get_session] = _no_database
 #: the timeline in E4.3.
 PENDING_ENDPOINTS = [
     ("post", f"{PREFIX}/cases/abc/reprocess"),
-    ("get", f"{PREFIX}/cases/abc"),
     ("get", f"{PREFIX}/cases/abc/evidence"),
     ("get", f"{PREFIX}/cases/abc/replay"),
     ("get", f"{PREFIX}/cases/abc/report"),

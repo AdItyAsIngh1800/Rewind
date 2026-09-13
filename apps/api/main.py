@@ -17,14 +17,27 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Query, status
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from apps.api.queue import enqueue_run
-from packages.database.models import Incident, ProcessingRun
+from packages.database.models import Camera, Incident, ProcessingRun
 from packages.database.session import get_session
-from packages.schemas import SCHEMA_VERSION, IdentityLink, SemanticEvent, TrackSegment
+from packages.schemas import (
+    SCHEMA_VERSION,
+    IdentityLink,
+    IncidentStatus,
+    RunStatus,
+    SemanticEvent,
+    Severity,
+    TrackSegment,
+)
+from packages.schemas import Camera as CameraContract
+from packages.schemas import Incident as IncidentContract
+from packages.schemas import ProcessingRun as RunContract
 from services.events import events_for_run, to_contract
 from services.identity import link_to_contract, links_for_run
+from services.incidents import incident_to_contract, list_incidents
 from services.ingestion import create_run
 from services.perception.persistence import segment_to_contract, segments_for_run
 
@@ -186,31 +199,82 @@ async def create_case(body: CreateCaseRequest, session: DbSession) -> CreateCase
     )
 
 
-@app.get(f"{PREFIX}/cases", tags=["cases"])
+class CaseList(BaseModel):
+    """One page of the case inbox, and how many incidents matched in total."""
+
+    cases: list[IncidentContract]
+    total: int
+
+
+@app.get(f"{PREFIX}/cases", response_model=CaseList, tags=["cases"])
 def list_cases(
-    severity: str | None = None,
-    status: str | None = None,
-    limit: int = 50,
-) -> dict[str, object]:
-    """List incidents for the case inbox, filtered by severity and status.
+    session: DbSession,
+    severity: Severity | None = None,
+    status_filter: Annotated[IncidentStatus | None, Query(alias="status")] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+) -> CaseList:
+    """List incidents for the case inbox, most severe first, filtered by severity and status.
 
     Not present in specification §F, which jumps straight to fetching one case by
     id. The Case Inbox screen in §G filters incidents by severity, time, location
     and status, and cannot be built without a collection endpoint — so §F is
     incomplete rather than this being new scope.
-
-    Not yet implemented — delivered by E6.2.
     """
-    raise _pending("E6.2")
+    rows, total = list_incidents(session, severity=severity, status=status_filter, limit=limit)
+    return CaseList(cases=[incident_to_contract(r) for r in rows], total=total)
 
 
-@app.get(f"{PREFIX}/cases/{{case_id}}", tags=["cases"])
-def get_case(case_id: CaseId) -> dict[str, object]:
-    """Return the case summary.
+class CaseDetail(BaseModel):
+    """A case: its incident and rewind window, the run behind it, and the cameras."""
 
-    Not yet implemented — delivered by E6.2.
+    incident: IncidentContract
+    run: RunContract
+    cameras: list[CameraContract]
+
+
+@app.get(f"{PREFIX}/cases/{{case_id}}", response_model=CaseDetail, tags=["cases"])
+def get_case(case_id: CaseId, session: DbSession) -> CaseDetail:
+    """Return one case: the incident with its rewind window, its run, and the cameras.
+
+    Cameras are every registered camera. The frozen ``ProcessingRun`` does not record
+    which cameras a run used, and the MVP has exactly three (charter §3); a run over a
+    subset would need that field first.
     """
-    raise _pending("E6.2")
+    incident = session.get(Incident, case_id)
+    if incident is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"no case {case_id!r}")
+    run = session.get(ProcessingRun, incident.run_id)
+    if run is None:  # the foreign key makes this unreachable short of a broken database
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"case {case_id!r} has no run")
+    return CaseDetail(
+        incident=incident_to_contract(incident),
+        run=RunContract(
+            run_id=run.run_id,
+            input_hash=run.input_hash,
+            dataset_version=run.dataset_version,
+            model_versions=dict(run.model_versions),
+            config_version=run.config_version,
+            status=RunStatus(run.status),
+            device=run.device,
+            started_at=run.started_at,
+            finished_at=run.finished_at,
+            error=run.error,
+        ),
+        cameras=[
+            CameraContract(
+                camera_id=c.camera_id,
+                name=c.name,
+                source_uri=c.source_uri,
+                timezone=c.timezone,
+                clock_offset_s=c.clock_offset_s,
+                width=c.width,
+                height=c.height,
+                fps=c.fps,
+                calibration_ref=c.calibration_ref,
+            )
+            for c in session.scalars(select(Camera).order_by(Camera.camera_id))
+        ],
+    )
 
 
 class Timeline(BaseModel):
@@ -230,7 +294,7 @@ class Timeline(BaseModel):
     identity_links: list[IdentityLink]
 
 
-def _run_for_case(session: Session, case_id: str) -> str:
+def _run_for_case(session: Session, case_id: str) -> tuple[str, Incident | None]:
     """Resolve a case id to the run whose data backs it.
 
     A case is an incident (E6). Until incidents exist, and for debugging after, a run
@@ -239,9 +303,9 @@ def _run_for_case(session: Session, case_id: str) -> str:
     """
     incident = session.get(Incident, case_id)
     if incident is not None:
-        return incident.run_id
+        return incident.run_id, incident
     if session.get(ProcessingRun, case_id) is not None:
-        return case_id
+        return case_id, None
     raise HTTPException(status.HTTP_404_NOT_FOUND, f"no case or run {case_id!r}")
 
 
@@ -252,8 +316,15 @@ def get_timeline(
     start_s: Annotated[float | None, Query(description="Window start, seconds")] = None,
     end_s: Annotated[float | None, Query(description="Window end, seconds")] = None,
 ) -> Timeline:
-    """Return the cross-camera semantic event timeline of a case's run."""
-    run_id = _run_for_case(session, case_id)
+    """Return the cross-camera semantic event timeline of a case's run.
+
+    A case id with no explicit window returns its incident's rewind window, which is
+    what opening a case means. An explicit window always wins, so the investigator can
+    widen it; a run id has no window of its own and returns everything.
+    """
+    run_id, incident = _run_for_case(session, case_id)
+    if incident is not None and start_s is None and end_s is None:
+        start_s, end_s = incident.window_start_s, incident.window_end_s
     events = [to_contract(r) for r in events_for_run(session, run_id, start_s=start_s, end_s=end_s)]
     segments = [
         segment_to_contract(s)

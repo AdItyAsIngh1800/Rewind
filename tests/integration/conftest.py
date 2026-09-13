@@ -18,8 +18,12 @@ import sys
 from collections.abc import Iterator
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+
+from apps.api.main import app
+from packages.database.session import get_session
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
@@ -59,3 +63,17 @@ def session(migrated_database: str) -> Iterator[Session]:
         transaction.rollback()
         connection.close()
         engine.dispose()
+
+
+@pytest.fixture
+def client(session: Session) -> Iterator[TestClient]:
+    """Build an API client whose requests share the test's rolled-back session."""
+    previous = app.dependency_overrides.get(get_session)
+    app.dependency_overrides[get_session] = lambda: session
+    try:
+        yield TestClient(app)
+    finally:
+        if previous is None:
+            app.dependency_overrides.pop(get_session, None)
+        else:
+            app.dependency_overrides[get_session] = previous

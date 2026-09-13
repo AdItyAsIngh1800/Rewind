@@ -2,32 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from apps.api.main import PREFIX, app
+from apps.api.main import PREFIX
 from packages.database.models import Camera, ProcessingRun
-from packages.database.session import get_session
 from packages.schemas import SCHEMA_VERSION, EventType, RunStatus, SemanticEvent
 from services.events import write_events
 from tests.integration.conftest import needs_db
-
-
-@pytest.fixture
-def client(session: Session) -> Iterator[TestClient]:
-    """Build an API client whose requests share the test's rolled-back session."""
-    previous = app.dependency_overrides.get(get_session)
-    app.dependency_overrides[get_session] = lambda: session
-    try:
-        yield TestClient(app)
-    finally:
-        if previous is None:
-            app.dependency_overrides.pop(get_session, None)
-        else:
-            app.dependency_overrides[get_session] = previous
 
 
 def _event(run_id: str, n: int, t: float, kind: EventType = EventType.ZONE_ENTRY) -> SemanticEvent:
