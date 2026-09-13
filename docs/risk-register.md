@@ -10,8 +10,8 @@ Not "soon".
 |---|---|---|---|---|---|---|
 | R1 | Unified-memory pressure | **Low** (measured) | High | Sudden throughput collapse — Metal pages to disk rather than raising OOM | Compact models, batch 1, one heavy workload at a time, `empty_cache()` between runs | Inference throughput drops more than 5x between identical runs. Measured 2026-09-09: 1.06 GB peak against an 11.8 GB ceiling |
 | R2 | Limited real incident data | Resolved | — | — | Simulated dataset with exact ground truth | Public-footage check (stretch 1) fails to generalise |
-| R3 | Cross-camera ID switches | High | High | False-link rate rising while recall improves | Appearance + time + geometry; conservative threshold; explicit UNKNOWN | False-link rate > 0.05 at Gate 3 |
-| R4 | Camera synchronization drift | Medium | High | Sync test fails on injected offset | Timestamp normalization, per-camera offset config, injected-offset test | Event ordering wrong across cameras |
+| R3 | Cross-camera ID switches | **Medium** (Gate 3) | High | False-link rate rising while recall improves | Appearance + time + geometry; conservative threshold; explicit UNKNOWN | False-link rate > 0.05 at Gate 3. Measured 2026-09-13: 0 of 20 on tune cases (EXP-0007). Not Low: no tune case contains a look-alike close in space and time; E9.1 is the real test |
+| R4 | Camera synchronization drift | **Low** (E5.1) | High | Sync test fails on injected offset | Timestamp normalization, per-camera offset config, injected-offset test, clock residual check on every run | Event ordering wrong across cameras. The per-run check caught a real wrong-offset bug on its first run (2026-09-12) |
 | R5 | Occlusion | Certain | Medium | — | Use other cameras; mark the gap; never force a conclusion | A gap is silently filled rather than reported |
 | R6 | False causal certainty | Medium | **Critical** | Report language stronger than evidence level | Rank hypotheses; vocabulary bound to the evidence enum | Any unsupported claim reaches a report |
 | R7 | LLM hallucination | Low | High | — | LLM is stretch-only and sits behind the evidence graph | LLM output diverges from the template on the same evidence |
