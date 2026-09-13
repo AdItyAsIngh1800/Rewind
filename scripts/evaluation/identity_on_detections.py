@@ -133,6 +133,12 @@ def main() -> int:
             score_links(case_id, observations, segments, descriptors, truth_real, "detections", cfg)
         )
         log_result(results[-1])
+        # Same perception output with descriptors withheld: the spec §D4 baseline the
+        # colour histogram has to beat to earn its weight in the score.
+        results.append(
+            score_links(case_id, observations, segments, {}, truth_real, "no-appear", cfg)
+        )
+        log_result(results[-1])
     out = REPORTS / f"identity-{datetime.now(UTC):%Y-%m-%dT%H%M%SZ}.json"
     out.write_text(json.dumps({"config": cfg.version, "results": results}, indent=2))
     log.info("written to %s", out)
