@@ -71,9 +71,10 @@ defensible causes have no tune-case counterpart. Both are measured at E9.1.
 ## Decision
 
 **Adopt** the graph, ranker and generator as configured for Gates 4 and 5.
-**Open, for the owner:** whether a refusal inside an identity group should cap a
-hypothesis about that group (see `docs/gates/gate-4-5.md`). Not tuned here: two cases
-cannot tell a principled rule from one fitted to them.
+**Decided by the owner, 2026-09-13:** a refusal inside an identity group keeps capping
+a hypothesis about that group (option A in `docs/gates/gate-4-5.md`), revisited only on
+golden-case evidence. Not tuned here: two cases cannot tell a principled rule from one
+fitted to them.
 
 ## Next experiment
 

@@ -96,7 +96,7 @@ would be theatre, so these are **provisional floors** to be replaced at Gate 1 b
 values calibrated against the measured baseline. A floor may be lowered only with an
 experiment record showing why it was unreachable.
 
-**Calibrated floors signed off 2026-09-13** at Gates 1–3; the provisional column is
+**Calibrated floors signed off 2026-09-13** at Gates 1–5; the provisional column is
 kept for the record.
 
 | Metric | Provisional floor | Calibrated floor | Rationale |
@@ -108,8 +108,10 @@ kept for the record.
 | Event timing error | ≤ 0.5 s | **≤ 0.5 s** (Gate 2) | Below the temporal resolution a human investigator would dispute |
 | Cross-camera **false-link rate** | ≤ 0.05 | **≤ 0.05** (Gate 3) | The one metric where being wrong is worse than being silent |
 | Cross-camera recall | — | **≥ 0.65** (Gate 3) | Measured 0.74; a regression tripwire, never traded against false links |
-| Evidence coverage | ≥ 0.95 | Every material claim carries a reference |
-| Unsupported-claim rate | 0.00 | Structural, not statistical — the generator raises rather than emits |
+| Evidence coverage | ≥ 0.95 | **≥ 0.95** (Gate 5) | Every material claim carries a reference; measured 1.00 |
+| Unsupported-claim rate | 0.00 | **0.00** (Gate 5) | Structural, not statistical — the generator raises rather than emits |
+| Cause ranking, top-3 / top-1 | — | **1.00 / ≥ 0.67** (Gate 4) | Measured 1.00 / 1.00 on three tune incidents; top-1 tolerates one close call under ambiguity (C06) |
+| Gap recall (unseen seconds named) | — | **≥ 0.90** (Gate 4) | Measured 1.00 wherever truth has a gap |
 
 ## 7. Locked technical decisions
 

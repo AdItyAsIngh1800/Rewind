@@ -2,8 +2,9 @@
 
 - **Sub-phase:** E7.5
 - **Date reviewed:** 2026-09-13 (calendar date: Tue 22 Dec 2026 — reached early)
-- **Verdict:** Gate 5 **PASS**. Gate 4 **PASS** on cause ranking, with one calibration
-  question for the owner and the golden-case behaviours still unmeasured
+- **Verdict:** Gate 5 **PASS**. Gate 4 **PASS** on cause ranking; calibration question
+  decided (option A) and thresholds signed off 2026-09-13; golden-case behaviours still
+  unmeasured
 
 ## Exit criteria
 
@@ -77,7 +78,7 @@ No scope added. No LLM anywhere on the path; the stretch LLM layer would sit beh
 `services/reporting`, never in front. No face or biometric signal is used in any
 hypothesis.
 
-## Decision needed — how a refusal inside a group affects a hypothesis
+## Decision — how a refusal inside a group affects a hypothesis
 
 On real detections the identity layer sometimes links A↔B and B↔C but refuses A↔C
 directly. The group still says one person. Today that refusal counts against any
@@ -93,7 +94,21 @@ hypothesis about the person whose critical interval it overlaps, capping it at
 Recommendation: **A now, revisit with the golden cases in E9.1**, where C02 and C06
 give the first evidence not used to design the rule.
 
-## Thresholds — proposed, awaiting sign-off
+**Decided 2026-09-13 by the owner: A.** Two reasons, recorded so E9.1 does not reopen
+this without new evidence:
+
+1. *Procedural.* B and C would be a threshold or matching rule picked after reading
+   case_01 and case_03, and case_01 is the case the rule would fix. That is the scoring
+   logic fitted to the demo, the thing the sealed golden pair exists to prevent.
+2. *Directional.* Wording the flagship cause *Conflicting evidence* when the truth is
+   *Likely contributed* says less than the truth. That is the failure the charter
+   prefers, the same shape as the 0.00 unsupported-claim floor: an honest
+   understatement is cheap, an overstatement is what E7 exists to prevent.
+
+Revisit only if the golden cases show the rule costing a correct conclusion, not only
+wording.
+
+## Thresholds — signed off 2026-09-13
 
 | Metric | Proposed floor | Why |
 |---|---|---|
