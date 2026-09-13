@@ -78,7 +78,7 @@ No scope added. Appearance is a colour histogram of the centre of the box: no fa
 no biometric, in line with the §4 non-goal. The embedding comparison spec §D4 invites
 was not built; EXP-0007 records why it is not needed yet.
 
-## Thresholds — proposed, awaiting sign-off
+## Thresholds — signed off 2026-09-13
 
 | Metric | Proposed floor | Why |
 |---|---|---|

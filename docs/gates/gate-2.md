@@ -84,7 +84,7 @@ No scope added. The camera model is pure maths on the existing scene config; no 
 dependency. The naive merge is explicitly interim and named as such in every event
 it produces (`payload.merge_rule`).
 
-## Thresholds — proposed, awaiting sign-off with Gate 1's
+## Thresholds — signed off 2026-09-13 with Gate 1's
 
 | Metric | Proposed floor | Why |
 |---|---|---|

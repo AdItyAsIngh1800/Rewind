@@ -96,13 +96,18 @@ would be theatre, so these are **provisional floors** to be replaced at Gate 1 b
 values calibrated against the measured baseline. A floor may be lowered only with an
 experiment record showing why it was unreachable.
 
-| Metric | Provisional floor | Rationale |
-|---|---|---|
-| Detection recall (person, robot) | ≥ 0.90 | Synthetic data with controlled lighting; missing the incident participants is fatal |
-| Detection precision | ≥ 0.85 | False entities manufacture evidence |
-| ID switches per case, per camera | ≤ 2 | Cross-camera identity cannot repair broken single-camera tracks |
-| Event timing error | ≤ 0.5 s | Below the temporal resolution a human investigator would dispute |
-| Cross-camera **false-link rate** | ≤ 0.05 | The one metric where being wrong is worse than being silent |
+**Calibrated floors signed off 2026-09-13** at Gates 1–3; the provisional column is
+kept for the record.
+
+| Metric | Provisional floor | Calibrated floor | Rationale |
+|---|---|---|---|
+| Detection recall (person, robot) | ≥ 0.90 | **≥ 0.95** (Gate 1) | Synthetic data with controlled lighting; missing the incident participants is fatal |
+| Detection precision | ≥ 0.85 | **≥ 0.95** (Gate 1) | False entities manufacture evidence |
+| ID switches per case, per camera | ≤ 2 | **≤ 2** (Gate 1) | Cross-camera identity cannot repair broken single-camera tracks |
+| Zone-event precision / recall | — | **≥ 0.85 / ≥ 0.90** (Gate 2) | Measured 0.88 / 0.92 on the real pipeline |
+| Event timing error | ≤ 0.5 s | **≤ 0.5 s** (Gate 2) | Below the temporal resolution a human investigator would dispute |
+| Cross-camera **false-link rate** | ≤ 0.05 | **≤ 0.05** (Gate 3) | The one metric where being wrong is worse than being silent |
+| Cross-camera recall | — | **≥ 0.65** (Gate 3) | Measured 0.74; a regression tripwire, never traded against false links |
 | Evidence coverage | ≥ 0.95 | Every material claim carries a reference |
 | Unsupported-claim rate | 0.00 | Structural, not statistical — the generator raises rather than emits |
 

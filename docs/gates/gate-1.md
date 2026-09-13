@@ -118,7 +118,7 @@ Two more bugs this re-run found:
 
 Verdict unchanged: **PASS**, on better tracking than the original review.
 
-## Calibrated thresholds — proposed, awaiting sign-off
+## Calibrated thresholds — signed off 2026-09-13
 
 Charter §6 says the provisional floors are replaced here with values calibrated to the
 measured baseline. Proposed:
