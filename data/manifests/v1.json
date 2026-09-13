@@ -8,17 +8,17 @@
         {
           "bytes": 1763842,
           "path": "case_01/CAM_A.mp4",
-          "sha256": "cfe0cf25a3db73b39a812044ec40595fdb09ce4846db165a24d359bfc45f4615"
+          "sha256": "32e25d2628eb457123ba2944a4e447a7d73501ba6331df25289b6522daa431e0"
         },
         {
-          "bytes": 1793959,
+          "bytes": 1793482,
           "path": "case_01/CAM_B.mp4",
-          "sha256": "2bb17574694f02d9c220709e0357d75c0857528e93fc4a99418519e19a28b3dc"
+          "sha256": "6cdd41ee855a3947d1fb83828d4f5ff71532d49ddbcbfe37eca6e5330e840a3c"
         },
         {
           "bytes": 2078758,
           "path": "case_01/CAM_C.mp4",
-          "sha256": "e82cb31ebc44b6185154f1626db6b1f272a4b5737bbd01a3da126b00a339176d"
+          "sha256": "5bd93f2888ef7d36b45bb2f090ec3ddd59190d01610aecaf4d23325866f92b3a"
         },
         {
           "bytes": 119,
@@ -47,7 +47,7 @@
         }
       ],
       "split": "tune",
-      "total_bytes": 6561197
+      "total_bytes": 6560720
     },
     {
       "case": "case_02",
@@ -56,17 +56,17 @@
         {
           "bytes": 1798962,
           "path": "case_02/CAM_A.mp4",
-          "sha256": "7c20ac394535f4ff0ca721fa3fff410fd9fc6f68cfe62c96e5c511d93349d446"
+          "sha256": "06a8a7cca2efd6df13ff7dc37eb51bcfad942f7be6f5f9fcb6045d00652ab65d"
         },
         {
-          "bytes": 1752073,
+          "bytes": 1752052,
           "path": "case_02/CAM_B.mp4",
-          "sha256": "4dd7add82bc9f488cfd59ff349b23ca754c57b299ece07382086cc7caf0bc210"
+          "sha256": "12194ebca22090444e51ee71b64d41eae7df69a4c3301c95fcd6661b23493f52"
         },
         {
           "bytes": 2023207,
           "path": "case_02/CAM_C.mp4",
-          "sha256": "f7c711946de65201c30cc224e6623b982f82d3bcd8a40a1dd63d8de6b000977a"
+          "sha256": "bc80e43020ea45ada8b85d87901810b68e0090327b5799906be146513ce7c462"
         },
         {
           "bytes": 151,
@@ -95,26 +95,26 @@
         }
       ],
       "split": "golden",
-      "total_bytes": 6402816
+      "total_bytes": 6402795
     },
     {
       "case": "case_03",
       "file_count": 8,
       "files": [
         {
-          "bytes": 1795619,
+          "bytes": 1798003,
           "path": "case_03/CAM_A.mp4",
-          "sha256": "938706128fe642cca066832e319aea3afd36b21c8210341a8d68292c547cd171"
+          "sha256": "4f1963e10b84ada9c8a0e30e02d2b21544e2ccca5b9808a5d85b3f46bfa140ee"
         },
         {
-          "bytes": 1849363,
+          "bytes": 1850075,
           "path": "case_03/CAM_B.mp4",
-          "sha256": "ffbe45524a7b356f4c0bf0b64348c240f1855dcca4776850edacae44d3985b1e"
+          "sha256": "93ad5b74fe5a5ff8b18f75ab2e469e35d052c963355a4445ce985a46eb25b812"
         },
         {
           "bytes": 2032797,
           "path": "case_03/CAM_C.mp4",
-          "sha256": "6de4ab5862d4a7aed22e49f7fd604a349f9d16b2f809b309e4c8c64563158f2e"
+          "sha256": "30d0803a1b42f9c385b3d6d224477a6b0240cf67e50cd5d9b3f6dfe5bf0b0586"
         },
         {
           "bytes": 127,
@@ -143,7 +143,7 @@
         }
       ],
       "split": "tune",
-      "total_bytes": 6778110
+      "total_bytes": 6781206
     },
     {
       "case": "case_04",
@@ -152,17 +152,17 @@
         {
           "bytes": 1785140,
           "path": "case_04/CAM_A.mp4",
-          "sha256": "8f843a5fcbe9eaf5325d0aefd582471912a5c73e7b85735535e918bb9426ed3c"
+          "sha256": "1a8fc055516d86592b78801ba6b4934f9d9545462d41327810d23f3320f5229f"
         },
         {
           "bytes": 1817094,
           "path": "case_04/CAM_B.mp4",
-          "sha256": "6949d571e4cd661143fa7c21f2d13e220d7b3b8b512a741a6d51307ae4365597"
+          "sha256": "1152ed9ec8cb442b8365f27e21fac67a07c73fdc02547aa8a63abf9f5416d32c"
         },
         {
           "bytes": 2066227,
           "path": "case_04/CAM_C.mp4",
-          "sha256": "830c7de01c211c789c1a3a23cbe3fda05697c6cb6ea15b22fe88187986c6debf"
+          "sha256": "5b7d44aa60328f477aa94f7425ea7508ce4e216c324d90ee729494d86e522221"
         },
         {
           "bytes": 114,
@@ -200,17 +200,17 @@
         {
           "bytes": 1758631,
           "path": "case_05/CAM_A.mp4",
-          "sha256": "39976e9689149efd7fc94acfa8ecf6bb6a19d639cd0e5f0a85034c1f246a49a7"
+          "sha256": "5995d4f2d9045cbcb7f16a2b27de0adc9aadffb29a30b4aa9675cf6f2c40baf0"
         },
         {
           "bytes": 1784380,
           "path": "case_05/CAM_B.mp4",
-          "sha256": "90b57c136e70b6ffacdf93aa00074aeb0dd0627849948feeef4195f7729b05f7"
+          "sha256": "59ab536ebdeac5ca33cb90657df13c8800ccca95255822a4988fdf667bc712d3"
         },
         {
           "bytes": 2027949,
           "path": "case_05/CAM_C.mp4",
-          "sha256": "c90d643569839ca84044ddbeb543b4110cc0cc2076a181141711dc867b569ff6"
+          "sha256": "8c683ec592c25b22510ab6424758175383ede8db75dd931d3de8d329d448fa45"
         },
         {
           "bytes": 46,
@@ -246,19 +246,19 @@
       "file_count": 8,
       "files": [
         {
-          "bytes": 1832093,
+          "bytes": 1822618,
           "path": "case_06/CAM_A.mp4",
-          "sha256": "4d73f386dfcff7656d2dae8f32ded96336bd4049fe66415ebd1c970469eec460"
+          "sha256": "4c6f40e9ab5d98736a95c16061c4caedc34843c81925d051e56c1907f004f3f3"
         },
         {
-          "bytes": 1843640,
+          "bytes": 1842353,
           "path": "case_06/CAM_B.mp4",
-          "sha256": "d38830aa7816e154fa2df1108bf31ee6236859fe0145bcf0e61808c8f6cba531"
+          "sha256": "cabe60716e550e0ef0deaf58f40378b188dfe22224cdadb6511d2bcc3b992343"
         },
         {
-          "bytes": 2084347,
+          "bytes": 2091947,
           "path": "case_06/CAM_C.mp4",
-          "sha256": "f79c0d2664428337f94a85794eafae82b61507312496b1281d0c9229c1ffde5a"
+          "sha256": "6a71c84c2151b1d645403339249fbdd12195a08ed499a6db9db1ea5064131d71"
         },
         {
           "bytes": 110,
@@ -287,11 +287,11 @@
         }
       ],
       "split": "golden",
-      "total_bytes": 6659994
+      "total_bytes": 6656832
     }
   ],
   "dataset_version": "v1",
-  "generated_at": "2026-09-11T14:32:40.661439+00:00",
+  "generated_at": "2026-09-13T10:54:35.463753+00:00",
   "provenance": {
     "consent_required": "no",
     "contains_real_people": "no",
@@ -312,6 +312,6 @@
       "case_05"
     ]
   },
-  "total_bytes": 38892368,
+  "total_bytes": 38891804,
   "warnings": []
 }
