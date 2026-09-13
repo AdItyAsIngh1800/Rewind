@@ -211,3 +211,41 @@ export interface CaseReport {
   report: Report;
   hypotheses: Hypothesis[];
 }
+
+export interface Health {
+  status: string;
+  api_version: string;
+  schema_version: string;
+  checked_at: string;
+  mock?: boolean;
+}
+
+/** The spec §N metric set. `null` means not measured, never zero: see services/observability/metrics.py. */
+export interface Metrics {
+  queue_depth: number | null;
+  queue_oldest_age_s: number | null;
+  worker_last_seen_s: number | null;
+  frames_per_second: number | null;
+  tracking_id_switch_rate: number | null;
+  event_generation_rate: number | null;
+  incident_detection_rate: number | null;
+  report_generation_latency_s: number | null;
+  api_error_rate: number | null;
+  worker_retries: number | null;
+  dead_letter_jobs: number | null;
+  evidence_coverage: number | null;
+  unsupported_claim_rate: number | null;
+}
+
+export interface RunList {
+  runs: ProcessingRun[];
+  total: number;
+}
+
+/** A dismissal is how a false alert is recorded, so the label says so. */
+export const STATUS_LABEL: Record<IncidentStatus, string> = {
+  new: "New",
+  investigating: "Investigating",
+  resolved: "Resolved",
+  dismissed: "Dismissed (false alert)",
+};

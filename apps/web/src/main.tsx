@@ -6,6 +6,8 @@ import "./styles/globals.css";
 import { Shell } from "./components/Shell";
 import { InboxPage } from "./pages/InboxPage";
 import { CasePage } from "./pages/CasePage";
+import { AnalyticsPage } from "./pages/AnalyticsPage";
+import { HealthPage } from "./pages/HealthPage";
 
 // Investigations do not change under the reader: a case is a fixed record of a run.
 // A long stale time avoids refetch flicker when moving between inbox and case.
@@ -21,6 +23,8 @@ createRoot(document.getElementById("root")!).render(
           <Route element={<Shell />}>
             <Route index element={<InboxPage />} />
             <Route path="cases/:caseId" element={<CasePage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="health" element={<HealthPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

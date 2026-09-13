@@ -9,6 +9,7 @@ import { Inspector } from "@/components/case/Inspector";
 import { ReportView } from "@/components/case/ReportView";
 import { TimelineView } from "@/components/case/TimelineView";
 import { SeverityMark } from "@/components/SeverityMark";
+import { StatusSelect } from "@/components/StatusSelect";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -78,7 +79,7 @@ export function CasePage() {
                 </span>
               </Meta>
               <Meta name="Status">
-                <span className="capitalize">{detail.data.incident.status}</span>
+                <StatusSelect incident={detail.data.incident} />
               </Meta>
               <Meta name="Run">
                 <span className="font-mono text-text-muted">{detail.data.run.run_id}</span>

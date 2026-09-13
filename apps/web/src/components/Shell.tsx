@@ -1,8 +1,11 @@
 import { NavLink, Outlet } from "react-router";
 import { cn } from "@/lib/utils";
 
-// System health and analytics join this list in E8.6, once the real API serves them.
-const NAV = [{ to: "/", label: "Cases" }];
+const NAV = [
+  { to: "/", label: "Cases" },
+  { to: "/analytics", label: "Analytics" },
+  { to: "/health", label: "System health" },
+];
 
 /** Application chrome: a single-row header and the routed page beneath it. */
 export function Shell() {
