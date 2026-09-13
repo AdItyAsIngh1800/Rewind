@@ -127,7 +127,13 @@ def identity_conflicts(
     start_s: float,
     end_s: float,
 ) -> list[IdentityConflict]:
-    """Refused links whose two segments together span part of the window."""
+    """Refused links whose undecided interval falls inside the window.
+
+    The undecided interval is when the identity question actually matters: the overlap
+    of two segments seen at once, or the hand-over gap between one ending and the other
+    starting. Using the whole span of both would cast doubt over every moment either
+    track exists, and downgrade hypotheses the refusal says nothing about.
+    """
     by_id = {s.segment_id: s for s in segments}
     conflicts: list[IdentityConflict] = []
     for link in links:
@@ -136,8 +142,14 @@ def identity_conflicts(
         a, b = by_id.get(link.segment_a), by_id.get(link.segment_b)
         if a is None or b is None:
             continue
-        lo = max(start_s, min(a.start_time_s, b.start_time_s))
-        hi = min(end_s, max(a.end_time_s, b.end_time_s))
+        overlap_lo = max(a.start_time_s, b.start_time_s)
+        overlap_hi = min(a.end_time_s, b.end_time_s)
+        if overlap_hi > overlap_lo:
+            undecided = (overlap_lo, overlap_hi)
+        else:
+            # A hand-over: the gap between the segments, at least one frame wide.
+            undecided = (overlap_hi, max(overlap_lo, overlap_hi + 0.1))
+        lo, hi = max(start_s, undecided[0]), min(end_s, undecided[1])
         if hi <= lo:
             continue
         conflicts.append(
