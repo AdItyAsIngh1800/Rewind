@@ -29,6 +29,7 @@ from services.perception import (
     segments_for_run,
 )
 from services.reasoning.persistence import hypotheses_for_incident
+from services.reporting import report_for_incident
 from tests.integration.conftest import needs_db
 
 CASE_DIR = pathlib.Path("data/samples/case_01")
@@ -195,6 +196,13 @@ def test_pipeline_extracts_and_persists_events(session: Session, queued_run: Pro
     assert top.description.startswith("Person") and top.evidence_level != "unknown"
     assert set(top.support_refs) | set(top.contradiction_refs) <= node_ids
     assert any(e.relation.value == "candidate_cause_of" for e in graph.edges)
+    # And written up: full coverage, and every citation resolves to something the
+    # graph, the event stream or the ranking actually holds.
+    report = report_for_incident(session, incident.incident_id)
+    assert report is not None and result.reports == 1
+    assert report.evidence_coverage == 1.0
+    known = node_ids | {r.event_id for r in rows} | set(report.ranked_hypotheses)
+    assert all(ref in known for c in report.claims for ref in c.evidence_refs)
 
 
 @needs_db

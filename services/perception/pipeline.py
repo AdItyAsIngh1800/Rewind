@@ -50,6 +50,7 @@ from services.ingestion import Frame, decode_frames, plan_sampling, probe, trans
 from services.perception.persistence import write_observations, write_segments
 from services.reasoning.hypotheses import rank_hypotheses
 from services.reasoning.persistence import write_hypotheses
+from services.reporting import generate_report, write_report
 from services.tracking import Tracker, TrackerConfig
 
 log = logging.getLogger(__name__)
@@ -114,6 +115,7 @@ class PipelineResult:
     #: Nodes across every incident's evidence graph built by the run (E7.1).
     evidence_nodes: int = 0
     hypotheses: int = 0
+    reports: int = 0
 
 
 def process_camera(
@@ -320,6 +322,9 @@ def process_run(
                 hypotheses = rank_hypotheses(incident, graph, events, zones, built_at)
                 write_graph(session, graph)
                 result.hypotheses += write_hypotheses(session, hypotheses)
+                result.reports += write_report(
+                    session, generate_report(incident, graph, hypotheses, events, built_at)
+                )
                 result.evidence_nodes += len(graph.nodes)
         transition(session, run_id, RunStatus.COMPLETE)
         session.commit()
