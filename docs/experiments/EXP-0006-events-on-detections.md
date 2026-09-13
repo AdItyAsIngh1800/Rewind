@@ -82,3 +82,23 @@ Same precision and recall as before, timing error halved to 0.2 s, and the genui
 cross-camera spread is under 0.5 s. **Decision amended: `merge_tolerance_s = 0.8`**,
 the smallest window that covers the real spread. The residual three false positives
 and two misses are unchanged and remain the two localisation limits.
+
+## Re-run, 2026-09-13 — per-actor render, retrained detector, identity-keyed merge
+
+Three things changed underneath this experiment: the clips were re-rendered with one
+colour per actor, the detector was retrained on them and given the edge rule
+(EXP-0003 and EXP-0004 re-runs), and the cross-camera merge now keys on E5.3 identity
+groups instead of class (`events-on-detections-2026-09-13T112135Z`).
+
+| Case | TP | FP | FN | P | R | Max timing |
+|---|---|---|---|---|---|---|
+| case_01 | 7 | 1 | 0 | 0.88 | 1.00 | 0.1 s |
+| case_03 | 7 | 0 | 0 | 1.00 | 1.00 | 0.2 s |
+| case_04 | 6 | 2 | 2 | 0.75 | 0.75 | 0.1 s |
+| case_05 | 3 | 0 | 0 | 1.00 | 1.00 | 0.2 s |
+| **Total** | **23** | **3** | **2** | **0.88** | **0.92** | **0.2 s** |
+
+Identical to the corrected sweep, with and without the edge rule. That is expected
+and also a limit of the evidence: no tune case has two same-class entities crossing
+one zone within the merge window from different cameras, so the identity-keyed merge
+has not yet been shown to fix the failure it exists for. **Decision stands.**

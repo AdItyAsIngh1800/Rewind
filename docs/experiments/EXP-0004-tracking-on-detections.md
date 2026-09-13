@@ -55,3 +55,37 @@ features exist to bridge.
 ## Next experiment
 
 `EXP-0005`, in E5: colour-histogram appearance baseline for cross-camera association.
+
+## Re-run, 2026-09-13 — retrained checkpoint, and an edge rule
+
+The checkpoint retrained on the per-actor colour render (EXP-0003 re-run) regressed
+tracking from 2 switches to **5, with 4 on `case_03 CAM_B` P02** — above the floor.
+
+Traced per track: P02 enters CAM_B from the bottom edge at frame 133. The detector
+reported it as a 4 px sliver (frames 136–140, track T003), then 13 px (141–146,
+T005), then the real 44 px box (144–279, T007), and another sliver on exit (268–276,
+T008). The box height tripled between frames, so each growth step fell below
+`match_thresh` and opened a new track. The main track never switched. The old
+checkpoint happened to emit fewer slivers; nothing about the tracker changed.
+
+Swept dropping detections that touch the frame border with a shorter side under N px:
+
+| Edge rule | Id switches | Worst camera | Spurious | Detections dropped |
+|---|---|---|---|---|
+| none | 5 | 4 (`case_03 CAM_B`) | 44 | 0 |
+| < 12 px | 2 | 1 | 32 | 25 |
+| **< 16 px** | **1** | **1** (`case_01 CAM_A`) | **26** | **39** |
+| < 24 px | 1 | 1 | 22 | 60 |
+
+Edge-only, because interior people at range are 13.8 px wide in the ground truth and
+a global size floor would drop them. Such a sliver is not usable evidence anyway: its
+centre is not the entity's, so it would back-project to the wrong floor position.
+
+Through the full pipeline with the rule (`tracking-on-detections-2026-09-13T112059Z`):
+`case_03 CAM_B` 0 switches, 3 tracks for 3 entities, 1 spurious box (was 25 on the
+first render). Detection precision and recall on `case_05` and `case_04` are
+unchanged to the box.
+
+**Decision: adopt `DetectorConfig.edge_min_side_px = 16`**, the smallest value on the
+plateau; recorded in the detector version string (`:edge16`). The one remaining switch
+is the long-gap re-acquisition on `case_01 CAM_A` P01.

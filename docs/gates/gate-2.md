@@ -15,6 +15,12 @@
 | Truth events no camera could see | 13 of 38, reported as coverage gaps | | EXP-0005 |
 | Timeline endpoint | real, windowed, 404 on unknown case | | `tests/integration/test_timeline.py` |
 
+**Re-measured 2026-09-13** on the per-actor colour render, retrained detector with the
+edge rule, and identity-keyed merge: 23 TP, 3 FP, 2 FN, precision 0.88, recall 0.92,
+max timing 0.2 s — identical per case (EXP-0006 re-run). Verdict unchanged: **PASS**.
+Note the 0.85 precision floor proposed below sits one false positive under the
+measurement.
+
 ## Contract integrity
 
 `SCHEMA_VERSION` unchanged. `GET /cases/{id}/timeline` now returns `Timeline`

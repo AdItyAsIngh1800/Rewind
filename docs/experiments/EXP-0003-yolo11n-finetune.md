@@ -53,3 +53,22 @@ the structural reason ADR-0004 records, so the comparison is between "cannot" an
 ## Next experiment
 
 `EXP-0004`: the tracker fed by this detector rather than by perfect boxes.
+
+## Re-run, 2026-09-13 — per-actor colour render
+
+The render gave every actor its class colour; scene spec §5 asks for one vest colour
+per actor. P02 is now orange and F02 navy (`scene_v1.json` `actor_colours`), the 18
+clips were re-rendered, `verify-alignment` and `validate-gt` pass, and the same recipe
+was trained again over the old checkpoint (860 s). Ledger row `BUG-FIX`.
+
+| Class | Case | Precision (was) | Recall (was) |
+|---|---|---|---|
+| `person` | case_05 (val) | 0.991 (0.987) | 0.989 (0.994) |
+| `robot` | case_05 (val) | 1.000 (0.997) | 0.989 (0.992) |
+| `forklift` | case_04 (train) | 0.998 (0.985) | 0.998 (1.000) |
+| `pallet` | case_04 (train) | 1.000 (1.000) | 0.999 (0.999) |
+
+Val mAP50 0.995, mAP50-95 0.986 (was 0.987). Zero-shot on `case_01`: still 0
+detections. Every movement is within a few boxes of a 1,000-box case, i.e. inside the
+run-to-run noise of a 20-epoch fine-tune. The same rows are identical with the edge
+rule added in the EXP-0004 re-run. **Decision stands.**

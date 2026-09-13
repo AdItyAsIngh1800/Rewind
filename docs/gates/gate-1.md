@@ -88,6 +88,36 @@ No scope added. Fine-tuning was brought into scope by ADR-0004 before any traini
 code was written. The E4.1 geometry module was pulled forward while the render ran,
 which the roadmap explicitly allows; no E4.2 work started.
 
+## Re-measured 2026-09-13 — per-actor colour render
+
+Scene spec §5 asks for a distinct vest colour per actor; the first render gave every
+actor its class colour, so P01 and P02 were pixel-identical. Fixed, re-rendered,
+retrained with the same recipe (EXP-0003), and every harness re-run (ledger, `BUG-FIX`).
+
+| Criterion | 2026-09-11 | 2026-09-13 | Floor |
+|---|---|---|---|
+| Detection recall, person | 0.994 | 0.989 | ≥ 0.90 |
+| Detection recall, robot | 0.992 | 0.989 | ≥ 0.90 |
+| Detection precision, person | 0.987 | 0.991 | ≥ 0.85 |
+| Detection precision, robot | 0.997 | 1.000 | ≥ 0.85 |
+| Id switches per camera per case | worst 1, total 2 | **worst 1, total 1** | ≤ 2 |
+
+The retrained checkpoint first scored **5 switches, 4 on `case_03 CAM_B`**, which
+fails this gate. Cause: P02 rises into CAM_B from the bottom edge and the new
+detector reported it as 4 px, then 13 px slivers, each too different from the last
+for ByteTrack to match. Fixed in the detector, not the tracker: edge-cut boxes under
+16 px are dropped (`DetectorConfig.edge_min_side_px`, EXP-0004 re-run). Detection
+precision and recall are identical with and without the rule.
+
+Two more bugs this re-run found:
+
+| Bug | Phase | Found by |
+|---|---|---|
+| Every actor rendered in its class colour; P01 and P02 indistinguishable, contrary to scene spec §5 | E1.2 | E5.2 appearance descriptors had nothing to separate |
+| Alignment guard demanded 35% of a box match regardless of occlusion; a shared class colour had let the occluder's pixels pass for the hidden actor's | E1.2 guard | First per-actor render: P02 at visibility 0.18 behind P01 |
+
+Verdict unchanged: **PASS**, on better tracking than the original review.
+
 ## Calibrated thresholds — proposed, awaiting sign-off
 
 Charter §6 says the provisional floors are replaced here with values calibrated to the
@@ -113,4 +143,5 @@ written down above with the phase that owns it.
 
 1. Long-gap re-acquisition → E5.2/E5.3.
 2. Forklift/pallet held-out measurement → E9.1.
-3. `yolo11n.pt` blob in history at `375a586` → scrub before the Week 20 public flip.
+3. ~~`yolo11n.pt` blob in history at `375a586` → scrub before the Week 20 public flip.~~
+   Done 2026-09-13 with `git filter-repo`; every earlier commit hash changed (ledger).
