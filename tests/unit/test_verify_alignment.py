@@ -39,3 +39,17 @@ def test_achromatic_entity_keeps_rgb_path_only() -> None:
     bgr, hs = va.srgb8(ROBOT), va.hue_sat(ROBOT)
     assert va.matches(_solid((200, 200, 200)), bgr, hs).all()  # shaded white
     assert not va.matches(_solid((0, 0, 255)), bgr, hs).any()  # pure red
+
+
+def test_occluded_box_needs_only_half_its_visible_fraction() -> None:
+    """An actor at visibility 0.18 behind another passes at 17%, not the full 35%."""
+    required = va.required_fraction((480, 239, 506, 323), 0.18, 1280, 720)
+    assert required is not None
+    assert 0.08 < required < 0.17
+    assert va.required_fraction((480, 239, 506, 323), 1.0, 1280, 720) == va.MIN_MATCH_FRACTION
+
+
+def test_box_cut_by_frame_edge_is_not_judged() -> None:
+    """A box touching the frame border is skipped rather than failed."""
+    assert va.required_fraction((1040, 686, 1145, 720), 0.55, 1280, 720) is None
+    assert va.required_fraction((0, 100, 40, 200), 0.9, 1280, 720) is None

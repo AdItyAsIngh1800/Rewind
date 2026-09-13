@@ -66,6 +66,32 @@ HUE_TOLERANCE_DEG = 8
 #: for the achromatic robot, which keeps the RGB tolerance alone.
 MIN_SATURATION = 0.25
 
+#: Share of a box's visible fraction that must match. A box is drawn around the whole
+#: entity, occluded parts included, so an actor at visibility 0.18 behind another can
+#: only ever colour 18% of it. With one colour per class the occluder's pixels passed
+#: for the hidden actor's, which hid this; per-actor colours (P01 green, P02 orange)
+#: exposed it as 17% and 29% matches on correctly placed boxes. A misplaced box still
+#: reads near 0%, so half the visible fraction keeps the margin the bug needs.
+VISIBLE_SHARE = 0.5
+
+
+def required_fraction(
+    box: tuple[int, int, int, int], visibility: float, width: int, height: int
+) -> float | None:
+    """Match fraction a box must reach, or None when it cannot be judged by colour.
+
+    A box cut by the frame edge is skipped: what remains in frame is the near-field
+    face at a grazing angle, washed out past both colour paths (P02's top face renders
+    hue 12 against its 16, which is the pallet's hue, so widening the window would
+    trade this false failure for a class collision). Measured on the colour-fix
+    render, this skipped 3 of 94 sampled boxes and lost 1 of 27 simulated frozen-actor
+    detections; interior boxes still catch the bug.
+    """
+    x1, y1, x2, y2 = box
+    if x1 <= 0 or y1 <= 0 or x2 >= width or y2 >= height:
+        return None
+    return min(MIN_MATCH_FRACTION, VISIBLE_SHARE * visibility)
+
 
 @dataclass
 class Mismatch:
@@ -125,13 +151,17 @@ def check_case(
                 x1, y1 = int(box["x1"]), int(box["y1"])
                 x2, y2 = int(box["x2"]) + 1, int(box["y2"]) + 1
                 crop = frame[y1:y2, x1:x2]
-                if crop.size == 0:
+                height, width = frame.shape[:2]
+                required = required_fraction(
+                    (x1, y1, x2, y2), float(str(row["visibility"])), width, height
+                )
+                if crop.size == 0 or required is None:
                     continue
                 key = str(row["entity_id"])
                 if key not in colours:
                     key = str(row["entity_class"])
                 fraction = float(matches(crop, colours[key], hues[key]).mean())
-                if fraction < MIN_MATCH_FRACTION:
+                if fraction < required:
                     mismatches.append(
                         Mismatch(
                             case_id,
