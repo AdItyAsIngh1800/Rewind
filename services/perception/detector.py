@@ -60,6 +60,13 @@ class DetectorConfig:
     #: IoU ~0.65 between them; the duplicate seeded phantom tracks (EXP-0004). 0.5
     #: removes those while leaving two people who genuinely overlap less than half.
     iou: float = 0.5
+    #: Boxes cut by the frame edge whose shorter side is under this many pixels are
+    #: dropped. An actor rising into view from the bottom edge is detected as a 4 px,
+    #: then 13 px sliver; each grew too fast between frames for ByteTrack to match, so
+    #: each opened a new track and `case_03 CAM_B` scored 4 id switches (EXP-0004,
+    #: re-run). Such a box cannot be localised either, since its centre is not the
+    #: entity's. Edge-only because interior people at range measure 13.8 px wide.
+    edge_min_side_px: float = 16.0
     device: str = "mps"
     #: Fine-tuned checkpoints predict the project's classes directly, so the COCO
     #: name mapping is bypassed. Set by the training run, not guessed at inference.
@@ -69,7 +76,19 @@ class DetectorConfig:
     def version(self) -> str:
         """Identifier recorded in ``ProcessingRun.model_versions``."""
         suffix = "native" if self.native_classes else "coco"
-        return f"{self.checkpoint}:{suffix}:conf{self.confidence}:iou{self.iou}"
+        return (
+            f"{self.checkpoint}:{suffix}:conf{self.confidence}:iou{self.iou}"
+            f":edge{self.edge_min_side_px:g}"
+        )
+
+
+def cut_by_edge(
+    box: tuple[float, float, float, float], width: int, height: int, min_side: float
+) -> bool:
+    """Whether a box touches the frame border and is too thin to track or localise."""
+    x1, y1, x2, y2 = box
+    touches = x1 <= 1.0 or y1 <= 1.0 or x2 >= width - 1.0 or y2 >= height - 1.0
+    return touches and min(x2 - x1, y2 - y1) < min_side
 
 
 class Detector:
@@ -174,6 +193,9 @@ class Detector:
                 # contract rejects those, so they are dropped here rather than
                 # crashing a 450-frame run on one degenerate prediction.
                 if x2 - x1 < 1.0 or y2 - y1 < 1.0:
+                    continue
+                height, width = frames[position].shape[:2]
+                if cut_by_edge((x1, y1, x2, y2), width, height, self.config.edge_min_side_px):
                     continue
 
                 yield Observation(
