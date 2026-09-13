@@ -64,6 +64,8 @@ def cases(session: Session) -> None:
             model_versions={"detector": "d"},
             config_version="t",
             status=RunStatus.COMPLETE.value,
+            # 90 s before the report below is issued, so report latency has a known answer.
+            started_at=datetime(2026, 9, 12, 23, 58, 30, tzinfo=UTC),
         )
     )
     session.flush()
@@ -170,10 +172,8 @@ def test_evidence_graph_is_served_with_provenance(client: TestClient, session: S
     assert client.get(f"{PREFIX}/cases/INC-nope/evidence").status_code == 404
 
 
-@needs_db
-@pytest.mark.usefixtures("cases")
-def test_report_is_served_with_its_ranked_hypotheses(client: TestClient, session: Session) -> None:
-    """Assert the stored report and its hypotheses come back together, and 404 without one."""
+def _issue_report(session: Session) -> None:
+    """Build and store the e-stop incident's graph, hypotheses and report, as a run would."""
     row = session.get(IncidentRow, ESTOP)
     assert row is not None
     incident = incident_to_contract(row)
@@ -194,6 +194,13 @@ def test_report_is_served_with_its_ranked_hypotheses(client: TestClient, session
     write_hypotheses(session, hypotheses)
     write_report(session, generate_report(incident, graph, hypotheses, events, built_at))
 
+
+@needs_db
+@pytest.mark.usefixtures("cases")
+def test_report_is_served_with_its_ranked_hypotheses(client: TestClient, session: Session) -> None:
+    """Assert the stored report and its hypotheses come back together, and 404 without one."""
+    _issue_report(session)
+
     body = client.get(f"{PREFIX}/cases/{ESTOP}/report").json()
     assert (
         body["report"]["claims"][0]["text"]
@@ -204,3 +211,43 @@ def test_report_is_served_with_its_ranked_hypotheses(client: TestClient, session
         "no candidate, so no cause is claimed"
     )
     assert client.get(f"{PREFIX}/cases/{BLOCKED}/report").status_code == 404
+
+
+@needs_db
+@pytest.mark.usefixtures("cases")
+def test_metrics_measure_what_is_stored_and_leave_the_rest_unmeasured(
+    client: TestClient, session: Session
+) -> None:
+    """Assert stored reports are measured, and what nothing observes yet is null, not zero."""
+    before = client.get(f"{PREFIX}/metrics").json()
+    assert before["evidence_coverage"] is None and before["report_generation_latency_s"] is None
+
+    _issue_report(session)
+    body = client.get(f"{PREFIX}/metrics").json()
+    assert (body["evidence_coverage"], body["unsupported_claim_rate"]) == (1.0, 0.0)
+    assert body["report_generation_latency_s"] == 90.0
+    assert body["event_generation_rate"] is None, "no observations, so no footage to divide by"
+    assert body["frames_per_second"] is None and body["api_error_rate"] is None
+
+
+@needs_db
+@pytest.mark.usefixtures("cases")
+def test_runs_are_listed_for_the_health_screen(client: TestClient) -> None:
+    """Assert runs come back as contracts with their total, and the limit is validated."""
+    body = client.get(f"{PREFIX}/runs").json()
+    assert body["total"] == 1
+    assert [r["run_id"] for r in body["runs"]] == [RUN]
+    assert client.get(f"{PREFIX}/runs", params={"limit": 0}).status_code == 422
+
+
+@needs_db
+@pytest.mark.usefixtures("cases")
+def test_dismissing_a_case_changes_its_status_and_nothing_else(client: TestClient) -> None:
+    """Assert a dismissal is stored and filterable, keeps the window, and rejects bad input."""
+    r = client.patch(f"{PREFIX}/cases/{ESTOP}", json={"status": "dismissed"})
+    assert r.status_code == 200
+    assert (r.json()["status"], r.json()["window_start_s"]) == ("dismissed", 3.4)
+    dismissed = client.get(f"{PREFIX}/cases", params={"status": "dismissed"}).json()
+    assert [c["incident_id"] for c in dismissed["cases"]] == [ESTOP]
+    assert client.patch(f"{PREFIX}/cases/{ESTOP}", json={"status": "closed"}).status_code == 422
+    assert client.patch(f"{PREFIX}/cases/INC-nope", json={"status": "resolved"}).status_code == 404

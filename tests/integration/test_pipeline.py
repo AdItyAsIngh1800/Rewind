@@ -23,6 +23,7 @@ from services.evidence import graph_for_incident
 from services.identity import links_for_run
 from services.incidents import list_incidents, load_case_script, state_changes
 from services.ingestion import Frame, RunConflictError
+from services.observability.metrics import stored_metrics
 from services.perception import (
     observations_in_window,
     process_run,
@@ -200,6 +201,10 @@ def test_pipeline_extracts_and_persists_events(session: Session, queued_run: Pro
     # graph, the event stream or the ranking actually holds.
     report = report_for_incident(session, incident.incident_id)
     assert report is not None and result.reports == 1
+
+    measured = stored_metrics(session)
+    assert measured.event_generation_rate and measured.incident_detection_rate
+    assert (measured.evidence_coverage, measured.unsupported_claim_rate) == (1.0, 0.0)
     assert report.evidence_coverage == 1.0
     known = node_ids | {r.event_id for r in rows} | set(report.ranked_hypotheses)
     assert all(ref in known for c in report.claims for ref in c.evidence_refs)

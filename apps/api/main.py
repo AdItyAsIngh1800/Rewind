@@ -17,10 +17,10 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from apps.api.queue import enqueue_run
+from apps.api.queue import enqueue_run, queue_stats
 from packages.database.models import Camera, Incident, ProcessingRun
 from packages.database.session import get_session
 from packages.schemas import (
@@ -44,6 +44,7 @@ from services.evidence import graph_for_incident
 from services.identity import link_to_contract, links_for_run
 from services.incidents import incident_to_contract, list_incidents
 from services.ingestion import create_run
+from services.observability.metrics import stored_metrics
 from services.perception.persistence import segment_to_contract, segments_for_run
 from services.reasoning.persistence import hypotheses_for_incident
 from services.reporting import report_for_incident
@@ -95,30 +96,81 @@ def health() -> Health:
 
 
 class Metrics(BaseModel):
-    """The metric set from specification §N.
+    """The metric set from specification §N, measured wherever the system can measure it.
 
-    Zeroed until the pipeline runs. The shape is fixed now so the System Health
-    screen can be built against it.
+    ``None`` means not measured, never zero. A zero queue or a zero unsupported-claim
+    rate reads as "idle and healthy", a claim the API could not back. Queue and worker
+    values are ``None`` while Redis is unreachable or no worker has reported; frame
+    throughput, API error rate and a live ID-switch rate need a running process to
+    observe and arrive with E10.2.
     """
 
-    queue_depth: int = 0
-    queue_oldest_age_s: float = 0.0
-    frames_per_second: float = 0.0
-    tracking_id_switch_rate: float = 0.0
-    event_generation_rate: float = 0.0
-    incident_detection_rate: float = 0.0
-    report_generation_latency_s: float = 0.0
-    api_error_rate: float = 0.0
-    worker_retries: int = 0
-    dead_letter_jobs: int = 0
-    evidence_coverage: float = Field(default=1.0, ge=0.0, le=1.0)
-    unsupported_claim_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    queue_depth: int | None = None
+    queue_oldest_age_s: float | None = None
+    worker_last_seen_s: float | None = Field(
+        default=None, description="Seconds since the worker's last heartbeat"
+    )
+    frames_per_second: float | None = None
+    tracking_id_switch_rate: float | None = None
+    event_generation_rate: float | None = Field(
+        default=None, description="Events per minute of processed footage"
+    )
+    incident_detection_rate: float | None = Field(
+        default=None, description="Incidents per minute of processed footage"
+    )
+    report_generation_latency_s: float | None = Field(
+        default=None, description="Run start to report issued, mean over reports"
+    )
+    api_error_rate: float | None = None
+    worker_retries: int | None = Field(default=None, description="Since the worker started")
+    dead_letter_jobs: int | None = Field(
+        default=None, description="Jobs that failed every retry, since the worker started"
+    )
+    evidence_coverage: float | None = Field(default=None, ge=0.0, le=1.0)
+    unsupported_claim_rate: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 @app.get(f"{PREFIX}/metrics", response_model=Metrics, tags=["operations"])
-def metrics() -> Metrics:
-    """Operational metrics. Real values arrive with the worker in E10.2."""
-    return Metrics()
+async def metrics(session: DbSession) -> Metrics:
+    """Return operational metrics: the queue from Redis, the rest from stored pipeline output."""
+    stored = stored_metrics(session)
+    queue = await queue_stats()
+    return Metrics(
+        queue_depth=queue.depth if queue else None,
+        queue_oldest_age_s=queue.oldest_age_s if queue else None,
+        worker_last_seen_s=queue.worker_last_seen_s if queue else None,
+        worker_retries=queue.worker_retries if queue else None,
+        dead_letter_jobs=queue.dead_letter_jobs if queue else None,
+        event_generation_rate=stored.event_generation_rate,
+        incident_detection_rate=stored.incident_detection_rate,
+        report_generation_latency_s=stored.report_generation_latency_s,
+        evidence_coverage=stored.evidence_coverage,
+        unsupported_claim_rate=stored.unsupported_claim_rate,
+    )
+
+
+class RunList(BaseModel):
+    """Processing runs, not yet started first and then most recently started, with the total."""
+
+    runs: list[RunContract]
+    total: int
+
+
+@app.get(f"{PREFIX}/runs", response_model=RunList, tags=["operations"])
+def list_runs(session: DbSession, limit: Annotated[int, Query(ge=1, le=500)] = 50) -> RunList:
+    """List processing runs for the System Health screen.
+
+    Not in specification §F. The System Health screen in §G shows latency and failures,
+    and a run is where a failure and its duration are recorded, so the screen cannot be
+    built without this collection.
+    """
+    rows = session.scalars(
+        select(ProcessingRun)
+        .order_by(ProcessingRun.started_at.desc().nulls_first(), ProcessingRun.run_id)
+        .limit(limit)
+    )
+    total = session.scalar(select(func.count()).select_from(ProcessingRun)) or 0
+    return RunList(runs=[_run_contract(r) for r in rows], total=total)
 
 
 # --------------------------------------------------------------------------
@@ -231,6 +283,45 @@ def list_cases(
     return CaseList(cases=[incident_to_contract(r) for r in rows], total=total)
 
 
+class StatusChange(BaseModel):
+    """A change to where an investigation stands."""
+
+    status: IncidentStatus
+
+
+@app.patch(f"{PREFIX}/cases/{{case_id}}", response_model=IncidentContract, tags=["cases"])
+def update_case_status(case_id: CaseId, body: StatusChange, session: DbSession) -> IncidentContract:
+    """Move a case through review: investigating, resolved, or dismissed as a false alert.
+
+    Only the status changes. The window, the evidence graph and the report are evidence
+    and stay as issued; a dismissal is the investigator's judgement recorded beside them,
+    not an edit to them. Unauthenticated, like every endpoint, until E10.3 adds the role
+    boundary.
+    """
+    incident = session.get(Incident, case_id)
+    if incident is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"no case {case_id!r}")
+    incident.status = body.status.value
+    session.commit()
+    return incident_to_contract(incident)
+
+
+def _run_contract(run: ProcessingRun) -> RunContract:
+    """Rehydrate a run row as the frozen contract."""
+    return RunContract(
+        run_id=run.run_id,
+        input_hash=run.input_hash,
+        dataset_version=run.dataset_version,
+        model_versions=dict(run.model_versions),
+        config_version=run.config_version,
+        status=RunStatus(run.status),
+        device=run.device,
+        started_at=run.started_at,
+        finished_at=run.finished_at,
+        error=run.error,
+    )
+
+
 class CaseDetail(BaseModel):
     """A case: its incident and rewind window, the run behind it, and the cameras."""
 
@@ -255,18 +346,7 @@ def get_case(case_id: CaseId, session: DbSession) -> CaseDetail:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"case {case_id!r} has no run")
     return CaseDetail(
         incident=incident_to_contract(incident),
-        run=RunContract(
-            run_id=run.run_id,
-            input_hash=run.input_hash,
-            dataset_version=run.dataset_version,
-            model_versions=dict(run.model_versions),
-            config_version=run.config_version,
-            status=RunStatus(run.status),
-            device=run.device,
-            started_at=run.started_at,
-            finished_at=run.finished_at,
-            error=run.error,
-        ),
+        run=_run_contract(run),
         cameras=[
             CameraContract(
                 camera_id=c.camera_id,

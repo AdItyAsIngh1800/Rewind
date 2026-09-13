@@ -714,71 +714,160 @@
         "type": "string"
       },
       "Metrics": {
-        "description": "The metric set from specification \u00a7N.\n\nZeroed until the pipeline runs. The shape is fixed now so the System Health\nscreen can be built against it.",
+        "description": "The metric set from specification \u00a7N, measured wherever the system can measure it.\n\n``None`` means not measured, never zero. A zero queue or a zero unsupported-claim\nrate reads as \"idle and healthy\", a claim the API could not back. Queue and worker\nvalues are ``None`` while Redis is unreachable or no worker has reported; frame\nthroughput, API error rate and a live ID-switch rate need a running process to\nobserve and arrive with E10.2.",
         "properties": {
           "api_error_rate": {
-            "default": 0.0,
-            "title": "Api Error Rate",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Error Rate"
           },
           "dead_letter_jobs": {
-            "default": 0,
-            "title": "Dead Letter Jobs",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Jobs that failed every retry, since the worker started",
+            "title": "Dead Letter Jobs"
           },
           "event_generation_rate": {
-            "default": 0.0,
-            "title": "Event Generation Rate",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Events per minute of processed footage",
+            "title": "Event Generation Rate"
           },
           "evidence_coverage": {
-            "default": 1.0,
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Evidence Coverage",
-            "type": "number"
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Coverage"
           },
           "frames_per_second": {
-            "default": 0.0,
-            "title": "Frames Per Second",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frames Per Second"
           },
           "incident_detection_rate": {
-            "default": 0.0,
-            "title": "Incident Detection Rate",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Incidents per minute of processed footage",
+            "title": "Incident Detection Rate"
           },
           "queue_depth": {
-            "default": 0,
-            "title": "Queue Depth",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Depth"
           },
           "queue_oldest_age_s": {
-            "default": 0.0,
-            "title": "Queue Oldest Age S",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Oldest Age S"
           },
           "report_generation_latency_s": {
-            "default": 0.0,
-            "title": "Report Generation Latency S",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Run start to report issued, mean over reports",
+            "title": "Report Generation Latency S"
           },
           "tracking_id_switch_rate": {
-            "default": 0.0,
-            "title": "Tracking Id Switch Rate",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tracking Id Switch Rate"
           },
           "unsupported_claim_rate": {
-            "default": 0.0,
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Unsupported Claim Rate",
-            "type": "number"
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unsupported Claim Rate"
+          },
+          "worker_last_seen_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Seconds since the worker's last heartbeat",
+            "title": "Worker Last Seen S"
           },
           "worker_retries": {
-            "default": 0,
-            "title": "Worker Retries",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Since the worker started",
+            "title": "Worker Retries"
           }
         },
         "title": "Metrics",
@@ -1022,6 +1111,28 @@
         "title": "Report",
         "type": "object"
       },
+      "RunList": {
+        "description": "Processing runs, not yet started first and then most recently started, with the total.",
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/ProcessingRun"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "runs",
+          "total"
+        ],
+        "title": "RunList",
+        "type": "object"
+      },
       "RunStatus": {
         "description": "Lifecycle of a processing run, from queued to terminal.",
         "enum": [
@@ -1127,6 +1238,19 @@
         ],
         "title": "Severity",
         "type": "string"
+      },
+      "StatusChange": {
+        "description": "A change to where an investigation stands.",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/IncidentStatus"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "StatusChange",
+        "type": "object"
       },
       "Timeline": {
         "description": "The event stream of one run with the tracks behind it, clipped if asked.\n\nSegments are included because the timeline view draws an entity lane per track\nand an event lane on top; serving them together saves the UI a second round trip\nfor every seek. Identity links carry every cross-camera comparison the run made,\nrefusals included, so the UI can show why two lanes are or are not one entity.",
@@ -1465,6 +1589,59 @@
         "tags": [
           "cases"
         ]
+      },
+      "patch": {
+        "description": "Move a case through review: investigating, resolved, or dismissed as a false alert.\n\nOnly the status changes. The window, the evidence graph and the report are evidence\nand stay as issued; a dismissal is the investigator's judgement recorded beside them,\nnot an edit to them. Unauthenticated, like every endpoint, until E10.3 adds the role\nboundary.",
+        "operationId": "update_case_status_api_v1_cases__case_id__patch",
+        "parameters": [
+          {
+            "description": "Case (incident) identifier",
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "description": "Case (incident) identifier",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Incident"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Case Status",
+        "tags": [
+          "cases"
+        ]
       }
     },
     "/api/v1/cases/{case_id}/evidence": {
@@ -1756,7 +1933,7 @@
     },
     "/api/v1/metrics": {
       "get": {
-        "description": "Operational metrics. Real values arrive with the worker in E10.2.",
+        "description": "Return operational metrics: the queue from Redis, the rest from stored pipeline output.",
         "operationId": "metrics_api_v1_metrics_get",
         "responses": {
           "200": {
@@ -1771,6 +1948,52 @@
           }
         },
         "summary": "Metrics",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/runs": {
+      "get": {
+        "description": "List processing runs for the System Health screen.\n\nNot in specification \u00a7F. The System Health screen in \u00a7G shows latency and failures,\nand a run is where a failure and its duration are recorded, so the screen cannot be\nbuilt without this collection.",
+        "operationId": "list_runs_api_v1_runs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Runs",
         "tags": [
           "operations"
         ]

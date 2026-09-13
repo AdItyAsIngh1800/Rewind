@@ -27,6 +27,7 @@ class WorkerSettings:
     max_jobs = 1
     job_timeout = 3600
     max_tries = 3
+    health_check_interval = worker_settings.heartbeat_interval_s
 
     @staticmethod
     async def on_startup(ctx: dict[str, object]) -> None:

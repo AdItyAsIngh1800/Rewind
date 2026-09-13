@@ -49,10 +49,9 @@ def test_health_reports_the_frozen_schema_version() -> None:
     assert body["schema_version"] == SCHEMA_VERSION
 
 
-def test_metrics_exposes_the_specification_metric_set() -> None:
-    """The System Health screen is built against this shape from Week 4."""
-    r = client.get(f"{PREFIX}/metrics")
-    assert r.status_code == 200
+def test_metrics_declares_the_specification_metric_set() -> None:
+    """Assert the §N metric names are in the contract; the values are tested against a database."""
+    declared = app.openapi()["components"]["schemas"]["Metrics"]["properties"]
     required = {
         "queue_depth",
         "frames_per_second",
@@ -61,7 +60,7 @@ def test_metrics_exposes_the_specification_metric_set() -> None:
         "evidence_coverage",
         "unsupported_claim_rate",
     }
-    assert required <= set(r.json())
+    assert required <= set(declared)
 
 
 @pytest.mark.parametrize(("method", "path"), PENDING_ENDPOINTS)
@@ -136,5 +135,6 @@ def test_openapi_covers_every_specification_endpoint() -> None:
         f"{PREFIX}/cases/{{case_id}}/reprocess",
         f"{PREFIX}/health",
         f"{PREFIX}/metrics",
+        f"{PREFIX}/runs",
     }
     assert expected == set(spec["paths"])

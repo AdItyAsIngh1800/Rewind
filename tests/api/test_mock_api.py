@@ -87,6 +87,7 @@ def test_mock_responses_are_json_serialisable() -> None:
         f"{PREFIX}/cases/{CASE}/replay",
         f"{PREFIX}/cases/{CASE}/report",
         f"{PREFIX}/metrics",
+        f"{PREFIX}/runs",
     ):
         response = client.get(path)
         assert response.status_code == 200, path

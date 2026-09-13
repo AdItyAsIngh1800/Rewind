@@ -26,6 +26,10 @@ class WorkerSettings(BaseSettings):
     #: Case scripts; the worker reads only the robot state channel from them, as the
     #: stand-in for live robot telemetry (`services/incidents/telemetry.py`).
     cases_config: pathlib.Path = pathlib.Path("ml/configs/cases_v1.json")
+    #: How often the worker writes its ARQ heartbeat. ARQ's default is an hour, which
+    #: would let the System Health screen call a dead worker alive for most of one. Read
+    #: by both the worker and the API, which is why it lives here.
+    heartbeat_interval_s: int = 30
 
     @property
     def detector_native_classes(self) -> bool:

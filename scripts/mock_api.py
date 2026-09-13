@@ -79,25 +79,33 @@ def health() -> dict[str, object]:
 
 @app.get(f"{PREFIX}/metrics", tags=["operations"])
 def metrics() -> dict[str, object]:
-    """Return plausible non-zero metrics so the System Health screen has shape.
+    """Return plausible metrics so the System Health screen has shape.
 
-    Zeroes would render as an empty dashboard and hide layout problems until the
-    real worker exists.
+    Zeroes would render as an empty dashboard and hide layout problems. The fields the
+    real API cannot measure until E10.2 are ``None`` here too, so the screen's
+    "not measured" state is exercised against the mock as well.
     """
     return {
         "queue_depth": 2,
         "queue_oldest_age_s": 14.2,
-        "frames_per_second": 33.6,
-        "tracking_id_switch_rate": 0.014,
+        "worker_last_seen_s": 8.0,
+        "frames_per_second": None,
+        "tracking_id_switch_rate": None,
         "event_generation_rate": 1.7,
         "incident_detection_rate": 0.08,
         "report_generation_latency_s": 2.4,
-        "api_error_rate": 0.0,
+        "api_error_rate": None,
         "worker_retries": 0,
         "dead_letter_jobs": 0,
         "evidence_coverage": 1.0,
         "unsupported_claim_rate": 0.0,
     }
+
+
+@app.get(f"{PREFIX}/runs", tags=["operations"])
+def list_runs(limit: int = 50) -> dict[str, Any]:
+    """List the golden run as the only processing run."""
+    return {"runs": [fixture("01_run.json")][:limit], "total": 1}
 
 
 @app.get(f"{PREFIX}/cases", tags=["cases"])
@@ -136,6 +144,13 @@ def get_case(case_id: str) -> dict[str, Any]:
         "run": fixture("01_run.json"),
         "cameras": fixture("00_cameras.json"),
     }
+
+
+@app.patch(f"{PREFIX}/cases/{{case_id}}", tags=["cases"])
+def update_case_status(case_id: str, body: dict[str, Any]) -> dict[str, Any]:
+    """Echo the golden incident with the requested status; nothing is stored."""
+    incident: dict[str, Any] = fixture("50_incident.json")
+    return {**incident, "status": body.get("status", incident["status"])}
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}/timeline", tags=["cases"])
