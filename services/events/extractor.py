@@ -275,6 +275,9 @@ def extract_events(
 
         for start, end in geometry.stop_intervals(arr, cfg.stop_max_speed, cfg.stop_min_duration):
             i, j = _index_at(track, start), _index_at(track, end)
+            # Where it stood, so the blocked-zone trigger (E6.1) can ask which zone
+            # without re-localising. Median over the stop: a still box still jitters.
+            still = np.array(track.xy[i : j + 1], dtype=np.float64)
             out.emit(
                 EventType.STOP,
                 track,
@@ -282,6 +285,8 @@ def extract_events(
                 refs=[track.rows[i], track.rows[j]],
                 duration_s=round(end - start, 3),
                 end_s=end,
+                x=round(float(np.median(still[:, 0])), 3),
+                y=round(float(np.median(still[:, 1])), 3),
             )
 
         thinned = _thin(arr, cfg.turn_baseline_s)

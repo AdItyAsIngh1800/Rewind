@@ -24,7 +24,7 @@ from numpy.typing import NDArray
 from sqlalchemy.orm import Session
 
 from packages.common.camera import CameraModel
-from packages.schemas import Observation, RunStatus, TrackSegment
+from packages.schemas import Observation, RunStatus, SemanticEvent, TrackSegment
 from services.events import (
     EventConfig,
     class_heights,
@@ -43,6 +43,7 @@ from services.identity import (
     write_links,
 )
 from services.identity.appearance import TrackDescriptors
+from services.incidents import IncidentConfig, detect_incidents, write_incidents
 from services.ingestion import Frame, decode_frames, plan_sampling, probe, transition
 from services.perception.persistence import write_observations, write_segments
 from services.tracking import Tracker, TrackerConfig
@@ -105,6 +106,7 @@ class PipelineResult:
     clock_residuals_s: dict[str, float] = field(default_factory=dict)
     links: int = 0
     links_linked: int = 0
+    incidents: int = 0
 
 
 def process_camera(
@@ -184,6 +186,7 @@ def process_run(
     tracker_config: TrackerConfig | None = None,
     target_fps: float = 10.0,
     scene: dict[str, Any] | None = None,
+    telemetry: list[SemanticEvent] | None = None,
 ) -> PipelineResult:
     """Run perception and event extraction for one run and persist the result.
 
@@ -193,6 +196,9 @@ def process_run(
 
     ``scene`` is the scene config with zones, cameras and entity heights. Without it
     the run still produces observations and segments but no events, and says so.
+
+    ``telemetry`` is the robots' own state channel as events (E6.1). It is stored with
+    the video events, and incidents are opened from both in the same transaction.
     """
     config = tracker_config or TrackerConfig()
     result = PipelineResult(run_id=run_id)
@@ -275,8 +281,19 @@ def process_run(
                 config_events.merge_tolerance_s,
                 entity_groups(links, all_segments),
             )
+            # Telemetry is stored beside the video events: an incident's trigger must be
+            # a stored event, and the e-stop is only ever a telemetry event.
+            events = [*events, *(telemetry or [])]
             result.events = len(events)
             result.events_written = write_events(session, events)
+            incidents = detect_incidents(
+                run_id,
+                events,
+                load_zones(scene),
+                max((o.timestamp_s for o in all_observations), default=0.0),
+                IncidentConfig(),
+            )
+            result.incidents = write_incidents(session, incidents)
         transition(session, run_id, RunStatus.COMPLETE)
         session.commit()
     except Exception as exc:

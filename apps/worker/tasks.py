@@ -20,7 +20,8 @@ from sqlalchemy.orm import Session
 
 from apps.worker.settings import worker_settings
 from packages.database.session import make_engine
-from packages.schemas import RunStatus
+from packages.schemas import RunStatus, SemanticEvent
+from services.incidents import load_case_script, state_changes
 from services.ingestion import RunConflictError
 from services.perception import Detector, DetectorConfig, process_run
 
@@ -63,6 +64,22 @@ def camera_offsets() -> dict[str, float]:
     return {camera["id"]: float(camera["clock_offset_s"]) for camera in scene["cameras"]}
 
 
+def robot_telemetry(run_id: str, case_ref: str) -> list[SemanticEvent]:
+    """Return the case's robot state channel as events, or none if it has no script.
+
+    A case without a script still processes. It cannot raise an e-stop incident, and
+    the log says why, rather than the run silently reporting no incidents.
+    """
+    try:
+        case = load_case_script(worker_settings.cases_config, case_ref)
+    except KeyError:
+        log.warning(
+            "case %s has no script in %s; no telemetry", case_ref, worker_settings.cases_config
+        )
+        return []
+    return state_changes(run_id, case)
+
+
 async def process_case(ctx: dict[str, Any], run_id: str, case_ref: str) -> dict[str, Any]:
     """Run perception for one queued run.
 
@@ -88,6 +105,7 @@ async def process_case(ctx: dict[str, Any], run_id: str, case_ref: str) -> dict[
                 camera_offsets=camera_offsets(),
                 detector=build_detector(),
                 scene=json.loads(worker_settings.scene_config.read_text()),
+                telemetry=robot_telemetry(run_id, case_ref),
             )
         except RunConflictError as exc:
             # A redelivered message for a run that already finished. Not an error:
@@ -101,4 +119,5 @@ async def process_case(ctx: dict[str, Any], run_id: str, case_ref: str) -> dict[
         "frames": result.frames_processed,
         "observations": result.observations_written,
         "segments": result.segments_written,
+        "incidents": result.incidents,
     }

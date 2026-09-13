@@ -23,6 +23,9 @@ class WorkerSettings(BaseSettings):
     detector_device: str = "mps"
     samples_dir: pathlib.Path = pathlib.Path("data/samples")
     scene_config: pathlib.Path = pathlib.Path("ml/configs/scene_v1.json")
+    #: Case scripts; the worker reads only the robot state channel from them, as the
+    #: stand-in for live robot telemetry (`services/incidents/telemetry.py`).
+    cases_config: pathlib.Path = pathlib.Path("ml/configs/cases_v1.json")
 
     @property
     def detector_native_classes(self) -> bool:

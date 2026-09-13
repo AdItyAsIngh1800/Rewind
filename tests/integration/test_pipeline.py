@@ -20,6 +20,7 @@ from packages.database.models import Camera, ProcessingRun
 from packages.schemas import Observation, RunStatus
 from services.events import events_for_run
 from services.identity import links_for_run
+from services.incidents import list_incidents, load_case_script, state_changes
 from services.ingestion import Frame, RunConflictError
 from services.perception import (
     observations_in_window,
@@ -145,6 +146,10 @@ def test_pipeline_extracts_and_persists_events(session: Session, queued_run: Pro
         camera_offsets=NO_OFFSETS,
         detector=GroundTruthDetector(queued_run.run_id),
         scene=scene,
+        telemetry=state_changes(
+            queued_run.run_id,
+            load_case_script(pathlib.Path("ml/configs/cases_v1.json"), "case_01"),
+        ),
     )
     assert result.events > 0
     assert result.events_written == result.events
@@ -164,6 +169,13 @@ def test_pipeline_extracts_and_persists_events(session: Session, queued_run: Pro
     assert len(links) == result.links > 0
     assert all(link.decision in ("linked", "unknown") for link in links)
     assert all(link.evidence_refs for link in links)
+    # The robot's e-stop arrives on telemetry and opens exactly one incident, whose
+    # trigger is the stored state change and whose window rewinds either side of it.
+    [incident], total = list_incidents(session)
+    assert total == result.incidents == 1
+    assert incident.incident_class == "robot_estop_human_incursion"
+    assert incident.trigger_event_id in {r.event_id for r in rows if r.event_type == "state_change"}
+    assert incident.window_start_s < 13.4 == incident.detected_at_s < incident.window_end_s
 
 
 @needs_db
