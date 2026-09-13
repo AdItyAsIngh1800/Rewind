@@ -1,0 +1,223 @@
+{
+  "results": [
+    {
+      "case_id": "case_01",
+      "mode": "perfect",
+      "incident": "robot_estop_human_incursion",
+      "window": [
+        3.4,
+        23.4
+      ],
+      "cause_entity": "P01",
+      "ranked_entities": [
+        "P01"
+      ],
+      "top_levels": [
+        "strongly_inferred"
+      ],
+      "cause_top1": true,
+      "cause_top3": true,
+      "gap_truth_s": 6.2,
+      "gap_named_s": 6.2,
+      "gap_recall": 1.0,
+      "gap_precision": 1.0,
+      "gap_named_s_by_entity": {
+        "P01": 6.2
+      },
+      "nodes": 20,
+      "edges": 31,
+      "claims": 5,
+      "claims_by_level": {
+        "confirmed": 3,
+        "strongly_inferred": 1,
+        "unknown": 1
+      },
+      "evidence_coverage": 1.0,
+      "unsupported_claim_rate": 0.0,
+      "summary": "Robot R12 reported an emergency stop at 13.4 s. Likely contributed: Person (CAM_A-P01, CAM_B-P01, CAM_C-P01) entered Z1 ROBOT_LANE at 12.8 s, 0.6 s before the robot's emergency stop."
+    },
+    {
+      "case_id": "case_01",
+      "mode": "detections",
+      "incident": "robot_estop_human_incursion",
+      "window": [
+        3.4,
+        23.4
+      ],
+      "cause_entity": "P01",
+      "ranked_entities": [
+        "P01"
+      ],
+      "top_levels": [
+        "conflicting"
+      ],
+      "cause_top1": true,
+      "cause_top3": true,
+      "gap_truth_s": 6.2,
+      "gap_named_s": 6.5,
+      "gap_recall": 1.0,
+      "gap_precision": 0.954,
+      "gap_named_s_by_entity": {
+        "P01": 6.5
+      },
+      "nodes": 19,
+      "edges": 30,
+      "claims": 6,
+      "claims_by_level": {
+        "confirmed": 3,
+        "conflicting": 1,
+        "unknown": 2
+      },
+      "evidence_coverage": 1.0,
+      "unsupported_claim_rate": 0.0,
+      "summary": "Robot R12 reported an emergency stop at 13.4 s. Conflicting evidence: Person (CAM_A-T004, CAM_B-T002, CAM_C-T002) entered Z1 ROBOT_LANE at 12.8 s, 0.6 s before the robot's emergency stop."
+    },
+    {
+      "case_id": "case_03",
+      "mode": "perfect",
+      "incident": "robot_estop_human_incursion",
+      "window": [
+        7.4,
+        27.4
+      ],
+      "cause_entity": "P01",
+      "ranked_entities": [
+        "P01"
+      ],
+      "top_levels": [
+        "strongly_inferred"
+      ],
+      "cause_top1": true,
+      "cause_top3": true,
+      "gap_truth_s": 0,
+      "gap_named_s": 0,
+      "gap_recall": null,
+      "gap_precision": null,
+      "gap_named_s_by_entity": {},
+      "nodes": 20,
+      "edges": 34,
+      "claims": 5,
+      "claims_by_level": {
+        "confirmed": 4,
+        "strongly_inferred": 1
+      },
+      "evidence_coverage": 1.0,
+      "unsupported_claim_rate": 0.0,
+      "summary": "Robot R12 reported an emergency stop at 17.4 s. Likely contributed: Person (CAM_A-P01, CAM_B-P01, CAM_C-P01) entered Z1 ROBOT_LANE at 16 s, 1.4 s before the robot's emergency stop."
+    },
+    {
+      "case_id": "case_03",
+      "mode": "detections",
+      "incident": "robot_estop_human_incursion",
+      "window": [
+        7.4,
+        27.4
+      ],
+      "cause_entity": "P01",
+      "ranked_entities": [
+        "P01"
+      ],
+      "top_levels": [
+        "conflicting"
+      ],
+      "cause_top1": true,
+      "cause_top3": true,
+      "gap_truth_s": 0,
+      "gap_named_s": 8.0,
+      "gap_recall": null,
+      "gap_precision": 0.0,
+      "gap_named_s_by_entity": {
+        "P02": 8.0
+      },
+      "nodes": 35,
+      "edges": 65,
+      "claims": 7,
+      "claims_by_level": {
+        "confirmed": 4,
+        "conflicting": 1,
+        "unknown": 2
+      },
+      "evidence_coverage": 1.0,
+      "unsupported_claim_rate": 0.0,
+      "summary": "Robot R12 reported an emergency stop at 17.4 s. Conflicting evidence: Person (CAM_A-T002, CAM_B-T002, CAM_C-T002) entered Z1 ROBOT_LANE at 16.2 s, 1.2 s before the robot's emergency stop."
+    },
+    {
+      "case_id": "case_04",
+      "mode": "perfect",
+      "incident": "zone_blocked_unattended_object",
+      "window": [
+        4.4,
+        44.4
+      ],
+      "cause_entity": "F01",
+      "ranked_entities": [
+        "F01"
+      ],
+      "top_levels": [
+        "strongly_inferred"
+      ],
+      "cause_top1": true,
+      "cause_top3": true,
+      "gap_truth_s": 22.2,
+      "gap_named_s": 22.3,
+      "gap_recall": 1.0,
+      "gap_precision": 0.996,
+      "gap_named_s_by_entity": {
+        "F01": 12.6,
+        "PL3": 9.7
+      },
+      "nodes": 21,
+      "edges": 41,
+      "claims": 5,
+      "claims_by_level": {
+        "confirmed": 3,
+        "strongly_inferred": 1,
+        "unknown": 1
+      },
+      "evidence_coverage": 1.0,
+      "unsupported_claim_rate": 0.0,
+      "summary": "Pallet stopped at 14.4 s and was still there when the dwell limit was crossed at 34.4 s. Likely contributed: Forklift (CAM_A-F01, CAM_B-F01, CAM_C-F01) entered Z2 at 11.5 s and left at 16.1 s, around when the pallet came to rest there at 14.4 s."
+    },
+    {
+      "case_id": "case_04",
+      "mode": "detections",
+      "incident": "zone_blocked_unattended_object",
+      "window": [
+        5.2,
+        44.9
+      ],
+      "cause_entity": "F01",
+      "ranked_entities": [
+        "F01",
+        "PL3"
+      ],
+      "top_levels": [
+        "strongly_inferred",
+        "conflicting"
+      ],
+      "cause_top1": true,
+      "cause_top3": true,
+      "gap_truth_s": 21.9,
+      "gap_named_s": 22.4,
+      "gap_recall": 1.0,
+      "gap_precision": 0.978,
+      "gap_named_s_by_entity": {
+        "F01": 13.2,
+        "PL3": 9.2
+      },
+      "nodes": 28,
+      "edges": 58,
+      "claims": 10,
+      "claims_by_level": {
+        "confirmed": 3,
+        "possible": 1,
+        "strongly_inferred": 1,
+        "conflicting": 1,
+        "unknown": 4
+      },
+      "evidence_coverage": 1.0,
+      "unsupported_claim_rate": 0.0,
+      "summary": "Pallet stopped at 15.2 s and was still there when the dwell limit was crossed at 35.2 s. Likely contributed: Forklift (CAM_A-T001, CAM_B-T001, CAM_C-T001) entered Z2 at 11.6 s and left at 16 s, around when the pallet came to rest there at 15.2 s."
+    }
+  ]
+}
