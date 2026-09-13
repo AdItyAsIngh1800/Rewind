@@ -205,6 +205,180 @@
         "title": "EventType",
         "type": "string"
       },
+      "EvidenceEdge": {
+        "additionalProperties": false,
+        "description": "A directed relationship between two evidence nodes, with its provenance.",
+        "properties": {
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "from_node": {
+            "title": "From Node",
+            "type": "string"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "relation": {
+            "$ref": "#/components/schemas/Relation"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "to_node": {
+            "title": "To Node",
+            "type": "string"
+          },
+          "weight": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "edge_id",
+          "run_id",
+          "incident_id",
+          "from_node",
+          "to_node",
+          "relation",
+          "provenance"
+        ],
+        "title": "EvidenceEdge",
+        "type": "object"
+      },
+      "EvidenceGraphResponse": {
+        "description": "One incident's evidence graph: every node and edge, each with its provenance.",
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceEdge"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "title": "EvidenceGraphResponse",
+        "type": "object"
+      },
+      "EvidenceNode": {
+        "additionalProperties": false,
+        "description": "A single node in an incident's evidence graph.\n\nA ``GAP`` node represents an interval no camera could see. It is evidence in its\nown right \u2014 the thing that lets a report say \"cannot determine\" rather than\nquietly omitting the interval.",
+        "properties": {
+          "confidence": {
+            "default": 1.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "interval_s": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interval S"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "node_type": {
+            "$ref": "#/components/schemas/NodeType"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Observation / event / segment this node stands for",
+            "title": "Source Ref"
+          },
+          "timestamp_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp S"
+          }
+        },
+        "required": [
+          "node_id",
+          "run_id",
+          "incident_id",
+          "node_type",
+          "label",
+          "provenance"
+        ],
+        "title": "EvidenceNode",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -473,6 +647,20 @@
         "title": "Metrics",
         "type": "object"
       },
+      "NodeType": {
+        "description": "Evidence graph node kinds.",
+        "enum": [
+          "entity",
+          "observation",
+          "event",
+          "location",
+          "interval",
+          "gap",
+          "conflict"
+        ],
+        "title": "NodeType",
+        "type": "string"
+      },
       "ProcessingRun": {
         "additionalProperties": false,
         "description": "One execution of the pipeline over one input set.\n\nThe four version fields are what make a result reproducible. A benchmark number\nwithout a run behind it is an anecdote.",
@@ -560,6 +748,67 @@
         ],
         "title": "ProcessingRun",
         "type": "object"
+      },
+      "Provenance": {
+        "additionalProperties": false,
+        "description": "Where a piece of derived data came from.\n\nAttached to every evidence node and edge. Without this the graph is a set of\nassertions; with it, the graph is auditable.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "derived_from": {
+            "description": "IDs of the records this was computed from",
+            "items": {
+              "type": "string"
+            },
+            "title": "Derived From",
+            "type": "array"
+          },
+          "producer_service": {
+            "description": "Which service emitted this",
+            "title": "Producer Service",
+            "type": "string"
+          },
+          "producer_version": {
+            "description": "Version of that service or model",
+            "title": "Producer Version",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "producer_service",
+          "producer_version",
+          "run_id",
+          "created_at"
+        ],
+        "title": "Provenance",
+        "type": "object"
+      },
+      "Relation": {
+        "description": "Evidence graph edge kinds.",
+        "enum": [
+          "observed_as",
+          "precedes",
+          "co_occurs",
+          "near",
+          "same_entity_as",
+          "occludes",
+          "candidate_cause_of",
+          "contradicts"
+        ],
+        "title": "Relation",
+        "type": "string"
       },
       "RunStatus": {
         "description": "Lifecycle of a processing run, from queued to terminal.",
@@ -1008,7 +1257,7 @@
     },
     "/api/v1/cases/{case_id}/evidence": {
       "get": {
-        "description": "Return the evidence graph, with provenance on every node and edge.\n\nNot yet implemented \u2014 delivered by E7.1.",
+        "description": "Return a case's evidence graph, with provenance on every node and edge.\n\nBuilt once, when the run that opened the incident finished (E7.1), and served as\nstored: the graph an investigator reads is the one the report was written from.",
         "operationId": "get_evidence_api_v1_cases__case_id__evidence_get",
         "parameters": [
           {
@@ -1028,9 +1277,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Evidence Api V1 Cases  Case Id  Evidence Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/EvidenceGraphResponse"
                 }
               }
             },

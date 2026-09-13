@@ -25,6 +25,8 @@ from packages.database.models import Camera, Incident, ProcessingRun
 from packages.database.session import get_session
 from packages.schemas import (
     SCHEMA_VERSION,
+    EvidenceEdge,
+    EvidenceNode,
     IdentityLink,
     IncidentStatus,
     RunStatus,
@@ -36,6 +38,7 @@ from packages.schemas import Camera as CameraContract
 from packages.schemas import Incident as IncidentContract
 from packages.schemas import ProcessingRun as RunContract
 from services.events import events_for_run, to_contract
+from services.evidence import graph_for_incident
 from services.identity import link_to_contract, links_for_run
 from services.incidents import incident_to_contract, list_incidents
 from services.ingestion import create_run
@@ -342,13 +345,26 @@ def get_timeline(
     )
 
 
-@app.get(f"{PREFIX}/cases/{{case_id}}/evidence", tags=["cases"])
-def get_evidence(case_id: CaseId) -> dict[str, object]:
-    """Return the evidence graph, with provenance on every node and edge.
+class EvidenceGraphResponse(BaseModel):
+    """One incident's evidence graph: every node and edge, each with its provenance."""
 
-    Not yet implemented — delivered by E7.1.
+    nodes: list[EvidenceNode]
+    edges: list[EvidenceEdge]
+
+
+@app.get(
+    f"{PREFIX}/cases/{{case_id}}/evidence", response_model=EvidenceGraphResponse, tags=["cases"]
+)
+def get_evidence(case_id: CaseId, session: DbSession) -> EvidenceGraphResponse:
+    """Return a case's evidence graph, with provenance on every node and edge.
+
+    Built once, when the run that opened the incident finished (E7.1), and served as
+    stored: the graph an investigator reads is the one the report was written from.
     """
-    raise _pending("E7.1")
+    if session.get(Incident, case_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"no case {case_id!r}")
+    graph = graph_for_incident(session, case_id)
+    return EvidenceGraphResponse(nodes=graph.nodes, edges=graph.edges)
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}/replay", tags=["cases"])

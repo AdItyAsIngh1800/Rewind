@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from apps.api.main import PREFIX
 from packages.database.models import Camera, ProcessingRun
+from packages.database.models import Incident as IncidentRow
 from packages.schemas import (
     SCHEMA_VERSION,
     EventType,
@@ -19,7 +22,8 @@ from packages.schemas import (
     Severity,
 )
 from services.events import write_events
-from services.incidents import write_incidents
+from services.evidence import build_graph, write_graph
+from services.incidents import incident_to_contract, write_incidents
 from tests.integration.conftest import needs_db
 
 RUN = "run-cases-test"
@@ -136,3 +140,28 @@ def test_opening_a_case_rewinds_to_its_window(client: TestClient) -> None:
         f"{PREFIX}/cases/{ESTOP}/timeline", params={"start_s": 0, "end_s": 45}
     ).json()
     assert len(widened["events"]) == 4
+
+
+@needs_db
+@pytest.mark.usefixtures("cases")
+def test_evidence_graph_is_served_with_provenance(client: TestClient, session: Session) -> None:
+    """Assert a stored graph comes back whole, every node and edge validated, and 404s."""
+    row = session.get(IncidentRow, ESTOP)
+    assert row is not None
+    graph = build_graph(
+        incident_to_contract(row),
+        events=[_event(2, EventType.STATE_CHANGE, 13.4)],
+        observations=[],
+        segments=[],
+        links=[],
+        groups={},
+        zones=[],
+        created_at=datetime(2026, 9, 13, tzinfo=UTC),
+    )
+    write_graph(session, graph)
+
+    body = client.get(f"{PREFIX}/cases/{ESTOP}/evidence").json()
+    assert {n["node_id"] for n in body["nodes"]} == {n.node_id for n in graph.nodes}
+    assert len(body["edges"]) == len(graph.edges) > 0
+    assert all(n["provenance"]["run_id"] == RUN for n in body["nodes"])
+    assert client.get(f"{PREFIX}/cases/INC-nope/evidence").status_code == 404
