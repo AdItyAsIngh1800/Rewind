@@ -48,3 +48,26 @@
     outline-offset: 2px;
   }
 }
+
+/* The pattern channel of the PS-8 evidence encoding, the same gradients as
+ * docs/ui/swatches.html. Class names are the EvidenceLevel values so a component can
+ * write `ev-${level}`; Tailwind cannot see a composed class name, hence plain CSS. */
+@layer components {
+  .ev-confirmed {
+    background: var(--evidence-confirmed);
+  }
+  .ev-strongly_inferred {
+    background: repeating-linear-gradient(90deg, var(--evidence-inferred) 0 10px, transparent 10px 17px);
+  }
+  .ev-possible {
+    background: repeating-linear-gradient(90deg, var(--evidence-possible) 0 3px, transparent 3px 9px);
+  }
+  .ev-conflicting {
+    background:
+      repeating-linear-gradient(45deg, var(--evidence-conflicting) 0 2px, transparent 2px 7px),
+      repeating-linear-gradient(-45deg, var(--evidence-conflicting) 0 2px, transparent 2px 7px);
+  }
+  .ev-unknown {
+    background: repeating-linear-gradient(45deg, var(--evidence-unknown) 0 2px, transparent 2px 8px);
+  }
+}
