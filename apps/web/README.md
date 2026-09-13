@@ -28,3 +28,7 @@ The investigator UI: React 19, TypeScript, Vite, Tailwind v4, shadcn/ui, TanStac
   `docs/ui/swatches.html`. Composed class names are invisible to Tailwind, hence plain CSS.
 - **The graph layout is fixed, not force-directed:** a node sits in the same place every
   time a case opens. See the ledger row for E8.4.
+- **`null` is "not measured", never zero.** Health tiles show a dash and say which phase
+  measures the value. A zero would read as idle and healthy.
+- **A status change refetches every case query**, so the inbox, a case and analytics
+  never disagree about where an investigation stands.
