@@ -1,9 +1,9 @@
 {
   "case_id": "case_05",
-  "model_version": "ml/models/yolo11n-rewind-v1/best.pt:native:conf0.25:iou0.5",
+  "model_version": "ml/models/yolo11n-rewind-v1/best.pt:native:conf0.25:iou0.5:edge16",
   "checkpoint": "ml/models/yolo11n-rewind-v1/best.pt",
   "device": "mps",
-  "generated_at": "2026-09-13T11:09:53.506537+00:00",
+  "generated_at": "2026-09-13T11:20:14.077645+00:00",
   "frames_processed": 1350,
   "per_class": {
     "person": {

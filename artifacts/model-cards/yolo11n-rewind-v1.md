@@ -89,4 +89,4 @@ Their scores rest on less evidence.
 ## Provenance
 
 Training record: `ml/models/yolo11n-rewind-v1/training.json`
-Evaluation: `artifacts/benchmark-reports/detection-finetuned-case_05-2026-09-13T110953Z.json`
+Evaluation: `artifacts/benchmark-reports/detection-finetuned-case_05-2026-09-13T112014Z.json`

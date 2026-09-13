@@ -51,15 +51,15 @@
         }
       },
       "CAM_B": {
-        "tracked": 1062,
-        "spurious": 19,
-        "id_switches": 4,
-        "tracks_created": 6,
+        "tracked": 1023,
+        "spurious": 1,
+        "id_switches": 0,
+        "tracks_created": 3,
         "true_entities": 3,
         "fragmentation": {
           "R12": 1,
           "P01": 1,
-          "P02": 4
+          "P02": 1
         }
       },
       "CAM_C": {
@@ -145,5 +145,5 @@
       }
     }
   },
-  "id_switches": 5
+  "id_switches": 1
 }

@@ -1,7 +1,7 @@
 # Detection baseline — case_04
 
-- **Generated:** 2026-09-13 11:10 UTC
-- **Model:** `ml/models/yolo11n-rewind-v1/best.pt:native:conf0.25:iou0.5`
+- **Generated:** 2026-09-13 11:20 UTC
+- **Model:** `ml/models/yolo11n-rewind-v1/best.pt:native:conf0.25:iou0.5:edge16`
 - **Device:** `mps`
 - **Frames processed:** 1350
 

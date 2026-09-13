@@ -38,7 +38,7 @@
       "predicted_bounded_unmatched": 0,
       "events_by_type": {
         "direction_change": 7,
-        "proximity": 6,
+        "proximity": 3,
         "stop": 7,
         "zone_entry": 4,
         "zone_exit": 3
