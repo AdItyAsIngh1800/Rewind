@@ -62,6 +62,28 @@ truth at IoU 0.5.
 
 The zero-shot column is the COCO-pretrained checkpoint with no adaptation. It is **uninformative on the current primitives** (ADR-0004, amendment of 2026-09-10): a rectangular box is not recognisable as a person, so the figure measures the geometry rather than the model. It is shown for the record, not as a baseline this model improved upon.
 
+## Held-out (E9.1)
+
+The golden cases were opened once, under EXP-0010's pre-registration, after the checkpoint was fixed. These are the only numbers on this card that neither trained nor selected the model.
+
+`case_02` (1350 frames):
+
+| Class | Truth | Precision | Recall | F1 |
+|---|---|---|---|---|
+| `person` | 321 | 0.875 | 0.065 | 0.122 |
+| `robot` | 645 | 0.998 | 0.991 | 0.995 |
+| `forklift` | 927 | 0.687 | 0.980 | 0.808 |
+| `pallet` | 0 | — | — | — |
+
+`case_06` (1350 frames):
+
+| Class | Truth | Precision | Recall | F1 |
+|---|---|---|---|---|
+| `person` | 0 | — | — | — |
+| `robot` | 0 | — | — | — |
+| `forklift` | 994 | 0.905 | 0.259 | 0.402 |
+| `pallet` | 1045 | 0.986 | 0.971 | 0.979 |
+
 ## Limitations
 
 **This model has only ever seen boxes.** It was trained and evaluated on untextured
@@ -78,15 +100,34 @@ the numbers above are a ceiling for this scene rather than an estimate for any o
 
 **The validation case selected the checkpoint.** `best.pt` is the epoch with the
 highest validation mAP, so `case_05` is not a fully independent test. The unbiased
-number arrives in E9.1 from the golden cases.
+number is the held-out section.
 
 **Class balance is uneven.** `forklift` and `pallet` appear in far fewer frames than
 `person` and `robot`, because only one of the three training cases contains them.
 Their scores rest on less evidence.
 
-**Unmeasured classes: `forklift`, `pallet`.** The evaluation case contains none of them, so this card makes no claim about their detection at all. The first independent number for them arrives in E9.1 from the golden cases.
+**Unmeasured classes: `forklift`, `pallet`.** The evaluation case contains none of them, so this card makes no claim about their detection at all. Their only independent numbers are in the held-out section.
+
+**Found on the held-out cases (EXP-0010, EXP-0011).**
+
+**A forklift of a colour absent from training is not detected.** `case_06`'s F02 is navy;
+the only forklift in the tune data is F01, in another colour. F02 was found in 0 of 697
+boxes at visibility up to 0.93 (F1). The model learned *forklift* as F01's colour. A
+colour-blind retrain (`yolo11n-rewind-v2`, hue jitter 0.5) finds F02 at 0.94 recall but
+then loses `case_02`'s forklift where it is cut off by the frame edge, a view the tune
+data does not contain either; it was not promoted. Until a tune case shows a second
+forklift colour, do not rely on this model for a forklift it was not trained on.
+
+**A person at a fifth of their silhouette is not detected.** Behind a parked forklift on
+`case_02`'s CAM_A, P01 at median visibility 0.20 is found in 4 of 297 boxes (F2, accepted
+limitation). The pipeline's answer is the unseen-interval claim, not detection.
+
+**A forklift half outside the frame can produce a second box on its front face** (F4).
+The detector now drops a same-class box nested in a larger one (`nest0.9`); a front face
+detected alone, with the rest of the machine out of view, still starts its own track.
 
 ## Provenance
 
 Training record: `ml/models/yolo11n-rewind-v1/training.json`
 Evaluation: `artifacts/benchmark-reports/detection-finetuned-case_05-2026-09-13T112014Z.json`
+Held-out: `artifacts/benchmark-reports/detection-finetuned-case_02-2026-09-14T134818Z.json`, `artifacts/benchmark-reports/detection-finetuned-case_06-2026-09-14T134828Z.json`
