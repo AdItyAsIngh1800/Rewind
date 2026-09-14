@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import pathlib
 from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from apps.api import main
 from apps.api.main import PREFIX
 from packages.database.models import Camera, ProcessingRun
 from packages.database.models import Incident as IncidentRow
@@ -251,3 +253,29 @@ def test_dismissing_a_case_changes_its_status_and_nothing_else(client: TestClien
     assert [c["incident_id"] for c in dismissed["cases"]] == [ESTOP]
     assert client.patch(f"{PREFIX}/cases/{ESTOP}", json={"status": "closed"}).status_code == 422
     assert client.patch(f"{PREFIX}/cases/INC-nope", json={"status": "resolved"}).status_code == 404
+
+
+@needs_db
+@pytest.mark.usefixtures("cases")
+def test_replay_streams_recorded_footage_and_refuses_anything_else(
+    client: TestClient, session: Session, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Assert a recorded clip gets a pane URL and streams by range; unrecorded or outside is 404."""
+    clip = tmp_path / "case_x" / "CAM_A.mp4"
+    clip.parent.mkdir()
+    clip.write_bytes(bytes(range(256)) * 4)
+    monkeypatch.setattr(main, "SAMPLES", tmp_path)
+    run = session.get(ProcessingRun, RUN)
+    assert run is not None
+    run.media_uris = {"CAM_A": str(clip), "CAM_B": "/etc/hosts"}
+    session.flush()
+
+    body = client.get(f"{PREFIX}/cases/{ESTOP}/replay").json()
+    panes = {c["camera_id"]: c["media_url"] for c in body["cameras"]}
+    assert panes["CAM_A"] == f"{PREFIX}/cases/{ESTOP}/media/CAM_A"
+    assert (body["window_start_s"], body["detected_at_s"]) == (3.4, 13.4)
+
+    part = client.get(panes["CAM_A"], headers={"Range": "bytes=0-99"})
+    assert part.status_code == 206 and part.content == clip.read_bytes()[:100]
+    assert client.get(f"{PREFIX}/cases/{ESTOP}/media/CAM_B").status_code == 404, "outside samples"
+    assert client.get(f"{PREFIX}/cases/{ESTOP}/media/CAM_Z").status_code == 404, "not recorded"

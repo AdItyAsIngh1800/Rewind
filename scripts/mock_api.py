@@ -183,13 +183,15 @@ def get_replay(case_id: str) -> dict[str, Any]:
     """
     incident = fixture("50_incident.json")
     return {
+        "run_id": fixture("01_run.json")["run_id"],
         "window_start_s": incident["window_start_s"],
         "window_end_s": incident["window_end_s"],
+        "detected_at_s": incident["detected_at_s"],
         "cameras": [
             {
                 "camera_id": c["camera_id"],
                 "name": c["name"],
-                "source_uri": c["source_uri"],
+                "media_url": f"{PREFIX}/cases/{case_id}/media/{c['camera_id']}",
                 "clock_offset_s": c["clock_offset_s"],
                 "fps": c["fps"],
                 "width": c["width"],
@@ -198,6 +200,12 @@ def get_replay(case_id: str) -> dict[str, Any]:
             for c in fixture("00_cameras.json")
         ],
     }
+
+
+@app.get(f"{PREFIX}/cases/{{case_id}}/media/{{camera_id}}", tags=["cases"])
+def get_media(case_id: str, camera_id: str) -> dict[str, Any]:
+    """Refuse: the golden fixtures ship no footage, so every pane shows its unavailable state."""
+    raise HTTPException(status.HTTP_404_NOT_FOUND, "the golden fixtures carry no footage")
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}/report", tags=["cases"])

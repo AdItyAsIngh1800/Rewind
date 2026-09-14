@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Query, status
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -319,6 +320,8 @@ def _run_contract(run: ProcessingRun) -> RunContract:
         started_at=run.started_at,
         finished_at=run.finished_at,
         error=run.error,
+        media_uris=dict(run.media_uris),
+        captured_at=run.captured_at,
     )
 
 
@@ -451,13 +454,101 @@ def get_evidence(case_id: CaseId, session: DbSession) -> EvidenceGraphResponse:
     return EvidenceGraphResponse(nodes=graph.nodes, edges=graph.edges)
 
 
-@app.get(f"{PREFIX}/cases/{{case_id}}/replay", tags=["cases"])
-def get_replay(case_id: CaseId) -> dict[str, object]:
-    """Return synchronized replay metadata: clips, offsets and the shared timebase.
+class ReplayCamera(BaseModel):
+    """One replay pane: where its clip is served and how its clock maps to the shared one."""
 
-    Not yet implemented — delivered by E8.2.
+    camera_id: str
+    name: str
+    media_url: str | None = Field(
+        description="Where the browser fetches the clip; None when the run recorded none"
+    )
+    clock_offset_s: float = Field(description="Clip time = shared time + offset")
+    fps: float
+    width: int
+    height: int
+
+
+class Replay(BaseModel):
+    """What the synchronized replay needs: the window, the trigger and a pane per camera."""
+
+    run_id: str
+    window_start_s: float
+    window_end_s: float
+    detected_at_s: float
+    cameras: list[ReplayCamera]
+
+
+@app.get(f"{PREFIX}/cases/{{case_id}}/replay", response_model=Replay, tags=["cases"])
+def get_replay(case_id: CaseId, session: DbSession) -> Replay:
+    """Return synchronized replay metadata: the window, the trigger and a pane per camera.
+
+    Offsets are carried per camera rather than applied: mapping the shared clock to each
+    clip's own time is the player's job while scrubbing, and pre-applying it would let a
+    desynchronised player look correct. A camera the run recorded no clip for still gets
+    a pane, with no media, so a missing camera is visible rather than silently dropped.
+
+    ponytail: offsets are the registered cameras' current values, not the ones the run
+    was processed with; record them beside ``media_uris`` if a camera is ever
+    recalibrated between runs.
     """
-    raise _pending("E8.2")
+    incident = session.get(Incident, case_id)
+    if incident is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"no case {case_id!r}")
+    run = session.get(ProcessingRun, incident.run_id)
+    if run is None:  # the foreign key makes this unreachable short of a broken database
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"case {case_id!r} has no run")
+    return Replay(
+        run_id=run.run_id,
+        window_start_s=incident.window_start_s,
+        window_end_s=incident.window_end_s,
+        detected_at_s=incident.detected_at_s,
+        cameras=[
+            ReplayCamera(
+                camera_id=c.camera_id,
+                name=c.name,
+                media_url=(
+                    f"{PREFIX}/cases/{case_id}/media/{c.camera_id}"
+                    if c.camera_id in run.media_uris
+                    else None
+                ),
+                clock_offset_s=c.clock_offset_s,
+                fps=c.fps,
+                width=c.width,
+                height=c.height,
+            )
+            for c in session.scalars(select(Camera).order_by(Camera.camera_id))
+        ],
+    )
+
+
+@app.get(
+    f"{PREFIX}/cases/{{case_id}}/media/{{camera_id}}",
+    response_class=FileResponse,
+    tags=["cases"],
+)
+def get_media(case_id: CaseId, camera_id: str, session: DbSession) -> FileResponse:
+    """Stream one camera's clip for a case, with range support so the browser can seek.
+
+    The one route raw footage leaves by (ADR-0006). The path comes from the run's record,
+    never from the request, and must resolve inside the samples root: a recorded path
+    anywhere else is refused, as is one whose file is gone. Both are a 404 so a probe
+    learns nothing about the filesystem. E10.3 adds the role check and the evidence
+    access log here, and nowhere else has to change.
+    """
+    incident = session.get(Incident, case_id)
+    run = session.get(ProcessingRun, incident.run_id) if incident is not None else None
+    recorded = run.media_uris.get(camera_id) if run is not None else None
+    if recorded is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, f"case {case_id!r} has no recorded footage for {camera_id!r}"
+        )
+    path = pathlib.Path(recorded).resolve()
+    if not path.is_relative_to(SAMPLES.resolve()) or not path.is_file():
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            f"footage for {camera_id!r} in case {case_id!r} is unavailable",
+        )
+    return FileResponse(path, media_type="video/mp4")
 
 
 class CaseReport(BaseModel):

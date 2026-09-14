@@ -38,7 +38,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -154,7 +154,7 @@
             "type": "array"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -289,7 +289,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -409,7 +409,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -475,7 +475,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -530,7 +530,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -590,7 +590,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -647,7 +647,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -891,6 +891,19 @@
         "additionalProperties": false,
         "description": "One execution of the pipeline over one input set.\n\nThe four version fields are what make a result reproducible. A benchmark number\nwithout a run behind it is an anecdote.",
         "properties": {
+          "captured_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Wall-clock start of the run's shared timebase; None for rendered footage",
+            "title": "Captured At"
+          },
           "config_version": {
             "title": "Config Version",
             "type": "string"
@@ -933,6 +946,13 @@
             "title": "Input Hash",
             "type": "string"
           },
+          "media_uris": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Media Uris",
+            "type": "object"
+          },
           "model_versions": {
             "additionalProperties": {
               "type": "string"
@@ -945,7 +965,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -1007,7 +1027,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           }
@@ -1035,6 +1055,96 @@
         ],
         "title": "Relation",
         "type": "string"
+      },
+      "Replay": {
+        "description": "What the synchronized replay needs: the window, the trigger and a pane per camera.",
+        "properties": {
+          "cameras": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayCamera"
+            },
+            "title": "Cameras",
+            "type": "array"
+          },
+          "detected_at_s": {
+            "title": "Detected At S",
+            "type": "number"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "window_end_s": {
+            "title": "Window End S",
+            "type": "number"
+          },
+          "window_start_s": {
+            "title": "Window Start S",
+            "type": "number"
+          }
+        },
+        "required": [
+          "run_id",
+          "window_start_s",
+          "window_end_s",
+          "detected_at_s",
+          "cameras"
+        ],
+        "title": "Replay",
+        "type": "object"
+      },
+      "ReplayCamera": {
+        "description": "One replay pane: where its clip is served and how its clock maps to the shared one.",
+        "properties": {
+          "camera_id": {
+            "title": "Camera Id",
+            "type": "string"
+          },
+          "clock_offset_s": {
+            "description": "Clip time = shared time + offset",
+            "title": "Clock Offset S",
+            "type": "number"
+          },
+          "fps": {
+            "title": "Fps",
+            "type": "number"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "media_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the browser fetches the clip; None when the run recorded none",
+            "title": "Media Url"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "camera_id",
+          "name",
+          "media_url",
+          "clock_offset_s",
+          "fps",
+          "width",
+          "height"
+        ],
+        "title": "ReplayCamera",
+        "type": "object"
       },
       "Report": {
         "additionalProperties": false,
@@ -1089,7 +1199,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -1198,7 +1308,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -1351,7 +1461,7 @@
             "type": "string"
           },
           "schema_version": {
-            "default": "1.0.0",
+            "default": "1.1.0",
             "title": "Schema Version",
             "type": "string"
           },
@@ -1689,9 +1799,56 @@
         ]
       }
     },
+    "/api/v1/cases/{case_id}/media/{camera_id}": {
+      "get": {
+        "description": "Stream one camera's clip for a case, with range support so the browser can seek.\n\nThe one route raw footage leaves by (ADR-0006). The path comes from the run's record,\nnever from the request, and must resolve inside the samples root: a recorded path\nanywhere else is refused, as is one whose file is gone. Both are a 404 so a probe\nlearns nothing about the filesystem. E10.3 adds the role check and the evidence\naccess log here, and nowhere else has to change.",
+        "operationId": "get_media_api_v1_cases__case_id__media__camera_id__get",
+        "parameters": [
+          {
+            "description": "Case (incident) identifier",
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "description": "Case (incident) identifier",
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "camera_id",
+            "required": true,
+            "schema": {
+              "title": "Camera Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Media",
+        "tags": [
+          "cases"
+        ]
+      }
+    },
     "/api/v1/cases/{case_id}/replay": {
       "get": {
-        "description": "Return synchronized replay metadata: clips, offsets and the shared timebase.\n\nNot yet implemented \u2014 delivered by E8.2.",
+        "description": "Return synchronized replay metadata: the window, the trigger and a pane per camera.\n\nOffsets are carried per camera rather than applied: mapping the shared clock to each\nclip's own time is the player's job while scrubbing, and pre-applying it would let a\ndesynchronised player look correct. A camera the run recorded no clip for still gets\na pane, with no media, so a missing camera is visible rather than silently dropped.\n\nponytail: offsets are the registered cameras' current values, not the ones the run\nwas processed with; record them beside ``media_uris`` if a camera is ever\nrecalibrated between runs.",
         "operationId": "get_replay_api_v1_cases__case_id__replay_get",
         "parameters": [
           {
@@ -1711,9 +1868,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Replay Api V1 Cases  Case Id  Replay Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/Replay"
                 }
               }
             },

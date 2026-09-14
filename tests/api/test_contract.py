@@ -32,11 +32,10 @@ def _no_database() -> object:
 
 app.dependency_overrides[get_session] = _no_database
 
-#: Endpoints still awaiting their phase. `POST /cases` left this list in E2.2 and
-#: the timeline in E4.3.
+#: Endpoints still awaiting their phase. `POST /cases` left this list in E2.2, the
+#: timeline in E4.3 and the replay in E8.2.
 PENDING_ENDPOINTS = [
     ("post", f"{PREFIX}/cases/abc/reprocess"),
-    ("get", f"{PREFIX}/cases/abc/replay"),
 ]
 
 
@@ -132,6 +131,7 @@ def test_openapi_covers_every_specification_endpoint() -> None:
         f"{PREFIX}/cases/{{case_id}}/evidence",
         f"{PREFIX}/cases/{{case_id}}/replay",
         f"{PREFIX}/cases/{{case_id}}/report",
+        f"{PREFIX}/cases/{{case_id}}/media/{{camera_id}}",
         f"{PREFIX}/cases/{{case_id}}/reprocess",
         f"{PREFIX}/health",
         f"{PREFIX}/metrics",
