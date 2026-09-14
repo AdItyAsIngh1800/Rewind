@@ -170,7 +170,7 @@ Unchanged by the hardware decision — see `ADR-0001`.
 | Service | Where it runs | Notes |
 |---|---|---|
 | `api` | Host (dev) / container (`docker compose up`) | FastAPI + Uvicorn. Metadata queries target sub-500 ms |
-| `worker` | Host (dev, MPS) / container (CPU) | ARQ. No Metal passthrough in Docker, so the container runs the detector on CPU: 63 FPS, a case in 22 s, against 170 FPS on MPS (EXP-0012). Both are well above the 5–10 FPS envelope |
+| `worker` | Host (dev, MPS) / container (CPU) | ARQ. No Metal passthrough in Docker, so the container runs the detector on CPU: **15.6 FPS, a 45 s case in 87 s**, about 5 FPS per camera, the bottom of the 5–10 FPS envelope and half real time. On the macOS host the same work runs at 63 FPS on CPU and 170 FPS on MPS (EXP-0012). The VM had all 10 cores and 7.7 GB, so allocation is not the gap; the cause is not investigated |
 | Database | Compose: `pgvector/pgvector:pg16` / hosted: **Supabase** | The full stack runs its own disposable Postgres (`ADR-0007`); Supabase is reached through the same settings (`ADR-0003`) |
 | `redis` | Container | Job queue and transient investigation state |
 | `web` | Vite dev server / nginx serving the static build | nginx proxies `/api`, so the browser talks to one origin in both |

@@ -51,8 +51,9 @@ curl -X POST localhost:5173/api/v1/cases \
   -d '{"dataset_version": "v1", "case_ref": "case_01"}'
 ```
 
-The worker processes the three clips in about 25 seconds on CPU; reload the inbox and
-open the incident. `case_01` to `case_06` are available. `docker compose down -v`
+The worker processes the three clips in about 90 seconds on CPU inside Docker (on Apple
+silicon, `make worker` on the host uses MPS and takes about 10 seconds); reload the
+inbox and open the incident. `case_01` to `case_06` are available. `docker compose down -v`
 stops everything and discards the database.
 
 Everything runs locally: Postgres with pgvector, Redis, the API, the worker and the
