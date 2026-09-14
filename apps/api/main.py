@@ -367,6 +367,9 @@ def _run_contract(run: ProcessingRun) -> RunContract:
         error=run.error,
         media_uris=dict(run.media_uris),
         captured_at=run.captured_at,
+        frames_processed=run.frames_processed,
+        stages_s=dict(run.stages_s or {}),
+        peak_memory_mb=run.peak_memory_mb,
     )
 
 

@@ -242,6 +242,26 @@ def test_metrics_measure_what_is_stored_and_leave_the_rest_unmeasured(
 
 @needs_db
 @pytest.mark.usefixtures("cases")
+def test_a_run_is_served_with_what_it_cost(client: TestClient, session: Session) -> None:
+    """Assert the frames, stage seconds and memory a run recorded reach the API (ADR-0008).
+
+    The contract is rebuilt field by field from the row, so a field added to both and
+    left out of the mapping reads as null to every client without failing anything.
+    """
+    run = session.get(ProcessingRun, RUN)
+    assert run is not None
+    run.frames_processed = 1350
+    run.stages_s = {"perception:CAM_A": 2.6, "events": 0.01}
+    run.peak_memory_mb = 1137.0
+    session.flush()
+    (served,) = client.get(f"{PREFIX}/runs").json()["runs"]
+    assert served["frames_processed"] == 1350
+    assert served["stages_s"] == {"perception:CAM_A": 2.6, "events": 0.01}
+    assert served["peak_memory_mb"] == 1137.0
+
+
+@needs_db
+@pytest.mark.usefixtures("cases")
 def test_runs_are_listed_for_the_health_screen(client: TestClient) -> None:
     """Assert runs come back as contracts with their total, and the limit is validated."""
     body = client.get(f"{PREFIX}/runs").json()
