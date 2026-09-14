@@ -1,0 +1,34 @@
+=== F6: gaps before the trigger claimed whoever they hide; generator deterministic-0.2.0
+=== 20:59:14 reasoning_on_detections.py case_01 case_02 case_03 case_04 case_06
+perfect    case_01  top1 True top3 True  ranked ['P01'] ['strongly_inferred']  gaps recall 1.0 precision 1.0 (truth 6.2s, named 6.2s)  claims 5 {'confirmed': 3, 'strongly_inferred': 1, 'unknown': 1}  coverage 1.00  unsupported 0.00  graph 20/31
+           Robot R12 reported an emergency stop at 13.4 s. Likely contributed: Person (CAM_A-P01, CAM_B-P01, CAM_C-P01) entered Z1 ROBOT_LANE at 12.8 s, 0.6 s before the robot's emergency stop.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 5 linked, 1 unknown
+detections case_01  top1 True top3 True  ranked ['P01'] ['conflicting']  gaps recall 1.0 precision 0.954 (truth 6.2s, named 6.5s)  claims 6 {'confirmed': 3, 'conflicting': 1, 'unknown': 2}  coverage 1.00  unsupported 0.00  graph 19/30
+           Robot R12 reported an emergency stop at 13.4 s. Conflicting evidence: Person (CAM_A-T004, CAM_B-T002, CAM_C-T002) entered Z1 ROBOT_LANE at 12.8 s, 0.6 s before the robot's emergency stop.
+perfect    case_02  top1 False top3 False  ranked ['F01'] ['possible']  gaps recall 1.0 precision 0.982 (truth 11.1s, named 11.3s)  claims 6 {'confirmed': 3, 'possible': 1, 'unknown': 2}  coverage 1.00  unsupported 0.00  graph 30/55
+           Robot R12 reported an emergency stop at 13.5 s. Possible: Forklift (CAM_A-F01, CAM_B-F01, CAM_C-F01) entered Z1 ROBOT_LANE at 3.7 s, 9.8 s before the robot's emergency stop.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 4 linked, 3 unknown
+detections case_02  top1 False top3 False  ranked ['F01', 'F01'] ['possible', 'possible']  gaps recall 1.0 precision 0.192 (truth 11.1s, named 57.8s)  claims 14 {'confirmed': 3, 'possible': 2, 'unknown': 9}  coverage 1.00  unsupported 0.00  graph 51/97
+           Robot R12 reported an emergency stop at 13.5 s. Possible: Forklift (CAM_A-T002, CAM_B-T008, CAM_C-T002) entered Z1 ROBOT_LANE at 3.95 s, 9.6 s before the robot's emergency stop.
+perfect    case_03  top1 True top3 True  ranked ['P01'] ['strongly_inferred']  gaps recall None precision None (truth 0s, named 0s)  claims 5 {'confirmed': 4, 'strongly_inferred': 1}  coverage 1.00  unsupported 0.00  graph 20/34
+           Robot R12 reported an emergency stop at 17.4 s. Likely contributed: Person (CAM_A-P01, CAM_B-P01, CAM_C-P01) entered Z1 ROBOT_LANE at 16 s, 1.4 s before the robot's emergency stop.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 5 linked, 2 unknown
+detections case_03  top1 True top3 True  ranked ['P01'] ['conflicting']  gaps recall None precision 0.0 (truth 0s, named 8.0s)  claims 8 {'confirmed': 4, 'conflicting': 1, 'unknown': 3}  coverage 1.00  unsupported 0.00  graph 35/65
+           Robot R12 reported an emergency stop at 17.4 s. Conflicting evidence: Person (CAM_A-T002, CAM_B-T002, CAM_C-T002) entered Z1 ROBOT_LANE at 16.2 s, 1.2 s before the robot's emergency stop.
+perfect    case_04  top1 True top3 True  ranked ['F01'] ['strongly_inferred']  gaps recall 1.0 precision 0.996 (truth 22.2s, named 22.3s)  claims 6 {'confirmed': 3, 'strongly_inferred': 1, 'unknown': 2}  coverage 1.00  unsupported 0.00  graph 21/41
+           Pallet stopped at 14.4 s and was still there when the dwell limit was crossed at 34.4 s. Likely contributed: Forklift (CAM_A-F01, CAM_B-F01, CAM_C-F01) entered Z2 at 11.5 s and left at 16.1 s, around when the pallet came to rest there at 14.4 s.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_04  top1 True top3 True  ranked ['F01', 'PL3'] ['strongly_inferred', 'conflicting']  gaps recall 1.0 precision 0.978 (truth 21.9s, named 22.4s)  claims 11 {'confirmed': 3, 'possible': 1, 'strongly_inferred': 1, 'conflicting': 1, 'unknown': 5}  coverage 1.00  unsupported 0.00  graph 27/55
+           Pallet stopped at 15.2 s and was still there when the dwell limit was crossed at 35.2 s. Likely contributed: Forklift (CAM_A-T001, CAM_B-T001, CAM_C-T001) entered Z2 at 11.6 s and left at 16 s, around when the pallet came to rest there at 15.2 s.
+perfect    case_06  top1 False top3 False  ranked [None] ['unknown']  gaps recall 1.0 precision 0.995 (truth 20.4s, named 20.5s)  claims 3 {'confirmed': 1, 'unknown': 2}  coverage 1.00  unsupported 0.00  graph 13/16
+           Pallet stopped at 24.1 s and was still there when the dwell limit was crossed at 44.1 s. No contributing cause could be determined from the evidence.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_06  top1 False top3 False  ranked [None] ['unknown']  gaps recall 0.995 precision 0.871 (truth 20.4s, named 23.3s)  claims 7 {'confirmed': 1, 'unknown': 6}  coverage 1.00  unsupported 0.00  graph 31/45
+           Pallet stopped at 24.1 s and was still there when the dwell limit was crossed at 44.1 s. No contributing cause could be determined from the evidence.
+written to artifacts/benchmark-reports/reasoning-2026-09-14T153002Z.json
+=== exit 0 21:00:03
