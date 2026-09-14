@@ -95,4 +95,114 @@ ledger as post-golden, and its numbers are reported beside these, never in their
 
 ## Results
 
-_Not yet run._
+- **Run:** 2026-09-14, 19:18–19:20 +0530, once, in the order above; all ten commands exited 0.
+- **Log:** `artifacts/golden-run-2026-09-14.log`.
+- **Tables:** `artifacts/benchmark-reports/final.md` holds every number against its floor.
+- **Unchanged since pre-registration:** code, configuration and the pre-registration above.
+
+### Verdict
+
+| | Held |
+|---|---|
+| Incidents | 4 of 4 opened, 0 false, latency ≤ 0.1 s, every window covers its cause |
+| Grounding | Evidence coverage 1.00 and unsupported-claim rate 0.00 in all four reports |
+| Uncertainty | Every truly unseen interval named: gap recall ≥ 0.995 |
+| Perception that transferred | Robot detection 0.99 / 1.00; ID switches ≤ 2; event timing ≤ 0.40 s |
+| No confident incursion | P01 is never said to have entered Z1; C06 on detections says no cause can be determined rather than naming the wrong one |
+
+| | Failed |
+|---|---|
+| Charter floors | Person detection (0.065 recall), zone events (0.38 / 0.53), cross-camera false links (0.25) and recall (0.35), cause top-3 (3 of 5) and top-1 (0.60) |
+| C02 behaviour | No *Possible* hypothesis about P01, and no *Cannot determine* claim about the interval nobody saw |
+| C06 behaviour | F01 never ranked; on real detections, no cause at all |
+| Truth of a claim | One false *Observed* claim on C02 detections, fully cited |
+
+### Pre-registered predictions
+
+- **C06, F01 outside the window: confirmed exactly.** The trigger came from the second
+  stop (44.1 s), the window opened at 14.1 s, and F01's drop at 10 s was invisible to the
+  ranker even with perfect tracks.
+- **C02, UNKNOWN fallback: wrong in detail.** The ranker did not fall back to UNKNOWN. The
+  parked forklift F01, which did cross into Z1 at 3.7 s, became a *Possible* candidate
+  instead (score 0.55).
+
+### Failure analysis
+
+Diagnostics re-ran the unchanged harness and perception code with capture hooks; every
+number matched the first run, so the pipeline is deterministic and the traces describe
+the run above.
+
+**F1. F02 is never detected: 0 of 697 true boxes, at visibility up to 0.93.** F02 is the
+only navy actor (per-actor colours, ledger 2026-09-13), and no tune case has a navy
+forklift. The fine-tuned detector learned *forklift* as F01's colour. This alone drives
+C06's forklift recall to 0.26, its event recall to 0.43, the absence of any F02 track
+for identity, and the detections-mode report finding no cause.
+
+**F2. A mostly hidden person is not found.** On CAM_A, C02's person has a median
+visibility of 0.20 behind the parked forklift; the detector finds 4 of 297 boxes. Ground
+truth emits anything at least 15% visible (scene spec §7), so the floor counts these, and
+it fails.
+
+**F3. A stationary object on a zone edge flickers in and out, and becomes a false
+*Observed* claim.** F01 parks at y = 9.5, exactly Z1's boundary. Its back-projected
+position crosses the edge repeatedly on real detections: entered at 11.2 s, left 11.3 s,
+entered 14.6 s, left 15.9 s, entered 16.2 s, left 17.1 s, all from `CAM_A-T002`, which is
+truly F01. The report states *"Observed: Forklift entered Z1 at 11.2 s"*, and the top
+hypothesis rests on it: *"Possible: Forklift … entered Z1 at 11.2 s, 2.3 s before the
+robot's emergency stop"*. The unsupported-claim rate stays 0.00 because the citation
+resolves to a real event. **Gate 5 guarantees that every claim is traceable, not that
+the evidence it traces to is true.** The same boundary sensitivity explains most of
+C02's 11 false events, and C06's projected-position precision of 0.47, where the pallet
+rests 0.2 m inside Z2's edge.
+
+**F4. A duplicate box on a partly visible forklift is joined to it across cameras.**
+`golden-case_02-CAM_B-f112-duplicate-box.jpg`: the forklift is cut off by CAM_B's bottom
+edge, and the detector emits the whole machine (0.87) and a second box on its dark front
+face (0.60). Their overlap (IoU about 0.27) is under the 0.5 NMS threshold, so both
+survive. The second box starts track `CAM_B-T008`, which matches no true box (410
+unmatched forklift boxes in CAM_B). Identity linked it to F01 on CAM_A (0.81) and CAM_C
+(0.97): the two false links behind the 0.50 rate. Both join a duplicate of the same
+physical forklift, so no trajectory between two real entities was made up, but the
+metric as registered counts them and the FAIL stands. Without appearance (`no-appear`)
+both are refused: the forklift's own colour is what accepted them.
+
+**F5. No hypothesis can be built for an entity whose decisive move was unseen.**
+Candidates come from observed events inside the window. P01's Z1 entry at about 13 s lies
+in the unseen interval (11.0–14.8 s), by design, so there is no event to build from. The
+spec's required outcome, *possible because consistent with the surrounding evidence*,
+needs a candidate generated from a gap (last seen approaching, next seen past the lane),
+which the ranker does not do.
+
+**F6. The unseen interval is not written as a claim.** The generator writes *Cannot
+determine* only for gaps on entities a hypothesis names or holds against it. P01 is in no
+hypothesis, so its gap reaches the graph, `report.gaps` and the limitations count, but a
+reader of the claims is never told that the critical moment was unseen. That is the
+behaviour the project is named for.
+
+**F7. The blocked-zone window starts too late for an earlier contributor.** The window
+opens 10 s before the object's final stop (EXP-0008). An object that arrived, stopped,
+was moved and stopped again has its first contributor outside the window: F01 at 10 s.
+
+### What these are not
+
+None of F1–F7 is a threshold fitted too tightly to the tune cases. Retuning any number on
+them would not detect a navy forklift, generate a candidate from a gap, or widen a
+window. They are three perception gaps (F1 colour, F2 heavy occlusion, F4 duplicate edge
+boxes), one event-extraction gap (F3 zone-edge hysteresis), and three reasoning design
+gaps (F5–F7).
+
+## Decision
+
+**Recorded as the held-out result, unchanged.** Gate 7's own criterion, that results and
+failure modes are measurable, is met: every floor is measured and every failure traced.
+The system does not meet the charter floors on unseen cases.
+
+Which of F1–F7 to fix is an owner decision. Every fix is post-golden: re-measured on all
+six cases with `case_02` and `case_06` labelled *no longer held-out*, reported beside this
+record, never in its place.
+
+## Next experiment
+
+The owner-selected post-golden fixes, re-measured on all six cases. E9.2 (failure
+catalogue with frames and model cards), E9.3 (profiling) and E9.4 (test suite) proceed
+regardless.
