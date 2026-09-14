@@ -40,9 +40,12 @@ COPY packages ./packages
 COPY services ./services
 COPY ml/configs ./ml/configs
 
-# Ultralytics keeps a settings file. Named explicitly, because without it the library
-# warns that ~/.config is not writable (it does not exist yet) and falls back here anyway.
-ENV YOLO_CONFIG_DIR=/tmp/Ultralytics
+# Ultralytics keeps a settings file in <YOLO_CONFIG_DIR>/Ultralytics. /tmp exists, so it is
+# created silently; ~/.config does not, and the library warned while falling back to /tmp.
+# Quiet mode drops its info lines, which it prints while being imported, before the
+# worker can route its logger through the JSON formatter; its errors still arrive.
+ENV YOLO_CONFIG_DIR=/tmp \
+    YOLO_VERBOSE=False
 RUN useradd --create-home rewind
 USER rewind
 
