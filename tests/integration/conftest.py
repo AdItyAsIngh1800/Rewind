@@ -13,6 +13,7 @@ fail here rather than in production.
 from __future__ import annotations
 
 import os
+import pathlib
 import subprocess
 import sys
 from collections.abc import Iterator
@@ -23,7 +24,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from apps.api.main import app
+from packages.database.models import Camera, ProcessingRun
 from packages.database.session import get_session
+from packages.schemas import RunStatus
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
@@ -55,7 +58,9 @@ def session(migrated_database: str) -> Iterator[Session]:
     engine = create_engine(migrated_database, future=True)
     connection = engine.connect()
     transaction = connection.begin()
-    db = Session(bind=connection)
+    # Savepoints, so the code under test commits and rolls back as it does in production
+    # while the outer transaction still discards everything at teardown.
+    db = Session(bind=connection, join_transaction_mode="create_savepoint")
     try:
         yield db
     finally:
@@ -77,3 +82,39 @@ def client(session: Session) -> Iterator[TestClient]:
             app.dependency_overrides.pop(get_session, None)
         else:
             app.dependency_overrides[get_session] = previous
+
+
+#: case_01 and deliberately wrong offsets, shared by the pipeline and failure tests.
+#: The clips are frame-synchronous (scene spec §4.1), so these shift CAM_B and CAM_C off
+#: the true clock by exactly these amounts; test_pipeline asserts E5.1 catches it.
+CASE_DIR = pathlib.Path("data/samples/case_01")
+OFFSETS = {"CAM_A": 0.0, "CAM_B": 0.4, "CAM_C": -0.2}
+
+
+@pytest.fixture
+def queued_run(session: Session) -> ProcessingRun:
+    """Create a queued run with its cameras registered."""
+    if not any(CASE_DIR.glob("*.mp4")):
+        pytest.skip("case_01 video has not been rendered")
+    for camera_id in OFFSETS:
+        session.add(
+            Camera(
+                camera_id=camera_id,
+                name=camera_id,
+                source_uri="file:///x",
+                clock_offset_s=OFFSETS[camera_id],
+                width=1280,
+                height=720,
+                fps=10.0,
+            )
+        )
+    run = ProcessingRun(
+        run_id="run-pipeline-test",
+        input_hash="sha256:t",
+        dataset_version="v1",
+        config_version="t",
+        status=RunStatus.QUEUED.value,
+    )
+    session.add(run)
+    session.flush()
+    return run

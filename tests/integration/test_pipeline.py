@@ -32,13 +32,8 @@ from services.perception import (
 )
 from services.reasoning.persistence import hypotheses_for_incident
 from services.reporting import report_for_incident
-from tests.integration.conftest import needs_db
+from tests.integration.conftest import CASE_DIR, OFFSETS, needs_db
 
-CASE_DIR = pathlib.Path("data/samples/case_01")
-#: Deliberately wrong offsets. The clips are frame-synchronous (scene spec §4.1), so
-#: applying these shifts CAM_B and CAM_C off the true clock by exactly these amounts;
-#: the tests below assert both that the shift is applied and that E5.1 catches it.
-OFFSETS = {"CAM_A": 0.0, "CAM_B": 0.4, "CAM_C": -0.2}
 NO_OFFSETS = {"CAM_A": 0.0, "CAM_B": 0.0, "CAM_C": 0.0}
 
 
@@ -87,35 +82,6 @@ class ExplodingDetector:
         """Raise as a model with a corrupt checkpoint would."""
         raise RuntimeError("simulated detector failure")
         yield  # pragma: no cover - makes this a generator
-
-
-@pytest.fixture
-def queued_run(session: Session) -> ProcessingRun:
-    """Create a queued run with its cameras registered."""
-    if not any(CASE_DIR.glob("*.mp4")):
-        pytest.skip("case_01 video has not been rendered")
-    for camera_id in OFFSETS:
-        session.add(
-            Camera(
-                camera_id=camera_id,
-                name=camera_id,
-                source_uri="file:///x",
-                clock_offset_s=OFFSETS[camera_id],
-                width=1280,
-                height=720,
-                fps=10.0,
-            )
-        )
-    run = ProcessingRun(
-        run_id="run-pipeline-test",
-        input_hash="sha256:t",
-        dataset_version="v1",
-        config_version="t",
-        status=RunStatus.QUEUED.value,
-    )
-    session.add(run)
-    session.flush()
-    return run
 
 
 @needs_db
