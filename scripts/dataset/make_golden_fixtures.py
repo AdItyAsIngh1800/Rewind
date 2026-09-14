@@ -124,6 +124,9 @@ def build_run() -> ProcessingRun:
         device="mps",
         started_at=CREATED,
         finished_at=CREATED,
+        # No footage ships with the fixtures; these name where it would be, so the
+        # replay's "footage could not be loaded" state is what the mock exercises.
+        media_uris={c: f"golden/{c}.mp4" for c in ("CAM_A", "CAM_B", "CAM_C")},
     )
 
 

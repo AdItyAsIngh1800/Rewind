@@ -25,6 +25,7 @@ from numpy.typing import NDArray
 from sqlalchemy.orm import Session
 
 from packages.common.camera import CameraModel
+from packages.database.models import ProcessingRun as ProcessingRunRow
 from packages.schemas import Observation, RunStatus, SemanticEvent, TrackSegment
 from services.events import (
     EventConfig,
@@ -212,13 +213,19 @@ def process_run(
     config = tracker_config or TrackerConfig()
     result = PipelineResult(run_id=run_id)
     transition(session, run_id, RunStatus.RUNNING)
+    clips = sorted(case_dir.glob("*.mp4"))
+    # Recorded as the run starts reading them, so the replay plays the footage this run's
+    # evidence came from, and a failed run still says what it was reading (ADR-0006).
+    run_row = session.get(ProcessingRunRow, run_id)
+    if run_row is not None:
+        run_row.media_uris = {clip.stem: str(clip) for clip in clips}
     session.commit()
 
     try:
         all_observations: list[Observation] = []
         all_segments: list[TrackSegment] = []
         descriptors: dict[str, NDArray[np.float64]] = {}
-        for clip in sorted(case_dir.glob("*.mp4")):
+        for clip in clips:
             camera_id = clip.stem
             log.info("run %s: %s", run_id, camera_id)
             out = process_camera(

@@ -76,6 +76,14 @@ class ProcessingRun(Contract):
     started_at: datetime | None = None
     finished_at: datetime | None = None
     error: str | None = None
+    #: Camera id to the clip that camera's observations were read from, recorded by the
+    #: pipeline from the clips it decoded, so a replay plays exactly the footage the
+    #: evidence came from (ADR-0006). Empty until the run is processed.
+    media_uris: dict[str, str] = Field(default_factory=dict)
+    captured_at: datetime | None = Field(
+        default=None,
+        description="Wall-clock start of the run's shared timebase; None for rendered footage",
+    )
 
 
 class Observation(Contract):

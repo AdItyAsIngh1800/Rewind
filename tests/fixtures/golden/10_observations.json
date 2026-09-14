@@ -1,7 +1,7 @@
 [
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 620.0,
       "x2": 678.0,
       "y1": 300.0,
@@ -14,7 +14,7 @@
     "frame_index": 115,
     "observation_id": "OBS-0001",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 11.5,
     "track_id": "CAM_A-P01",
     "visibility": 1.0,
@@ -22,7 +22,7 @@
   },
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 634.0,
       "x2": 692.0,
       "y1": 300.0,
@@ -35,7 +35,7 @@
     "frame_index": 122,
     "observation_id": "OBS-0002",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 12.2,
     "track_id": "CAM_A-P01",
     "visibility": 1.0,
@@ -43,7 +43,7 @@
   },
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 648.0,
       "x2": 706.0,
       "y1": 300.0,
@@ -56,7 +56,7 @@
     "frame_index": 128,
     "observation_id": "OBS-0003",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 12.8,
     "track_id": "CAM_A-P01",
     "visibility": 1.0,
@@ -64,7 +64,7 @@
   },
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 662.0,
       "x2": 720.0,
       "y1": 300.0,
@@ -77,7 +77,7 @@
     "frame_index": 134,
     "observation_id": "OBS-0004",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 13.4,
     "track_id": "CAM_A-P01",
     "visibility": 1.0,
@@ -85,7 +85,7 @@
   },
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 676.0,
       "x2": 734.0,
       "y1": 300.0,
@@ -98,7 +98,7 @@
     "frame_index": 140,
     "observation_id": "OBS-0005",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 14.0,
     "track_id": "CAM_A-P01",
     "visibility": 1.0,
@@ -106,7 +106,7 @@
   },
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 540.0,
       "x2": 636.0,
       "y1": 380.0,
@@ -119,7 +119,7 @@
     "frame_index": 122,
     "observation_id": "OBS-0006",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 12.2,
     "track_id": "CAM_B-R12",
     "visibility": 1.0,
@@ -127,7 +127,7 @@
   },
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 518.0,
       "x2": 614.0,
       "y1": 380.0,
@@ -140,7 +140,7 @@
     "frame_index": 128,
     "observation_id": "OBS-0007",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 12.8,
     "track_id": "CAM_B-R12",
     "visibility": 1.0,
@@ -148,7 +148,7 @@
   },
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 496.0,
       "x2": 592.0,
       "y1": 380.0,
@@ -161,7 +161,7 @@
     "frame_index": 134,
     "observation_id": "OBS-0008",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 13.4,
     "track_id": "CAM_B-R12",
     "visibility": 1.0,
@@ -169,7 +169,7 @@
   },
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 474.0,
       "x2": 570.0,
       "y1": 380.0,
@@ -182,7 +182,7 @@
     "frame_index": 140,
     "observation_id": "OBS-0009",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 14.0,
     "track_id": "CAM_B-R12",
     "visibility": 1.0,
@@ -190,7 +190,7 @@
   },
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 700.0,
       "x2": 760.0,
       "y1": 250.0,
@@ -203,7 +203,7 @@
     "frame_index": 115,
     "observation_id": "OBS-0010",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 11.5,
     "track_id": "CAM_C-P01",
     "visibility": 0.9,
@@ -211,7 +211,7 @@
   },
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 430.0,
       "x2": 530.0,
       "y1": 300.0,
@@ -224,7 +224,7 @@
     "frame_index": 115,
     "observation_id": "OBS-0011",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 11.5,
     "track_id": "CAM_C-R12",
     "visibility": 0.9,
@@ -232,7 +232,7 @@
   },
   {
     "bbox": {
-      "schema_version": "1.0.0",
+      "schema_version": "1.1.0",
       "x1": 600.0,
       "x2": 700.0,
       "y1": 300.0,
@@ -245,7 +245,7 @@
     "frame_index": 144,
     "observation_id": "OBS-0012",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "timestamp_s": 14.4,
     "track_id": "CAM_C-R12",
     "visibility": 0.85,

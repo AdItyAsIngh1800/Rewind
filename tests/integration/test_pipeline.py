@@ -137,6 +137,7 @@ def test_pipeline_processes_a_case_end_to_end(session: Session, queued_run: Proc
     session.refresh(queued_run)
     assert queued_run.status == RunStatus.COMPLETE.value
     assert queued_run.started_at is not None and queued_run.finished_at is not None
+    assert queued_run.media_uris == {c: str(CASE_DIR / f"{c}.mp4") for c in result.cameras}
 
 
 @needs_db

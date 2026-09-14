@@ -13,7 +13,7 @@
     "hypothesis_id": "HYP-0001",
     "incident_id": "INC-0001",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "score": 0.87,
     "support_refs": [
       "NODE-V-ZONE1",
@@ -35,7 +35,7 @@
     "hypothesis_id": "HYP-0002",
     "incident_id": "INC-0001",
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "score": 0.31,
     "support_refs": [
       "NODE-GAP-CAMC"
