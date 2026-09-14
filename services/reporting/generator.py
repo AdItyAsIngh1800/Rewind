@@ -39,7 +39,7 @@ from packages.schemas import (
 from services.evidence.graph import EvidenceGraph, id_base
 from services.reasoning.hypotheses import RankingConfig
 
-GENERATOR_VERSION = "deterministic-0.2.0"
+GENERATOR_VERSION = "deterministic-0.2.1"
 
 #: A standing limitation true of every report this system writes, whatever the case.
 STANDING_LIMITATION = (
@@ -115,7 +115,13 @@ def generate_report(
             if bound is None and not event.payload.get("at_first_sight"):
                 claim(EvidenceLevel.CONFIRMED, node.label, [event.event_id, ref])
             else:
-                when = f" (time bounded between {bound[0]:g} and {bound[1]:g} s)" if bound else ""
+                # A first-sight crossing has no earlier sighting to bound it by; the
+                # claim says only that the crossing was not seen, never a time for it.
+                when = (
+                    f" (time bounded between {bound[0]:g} and {bound[1]:g} s)"
+                    if bound
+                    else " (crossing not seen; first sighted inside)"
+                )
                 claim(EvidenceLevel.POSSIBLE, f"{node.label}{when}", [event.event_id, ref])
 
     # 2 and 3. The inferences, in ranked order, each worded by its own level.

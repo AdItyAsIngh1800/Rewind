@@ -182,6 +182,37 @@ def test_an_entry_seen_only_after_the_stop_but_bounded_before_it_is_possible() -
     assert 0 < top.components["temporal_precedence"] < 1
 
 
+def test_an_entry_first_seen_after_the_stop_is_bounded_by_the_window_and_possible() -> None:
+    """The same unseen entry when the track came back as a new one (the product path).
+
+    A gap longer than the tracker bridges gives the entity a fresh track, first seen
+    already inside Z1 after the stop, with no ``during_gap`` to bound the crossing.
+    The crossing is bounded by the window's start instead, and ranked *possible*.
+    """
+    scene = _scene()
+    events = scene["events"]
+    observations = scene["observations"]
+    assert isinstance(events, list) and isinstance(observations, list)
+    scene["observations"] = [
+        o for o in observations if not (o.track_id == "CAM_A-T001" and 10.0 <= o.timestamp_s < 14.5)
+    ]
+    scene["segments"] = segments_from_observations("r", scene["observations"])  # type: ignore[arg-type]
+    first_sight_entry = events[0].model_copy(
+        update={
+            "timestamp_s": 14.5,
+            "payload": {"entity_class": "person", "at_first_sight": True},
+        }
+    )
+    scene["events"] = [first_sight_entry, *events[2:]]
+    incident, graph, remaining = _graph(scene)
+    [top, *_] = rank_hypotheses(incident, graph, remaining, ZONES, NOW)
+    assert top.description.startswith("Person (CAM_A-T001, CAM_B-T001) entered Z1")
+    assert (
+        f"between {incident.window_start_s:g} and 14.5 s while no camera saw it" in top.description
+    )
+    assert top.evidence_level is EvidenceLevel.POSSIBLE
+
+
 def test_both_forklifts_that_handled_the_pallet_are_ranked() -> None:
     """Scene spec §6.6: one set it down at the edge, another nudged it in; both surface with scores.
 

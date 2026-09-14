@@ -151,18 +151,28 @@ def _bounded(event: SemanticEvent) -> bool:
     return bool(event.payload.get("at_first_sight") or event.payload.get("during_gap"))
 
 
-def _happened_between(event: SemanticEvent) -> tuple[float, float]:
-    """Return when an event happened: its stamp, or the gap a bounded event fell in.
+def _happened_between(event: SemanticEvent, window_start: float) -> tuple[float, float]:
+    """Return when an event happened: its stamp, or the interval a bounded event fell in.
 
     The extractor stamps a crossing that happened while the track was unseen at the
     reappearance and records the gap in ``during_gap``. Judged by its stamp, a person
     who entered the lane unseen and reappeared after the stop looks like they entered
     after it, and the case the project is named for produces no hypothesis (EXP-0010,
     F5). Judged by the interval, the entry may precede the stop, and is *possible*.
+
+    A track that reappears after a gap longer than the tracker bridges comes back as a
+    *new* track, first seen already inside the zone (``at_first_sight``), with no
+    earlier sighting of its own to bound the crossing by. Nothing before the incident
+    window is in evidence, so the crossing is bounded by the window's start: the same
+    honesty as ``during_gap``, with a wider interval. Without this the product path,
+    which always runs the tracker, never produced the hypothesis F5 was for (E9.4,
+    golden e2e).
     """
     gap = event.payload.get("during_gap")
     if isinstance(gap, list) and len(gap) == 2:
         return float(gap[0]), float(gap[1])
+    if event.payload.get("at_first_sight"):
+        return min(window_start, event.timestamp_s), event.timestamp_s
     return event.timestamp_s, event.timestamp_s
 
 
@@ -192,7 +202,7 @@ def rank_hypotheses(
     trigger = index.events[incident.trigger_event_id]
 
     if incident.incident_class is IncidentClass.ROBOT_ESTOP_HUMAN_INCURSION:
-        candidates = _estop_candidates(index, trigger_node, trigger, cfg)
+        candidates = _estop_candidates(index, trigger_node, trigger, cfg, incident.window_start_s)
     else:
         candidates = _blocked_candidates(index, trigger_node, trigger, zones, cfg)
 
@@ -332,7 +342,11 @@ def _edge(
 
 
 def _estop_candidates(
-    index: _Index, trigger_node: EvidenceNode, trigger: SemanticEvent, cfg: RankingConfig
+    index: _Index,
+    trigger_node: EvidenceNode,
+    trigger: SemanticEvent,
+    cfg: RankingConfig,
+    window_start: float,
 ) -> list[_Candidate]:
     t_stop = trigger.timestamp_s
     zone_weight = dict(cfg.path_zones)
@@ -350,7 +364,7 @@ def _estop_candidates(
             event = index.event_of(node)
             if event is None:
                 continue
-            earliest, latest = _happened_between(event)
+            earliest, latest = _happened_between(event, window_start)
             if latest < t_stop - cfg.lookback_s or earliest > t_stop + cfg.timing_tolerance_s:
                 continue
             # The moment it most plausibly happened: its stamp, or for a bounded event
