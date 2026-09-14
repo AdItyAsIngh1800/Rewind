@@ -45,6 +45,10 @@ tracker number.
   runs read as "not recorded", never as zero. Golden fixtures regenerated;
   `openapi.json` regenerated; the web and mock API types follow.
 - A failed run records nothing: it has no complete stage set to be honest about.
+- `stages_s` is monotonic time, which does not advance while the machine sleeps; a run's
+  `started_at` and `finished_at` are wall-clock and do. In the container check a sleeping
+  host made a run's wall span 1018 s against 110 s of stages. Throughput is taken from the
+  stages, which measure work; the wall span measures how long someone waited.
 - Memory is a process-level figure. The worker handles one run at a time, so the peak
   belongs to that run; a worker that processed runs concurrently would need a per-run
   measurement.
