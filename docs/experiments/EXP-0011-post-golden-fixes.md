@@ -300,3 +300,43 @@ named as a claim, and no false *Observed* statement left.
 | F2 hidden person | accepted limitation | none; the *Cannot determine* claim is the design answer |
 | F4 fragment links | partial | identity refuses a track that is an edge fragment (short, at the frame edge, one camera): candidate rule, thresholds from tune cases |
 | F3 cost on case_06 edge touches | accepted with F7 | a touch-and-reverse rule would be shaped on case_06; leave |
+
+## F5 addendum — the fix did not reach the product path (found by the E9.4 golden e2e)
+
+**Found.** `tests/e2e/test_golden_case.py` runs case_02 through `process_run` with
+ray-cast boxes, so through the real tracker. P01 is unseen for 3.7 s and comes back as a
+*new* track, first sighted already inside Z1 at 14.9 s: the event carries
+`at_first_sight`, not `during_gap`. F5's rule bounded only `during_gap` events, so this
+one was judged by its stamp, after the stop, and discarded. No *Possible: Person*
+hypothesis on the path the product actually runs.
+
+**Why no harness saw it.** `reasoning_on_detections.py`'s perfect mode labels every
+observation with its true entity (`perfect_tracks`) and never runs the tracker, so P01
+never fragments; detections mode runs the tracker but does not detect P01 after the gap
+(F2). The one input that exercises this path, perfect boxes through the tracker, existed
+only in the integration tests, and none of them used case_02. EXP-0011's "fixed" for F5
+was true of the harness, not of the product.
+
+**Change.** A first-sight entry is bounded by the incident window's start: nothing
+before the window is in evidence, so the crossing happened at some moment between the
+window's start and the first sighting. The description says so ("between 3.5 and 14.9 s
+while no camera saw it"), the level stays capped at *Possible* by the existing bounded
+rule, and the report's claim for such an event says "crossing not seen; first sighted
+inside" instead of a time (`deterministic-0.2.1`). No new threshold.
+
+**Results** (`post-golden-F5b-2026-09-14.log`, `reasoning-2026-09-14T182204Z`):
+
+| Measure | Before | After |
+|---|---|---|
+| Harness, all ten rows (five incidents × two modes) | — | **identical** in ranking, level, gaps, claims, coverage |
+| Golden e2e, tracked perfect boxes: person ranked | no | **yes, *Possible***, "between 3.5 and 14.9 s while no camera saw it" |
+| Golden e2e: anything ranked above *Possible* | — | nothing |
+| Golden e2e: person's rank | — | second, behind F01 (0.55 against 0.51) |
+
+**What it does not do.** The person ranks second on the tracked path. Its crossing is
+bounded only by the window, 11.4 s wide, so temporal precedence cannot prefer it over
+F01's observed entry; the ranking is honest about that. Cause top-1 on this path is a
+metric the harness cannot yet measure (above); the e2e pins the behaviours, not the rank.
+
+**Owed.** A harness mode that runs ray-cast boxes through the tracker, so the product
+path is measured, not only tested.

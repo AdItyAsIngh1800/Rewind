@@ -45,8 +45,14 @@ a re-render); *partial*.
 
 | # | Failure mode | Root cause | Found | Status |
 |---|---|---|---|---|
-| **F5** | No hypothesis for an entity whose decisive move was unseen: the case the project is named for got a forklift ranked *Possible* and no person | The extractor emitted the bounded entry stamped at the reappearance; the ranker judged it by its stamp, after the window | E9.1, EXP-0010 | fixed: bounded events judged by the interval they happened in, worded "at some moment between … while no camera saw it", capped at *Possible* (EXP-0011) |
+| **F5** | No hypothesis for an entity whose decisive move was unseen: the case the project is named for got a forklift ranked *Possible* and no person | The extractor emitted the bounded entry stamped at the reappearance; the ranker judged it by its stamp, after the window | E9.1, EXP-0010 | fixed: bounded events judged by the interval they happened in, worded "at some moment between … while no camera saw it", capped at *Possible* (EXP-0011). **Addendum:** a person returning as a new track (`at_first_sight`) was still dropped on the tracked product path; now bounded by the window start. Found by the golden e2e, invisible to the harness, whose perfect mode bypasses the tracker |
 | **F6** | The unseen interval reached the graph and the limitations count but never a claim | *Cannot determine* written only for entities a hypothesis named | E9.1, EXP-0010 | fixed: any non-robot gap overlapping the look-back before the trigger is claimed (`deterministic-0.2.0`) |
 | **F7** | A blocked zone's earlier contributor fell outside the window, and candidates came only from zone entries | Window opened before the *last* rest; no contact-based candidates | E9.1, EXP-0010 | fixed: window from the first of a chain of rests; candidates from proximity to the resting object (EXP-0011) |
 | R1 | A pallet fragment ranked as a second, low candidate on case_04 | Identity refused to join the pallet's per-camera tracks, so a fragment looked like another object | Gate 4/5, EXP-0009 | fixed as a side effect of F7's amendment: the object is every same-class track resting in the zone while the trigger's does |
 | R2 | Gate 5 guarantees every claim is traceable, not that the evidence it traces to is true (F3's false *Observed* claim cited a real event) | By design: the generator checks citations, not the world | E9.1, EXP-0010 | accepted; the defence is upstream (F3) and the *Observed* level's reservation for direct events |
+
+## Runtime
+
+| # | Failure mode | Root cause | Found | Status |
+|---|---|---|---|---|
+| T1 | A worker that died mid-run left the run RUNNING forever; a redelivered job reported it complete and skipped. A corrupt clip on a clean database failed during camera registration, outside the pipeline's error handling, and also stranded the run RUNNING | Redelivery treated every non-QUEUED run as finished; registration probed clips before the `try` | E9.4 failure tests | fixed: an interrupted run is closed FAILED with the reason; clips are probed inside the `try` |
