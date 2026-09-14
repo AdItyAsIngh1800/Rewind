@@ -76,6 +76,44 @@ class _Candidate:
     severity: Severity
 
 
+def _first_rest(
+    events: Sequence[SemanticEvent],
+    trigger: SemanticEvent,
+    zone_id: str,
+    polygon: shapely.Polygon,
+    cfg: IncidentConfig,
+) -> float:
+    """Return when the object first came to rest in the zone, walking back through earlier stops.
+
+    An object that was set down, nudged and set down again triggers on its last rest, and
+    a window measured from that rest cuts off whoever placed it first (EXP-0010, F7). Any
+    earlier stop of the same class in the same zone that ended within the pre-margin of
+    the next one is the same obstruction, moved; the window opens before the earliest.
+    Events carry track ids, not identities, so the chain is by class and place.
+    """
+    earliest = trigger.timestamp_s
+    stops = sorted(
+        (
+            e
+            for e in events
+            if e.event_type is EventType.STOP
+            and e.payload.get("entity_class") == trigger.payload.get("entity_class")
+            and e.timestamp_s < trigger.timestamp_s
+        ),
+        key=lambda e: e.timestamp_s,
+        reverse=True,
+    )
+    for e in stops:
+        end = _number(e.payload.get("end_s"))
+        x, y = _number(e.payload.get("x")), _number(e.payload.get("y"))
+        if end is None or x is None or y is None or not polygon.covers(shapely.Point(x, y)):
+            continue
+        if end < earliest - cfg.dwell_pre_margin_s:
+            continue
+        earliest = min(earliest, e.timestamp_s)
+    return earliest
+
+
 def _number(value: object) -> float | None:
     return float(value) if isinstance(value, int | float) else None
 
@@ -138,12 +176,13 @@ def detect_incidents(
         if any(z == zone_id and s < end and start < e for z, s, e in obstructions):
             continue
         obstructions.append((zone_id, start, end))
+        first_rest = _first_rest(events, event, zone_id, keep_clear[zone_id], cfg)
         candidates.append(
             _Candidate(
                 IncidentClass.ZONE_BLOCKED_UNATTENDED_OBJECT,
                 event,
                 start + cfg.dwell_threshold_s,
-                start - cfg.dwell_pre_margin_s,
+                first_rest - cfg.dwell_pre_margin_s,
                 start + cfg.dwell_threshold_s + cfg.dwell_post_s,
                 cfg.blocked_severity,
             )

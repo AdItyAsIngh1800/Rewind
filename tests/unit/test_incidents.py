@@ -143,3 +143,22 @@ def test_near_miss_stream_opens_nothing() -> None:
 def test_config_version_names_every_window_value() -> None:
     """A run's incident list must be traceable to the values that produced it."""
     assert IncidentConfig().version == "incidents:estop10/10:dwell20+10/10:zonesZ2"
+
+
+def test_window_reaches_back_to_the_object_first_rest() -> None:
+    """Scene spec §6.6: set down, nudged, set down again; the window opens before the first rest."""
+    first = _event(
+        7, EventType.STOP, 20.3, entity_class="pallet", duration_s=11.7, end_s=32.0, x=11.0, y=6.2
+    )
+    final = _event(
+        8, EventType.STOP, 34.1, entity_class="pallet", duration_s=20.8, end_s=54.9, x=12.0, y=7.5
+    )
+    # Ended 15 s before the first rest: moved for longer than the pre-margin, another obstruction.
+    unrelated = _event(
+        9, EventType.STOP, 2.0, entity_class="pallet", duration_s=3.0, end_s=5.0, x=11.0, y=6.5
+    )
+    [incident] = detect_incidents("r", [unrelated, first, final], ZONES, 60.0)
+    assert incident.detected_at_s == pytest.approx(54.1)
+    assert incident.window_start_s == pytest.approx(10.3), (
+        "10 s before the first rest, not the last"
+    )
