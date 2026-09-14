@@ -84,3 +84,41 @@ def test_runs_drop_zero_duration_singletons() -> None:
     m = np.array([False, True, False, True, True])
     assert g._runs(t, m, 0.0) == [(1.0, 1.0), (3.0, 4.0)]
     assert g._runs(t, m, 0.5) == [(3.0, 4.0)]
+
+
+SQUARE = [(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)]
+
+
+def _along_x(xs: list[float]) -> np.ndarray:
+    """Build a track sampled every 0.1 s along ``xs`` at y = 5."""
+    return np.array([[round(i * 0.1, 1), x, 5.0] for i, x in enumerate(xs)])
+
+
+def test_jitter_on_an_edge_confirms_nothing() -> None:
+    """An object parked on the edge, wobbling 0.2 m across it, never re-enters or leaves."""
+    track = _along_x([-3.0, -1.0, 2.0, 1.0, 0.1, -0.2, 0.1, -0.2, 0.2, -0.1, 0.1])
+    assert g.confirmed_transitions(track, SQUARE, margin=0.5) == [(0.2, True)]
+    assert len(g.zone_transitions(track, SQUARE)) == 7
+
+
+def test_a_confirmed_crossing_keeps_its_original_time() -> None:
+    """The exit is stamped at the first outside sample, though depth is reached later."""
+    track = _along_x([5.0, 1.0, -0.1, -0.3, -2.0])
+    assert g.confirmed_transitions(track, SQUARE, margin=0.5) == [(0.2, False)]
+
+
+def test_zero_margin_is_the_raw_crossings() -> None:
+    """With no margin every flip is kept, exactly as zone_transitions reports."""
+    track = _along_x([-3.0, -1.0, 2.0, 1.0, 0.1, -0.2, 0.1, -0.2, 0.2, -0.1, 0.1])
+    assert g.confirmed_transitions(track, SQUARE, margin=0.0) == g.zone_transitions(track, SQUARE)
+
+
+def test_a_shallow_crossing_by_a_moving_object_is_kept() -> None:
+    """Walking along the edge, 0.1 m inside for a while, is a real entry and a real exit."""
+    track = np.array(
+        [
+            [round(i * 0.1, 1), float(i) * 0.3, y]
+            for i, y in enumerate([-2.0, -1.0, -0.2, 0.1, 0.1, 0.1, 0.1, -1.0, -3.0, -3.0])
+        ]
+    )
+    assert g.confirmed_transitions(track, SQUARE, margin=0.5) == [(0.3, True), (0.7, False)]

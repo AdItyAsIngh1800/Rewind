@@ -81,6 +81,15 @@ class EventConfig:
     #: spread was mostly spurious clock offsets (scene spec §4.1). With correct clocks
     #: the real spread is under 0.5 s and 0.8 is the smallest window that covers it.
     merge_tolerance_s: float = 0.8
+    #: A shallow excursion across a zone edge counts only if it goes this far past the
+    #: edge or the object moves this far across it (`geometry.confirmed_transitions`);
+    #: a crossing keeps its original time.
+    #: Real-detection positions of a still object wobble by up to 0.40 m on the tune
+    #: cases (pallet; person 0.31, robot 0.09, `localisation_jitter.py`), and 0.5 m is
+    #: the first step above that. Without it, a forklift parked on Z1's edge in case_02
+    #: was reported as *observed* entering the lane (EXP-0010, F3). No tune case has a
+    #: stationary forklift, so its wobble is unmeasured.
+    zone_edge_margin_m: float = 0.5
 
     @property
     def version(self) -> str:
@@ -88,7 +97,7 @@ class EventConfig:
         return (
             f"events:stop{self.stop_max_speed}/{self.stop_min_duration}"
             f":turn{self.turn_min_angle_deg}/{self.turn_baseline_s}:prox{self.proximity_distance}"
-            f":occ{self.occlusion_gap_s}:merge{self.merge_tolerance_s}"
+            f":occ{self.occlusion_gap_s}:merge{self.merge_tolerance_s}:edge{self.zone_edge_margin_m}"
         )
 
 
@@ -252,7 +261,9 @@ def extract_events(
                     confidence=track.rows[0].confidence / 2,
                     at_first_sight=True,
                 )
-            for t, entered in geometry.zone_transitions(arr, zone.polygon):
+            for t, entered in geometry.confirmed_transitions(
+                arr, zone.polygon, cfg.zone_edge_margin_m
+            ):
                 i = _index_at(track, t)
                 before, after = track.rows[i - 1], track.rows[i]
                 gap = after.timestamp_s - before.timestamp_s

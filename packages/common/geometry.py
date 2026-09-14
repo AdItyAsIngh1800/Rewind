@@ -18,6 +18,7 @@ whose positions jitter — that is expected, and the reason nothing here is hard
 
 from __future__ import annotations
 
+import itertools
 from collections.abc import Sequence
 
 import numpy as np
@@ -84,6 +85,48 @@ def zone_transitions(track: Track, polygon: PolygonLike) -> list[tuple[float, bo
     inside = inside_mask(track, polygon)
     flips = np.flatnonzero(inside[1:] != inside[:-1]) + 1
     return [(float(track[i, 0]), bool(inside[i])) for i in flips]
+
+
+def confirmed_transitions(
+    track: Track, polygon: PolygonLike, margin: float, still_samples: int = 5
+) -> list[tuple[float, bool]]:
+    """Zone crossings, with a still object's position wobble across the edge removed.
+
+    A position estimate wobbles, so an object parked on a zone edge crosses it back and
+    forth without moving. A run of samples on the new side counts as a crossing if it
+    reaches at least ``margin`` past the edge, or if the object moved at least
+    ``margin`` across it: the median of up to ``still_samples`` positions before the run
+    against the same after it. Only a shallow excursion by a still object is wobble.
+
+    Depth alone is not enough. A person walking along an edge and a forklift nosing a
+    pallet into a zone both cross it by centimetres, and they are real crossings; a
+    depth-only rule dropped them, and the exit that followed with them (EXP-0011).
+
+    A kept crossing is stamped at the first sample on the new side: confirmation looks
+    ahead rather than waiting, so a real crossing is not delayed, the objection EXP-0005
+    raised against hysteresis. ``margin = 0`` returns exactly :func:`zone_transitions`.
+    """
+    if len(track) == 0:
+        return []
+    shape = _polygon(polygon)
+    inside = inside_mask(track, shape)
+    xy = track[:, 1:3]
+    depth = shapely.distance(shape.boundary, shapely.points(xy))
+    bounds = [0, *(np.flatnonzero(inside[1:] != inside[:-1]) + 1).tolist(), len(track)]
+    state = bool(inside[0])
+    out: list[tuple[float, bool]] = []
+    for start, end in itertools.pairwise(bounds):
+        side = bool(inside[start])
+        if side == state:
+            continue
+        if float(depth[start:end].max()) < margin:
+            before = np.median(xy[max(0, start - still_samples) : start], axis=0)
+            after_rows = xy[end : end + still_samples] if end < len(track) else xy[start:end]
+            if float(np.linalg.norm(np.median(after_rows, axis=0) - before)) < margin:
+                continue
+        out.append((float(track[start, 0]), side))
+        state = side
+    return out
 
 
 def dwell_intervals(

@@ -59,6 +59,15 @@ def test_zone_crossing_cites_the_straddling_pair() -> None:
     assert zone[0].payload["entity_class"] == "person"
 
 
+def test_a_still_object_on_a_zone_edge_enters_once() -> None:
+    """Wobble across the edge after coming to rest is not a crossing; the entry keeps its time."""
+    rows = walk([-3, -1.5, 1, 0.2, 0.1, 0.2, 0.1, 0.2, -0.2, 0.3, -0.1, 0.2, -0.3, 0.1, 0.2, 0.1])
+    zone = [(e.event_type, e.timestamp_s) for e in events_of(rows) if e.zone_id == "Z"]
+    assert zone == [(EventType.ZONE_ENTRY, 0.2)]
+    raw = [e for e in events_of(rows, zone_edge_margin_m=0.0) if e.zone_id == "Z"]
+    assert len(raw) > 1, "without the margin the wobble is reported as crossings"
+
+
 def test_first_sight_inside_is_a_bounded_entry() -> None:
     """Starting inside gives an entry at first sight, flagged and half-confidence."""
     rows = walk([5, 6, 7])
