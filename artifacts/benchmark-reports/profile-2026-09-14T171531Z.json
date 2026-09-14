@@ -1,0 +1,128 @@
+[
+  {
+    "case_id": "case_01",
+    "frames": 1350,
+    "total_s": 10.66,
+    "perception_s": 10.13,
+    "fps": 133.3,
+    "stages_s": {
+      "perception:CAM_A": 4.32,
+      "perception:CAM_B": 2.94,
+      "perception:CAM_C": 2.87,
+      "persist:observations": 0.37,
+      "events": 0.02,
+      "identity": 0.01,
+      "reasoning": 0.01
+    },
+    "observations": 2116,
+    "events": 15,
+    "incidents": 1,
+    "peak_rss_mb": 675.0,
+    "accelerator_mb": 1136.541696
+  },
+  {
+    "case_id": "case_02",
+    "frames": 1350,
+    "total_s": 8.76,
+    "perception_s": 8.29,
+    "fps": 162.8,
+    "stages_s": {
+      "perception:CAM_A": 3.0,
+      "perception:CAM_B": 3.03,
+      "perception:CAM_C": 2.26,
+      "persist:observations": 0.34,
+      "events": 0.01,
+      "identity": 0.0,
+      "reasoning": 0.02
+    },
+    "observations": 1585,
+    "events": 31,
+    "incidents": 1,
+    "peak_rss_mb": 681.0,
+    "accelerator_mb": 1136.541696
+  },
+  {
+    "case_id": "case_03",
+    "frames": 1350,
+    "total_s": 9.19,
+    "perception_s": 8.6,
+    "fps": 157.0,
+    "stages_s": {
+      "perception:CAM_A": 3.24,
+      "perception:CAM_B": 3.07,
+      "perception:CAM_C": 2.29,
+      "persist:observations": 0.45,
+      "events": 0.01,
+      "identity": 0.01,
+      "reasoning": 0.01
+    },
+    "observations": 2484,
+    "events": 26,
+    "incidents": 1,
+    "peak_rss_mb": 687.0,
+    "accelerator_mb": 1136.541696
+  },
+  {
+    "case_id": "case_04",
+    "frames": 1350,
+    "total_s": 8.43,
+    "perception_s": 8.05,
+    "fps": 167.7,
+    "stages_s": {
+      "perception:CAM_A": 2.64,
+      "perception:CAM_B": 2.61,
+      "perception:CAM_C": 2.79,
+      "persist:observations": 0.25,
+      "events": 0.01,
+      "identity": 0.0,
+      "reasoning": 0.01
+    },
+    "observations": 1387,
+    "events": 16,
+    "incidents": 1,
+    "peak_rss_mb": 687.0,
+    "accelerator_mb": 1136.541696
+  },
+  {
+    "case_id": "case_05",
+    "frames": 1350,
+    "total_s": 8.38,
+    "perception_s": 7.99,
+    "fps": 168.9,
+    "stages_s": {
+      "perception:CAM_A": 2.71,
+      "perception:CAM_B": 2.71,
+      "perception:CAM_C": 2.58,
+      "persist:observations": 0.27,
+      "events": 0.01,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "observations": 1444,
+    "events": 5,
+    "incidents": 0,
+    "peak_rss_mb": 687.0,
+    "accelerator_mb": 1136.541696
+  },
+  {
+    "case_id": "case_06",
+    "frames": 1350,
+    "total_s": 8.4,
+    "perception_s": 8.02,
+    "fps": 168.4,
+    "stages_s": {
+      "perception:CAM_A": 2.64,
+      "perception:CAM_B": 2.61,
+      "perception:CAM_C": 2.76,
+      "persist:observations": 0.24,
+      "events": 0.01,
+      "identity": 0.0,
+      "reasoning": 0.02
+    },
+    "observations": 1306,
+    "events": 33,
+    "incidents": 1,
+    "peak_rss_mb": 687.0,
+    "accelerator_mb": 1136.541696
+  }
+]
