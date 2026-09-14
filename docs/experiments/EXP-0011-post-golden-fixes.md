@@ -133,3 +133,42 @@ Scene spec §6.6 asks that both be surfaced with scores and that F02 be no worse
 close second; with perfect tracks that now holds. F01 outranks F02 because its contact
 is 0.1 s from the first rest and F02's ends 1.3 s before the last; the ranking is by
 timing, and the spec accepts either order.
+
+**F7 amended after F4 (below) exposed a fragility.** The contact rule required the
+proximity event's object to be in the trigger's identity group. When identity refuses to
+join the object's per-camera tracks, the trigger's pallet (one camera) and the contact's
+pallet (another) are different entities and no contact counts. The ranker now gathers
+the object the way `detect_incidents` already does: every same-class track resting in
+the zone while the trigger's does. Side effect on case_04 detections: the pallet
+fragment that had been a second, *Conflicting* hypothesis is recognised as the object
+and no longer ranked as a cause.
+
+## F4 — a second box on a half-visible forklift
+
+**Failure.** A forklift cut off by CAM_B's bottom edge got a box on the whole machine
+and a second on its dark front face (IoU 0.27, under NMS). The second box seeded its own
+track, and appearance linked that track to the real forklift on the other cameras: both
+of case_02's false links.
+
+**Change.** `nested_in_larger`: a box with at least 90% of its area inside a larger box
+of the same class in the same frame is dropped (`…:nest0.9`). No case chose the value:
+two objects of one class never nest in the image, and 0.9 is "nearly wholly inside".
+
+**Results** (`post-golden-F4-2026-09-14.log`, all six cases, both modes):
+
+| Measure | Before | After |
+|---|---|---|
+| case_02 forklift precision / recall | 0.687 / 0.980 | **0.986 / 0.980** (413 false boxes → 13) |
+| case_02 CAM_B spurious boxes / ID switches | 417 / 2 | **17 / 1** |
+| Tune detection, every class | Gate 1 values | unchanged to the third decimal |
+| ID switches, worst camera, six cases | 2 | 1 |
+| case_02 false links | 2 of 4 | **2 of 4**, on a different track |
+| Tune false links / recall | 0 / 0.74 | 0 / 0.74 |
+
+**What F4 did not fix.** The remaining false links join `CAM_B-T003` to F01. That track
+is the forklift's front face detected *alone*, in frames where the rest of the machine
+is outside CAM_B's view, so there is no larger box to nest in. It is a fragment of the
+real forklift, and the links join it to that forklift on the other cameras, so no
+trajectory between two real entities is invented; but the metric counts them and the
+false-link rate on case_02 stays 0.50. A fragment at the frame edge is the visibility
+limit accepted under F2, seen from the identity layer.
