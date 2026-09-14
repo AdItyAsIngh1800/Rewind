@@ -1,14 +1,15 @@
-"""Console logging setup shared by every entry point.
+"""Logging setup shared by every entry point.
 
-Exists so that no module has to decide how a log line is formatted, and so that
-nothing in this codebase reaches for ``print``. Modules take a
-``logging.getLogger(__name__)`` and log to it; the process entry point calls
-``configure_logging`` exactly once.
+Exists so that no module has to decide how a log line is formatted, and so that nothing
+in this codebase reaches for ``print``. Modules take a ``logging.getLogger(__name__)``
+and log to it; the process entry point calls ``configure_logging`` exactly once.
 
-Stdlib logging rather than structlog, deliberately, even though structlog is the
-locked choice in ROADMAP E10.2. Every module logs through a stdlib logger either
-way — E10.2 swaps this function's formatter for structlog's ``ProcessorFormatter``
-and gains JSON output without touching a single call site.
+Two formats, one set of call sites. ``console`` prints the bare message, for a person at
+a terminal: several commands (the benchmark report, the accelerator table) are meant
+to be piped or pasted verbatim. ``json`` renders every record, the project's and every
+library's, as one JSON object per line with timestamp, level and logger, for a log
+aggregator (E10.2). The containers set ``REWIND_LOG_FORMAT=json``. Every call site is a
+stdlib logger, so the switch is this module and nothing else.
 """
 
 from __future__ import annotations
@@ -17,27 +18,53 @@ import logging
 import os
 import sys
 
+import structlog
+
 DEFAULT_LEVEL = "INFO"
 
+#: Servers that install their own handlers, which would bypass the JSON formatter and
+#: put plain-text lines into an otherwise structured stream.
+_SELF_CONFIGURED = ("uvicorn", "uvicorn.error", "uvicorn.access", "arq")
 
-def configure_logging(level: int | str | None = None) -> None:
-    """Install a stdout handler that emits the bare message, replacing any existing one.
+
+def json_formatter() -> logging.Formatter:
+    """Return a formatter that renders a stdlib record as one JSON object."""
+    return structlog.stdlib.ProcessorFormatter(
+        foreign_pre_chain=[
+            structlog.processors.TimeStamper(fmt="iso", utc=True),
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.add_logger_name,
+        ],
+        processors=[
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+            structlog.processors.format_exc_info,
+            structlog.processors.JSONRenderer(),
+        ],
+    )
+
+
+def configure_logging(level: int | str | None = None, fmt: str | None = None) -> None:
+    """Install one stdout handler for the whole process, replacing any existing one.
 
     Args:
         level: Threshold to install. Defaults to ``$REWIND_LOG_LEVEL``, then ``INFO``.
+        fmt: ``console`` or ``json``. Defaults to ``$REWIND_LOG_FORMAT``, then ``console``.
 
-    Output goes to stdout with no timestamp or level prefix because these commands
-    are read by a person at a terminal and several of them (the benchmark report,
-    the accelerator table) are meant to be piped or pasted verbatim. Level and
-    timestamp arrive in E10.2 along with the JSON renderer, where a log aggregator
-    rather than a person is the reader. ``force`` is set so that a second entry
-    point in the same process — a script importing the API app, for instance —
-    still gets this configuration rather than silently keeping an earlier one.
+    ``force`` is set so that a second entry point in the same process — a script
+    importing the API app, for instance — still gets this configuration rather than
+    silently keeping an earlier one.
 
     """
+    chosen = fmt or os.environ.get("REWIND_LOG_FORMAT", "console")
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(json_formatter() if chosen == "json" else logging.Formatter("%(message)s"))
     logging.basicConfig(
         level=level if level is not None else os.environ.get("REWIND_LOG_LEVEL", DEFAULT_LEVEL),
-        format="%(message)s",
-        stream=sys.stdout,
+        handlers=[handler],
         force=True,
     )
+    if chosen == "json":
+        for name in _SELF_CONFIGURED:
+            server = logging.getLogger(name)
+            server.handlers.clear()
+            server.propagate = True

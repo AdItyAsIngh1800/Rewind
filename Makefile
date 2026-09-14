@@ -29,13 +29,13 @@ bench:  ## Run the evaluation harness and emit a benchmark report
 	uv run python scripts/evaluation/run_benchmark.py
 
 worker:  ## Run the perception worker (needs redis: make up)
-	uv run arq apps.worker.main.WorkerSettings
+	uv run python -m apps.worker
 
 worker-burst:  ## Process whatever is queued, then exit
-	uv run arq apps.worker.main.WorkerSettings --burst
+	uv run python -m apps.worker --burst
 
 api:  ## Run the API with reload
-	uv run uvicorn apps.api.main:app --reload --port 8000
+	uv run python -m apps.api --reload --port 8000
 
 web:  ## Run the investigator UI dev server (proxies /api to :8000 — run make mock or make api)
 	cd apps/web && pnpm dev

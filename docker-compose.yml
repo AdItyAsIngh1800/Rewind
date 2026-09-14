@@ -20,6 +20,7 @@ x-app: &app
     DATABASE_URL: postgresql+psycopg://rewind:rewind@db:5432/rewind
     REWIND_REDIS_URL: redis://redis:6379/0
     REWIND_DETECTOR_DEVICE: cpu
+    REWIND_LOG_FORMAT: json
   volumes:
     - ./data/samples:/app/data/samples:ro
     - ./ml/models:/app/ml/models:ro
@@ -71,7 +72,7 @@ services:
 
   worker:
     <<: *app
-    command: ["arq", "apps.worker.main.WorkerSettings"]
+    command: ["python", "-m", "apps.worker"]
     depends_on:
       migrate:
         condition: service_completed_successfully

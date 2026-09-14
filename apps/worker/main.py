@@ -1,6 +1,4 @@
-"""ARQ worker entry point.
-
-    uv run arq apps.worker.main.WorkerSettings
+"""ARQ worker settings; run with ``python -m apps.worker``.
 
 Retries are bounded. A job that fails three times is left for a person to look at,
 because a run that fails deterministically will fail forever and retrying it burns
@@ -16,7 +14,6 @@ from arq.connections import RedisSettings
 
 from apps.worker.settings import worker_settings
 from apps.worker.tasks import process_case
-from services.observability.logging import configure_logging
 
 
 class WorkerSettings:
@@ -28,8 +25,3 @@ class WorkerSettings:
     job_timeout = 3600
     max_tries = 3
     health_check_interval = worker_settings.heartbeat_interval_s
-
-    @staticmethod
-    async def on_startup(ctx: dict[str, object]) -> None:
-        """Configure logging once for the worker process."""
-        configure_logging()
