@@ -1,0 +1,91 @@
+# The full REWIND stack (E10.1, Gate 6): from a fresh clone, `make fetch-data` then
+# `docker compose up`, and the investigator UI is on http://localhost:5173.
+#
+# Everything is local and disposable (ADR-0007): a Postgres container, not Supabase,
+# so the stack starts with no account and no secrets. Supabase stays the hosted
+# target through DATABASE_URL. The worker runs the detector on CPU, 63 FPS, a case in
+# about 22 s (EXP-0012); on Apple silicon `make worker` on the host uses MPS instead.
+#
+# Footage and weights are mounted read-only from the host, so the image is the same
+# for every dataset and checkpoint. Only the UI is published; the API is reached
+# through it, and the database and queue are internal.
+
+name: rewind
+
+x-app: &app
+  image: rewind-app:local
+  build: .
+  environment:
+    DATABASE_URL: postgresql+psycopg://rewind:rewind@db:5432/rewind
+    REWIND_REDIS_URL: redis://redis:6379/0
+    REWIND_DETECTOR_DEVICE: cpu
+  volumes:
+    - ./data/samples:/app/data/samples:ro
+    - ./ml/models:/app/ml/models:ro
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: rewind
+      POSTGRES_PASSWORD: rewind
+      POSTGRES_DB: rewind
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./packages/database/docker-init.sql:/docker-entrypoint-initdb.d/10-extensions.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "rewind"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    <<: *app
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  worker:
+    <<: *app
+    command: ["arq", "apps.worker.main.WorkerSettings"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build: apps/web
+    ports:
+      - "${REWIND_WEB_PORT:-5173}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

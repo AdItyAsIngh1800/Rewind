@@ -1,0 +1,13 @@
+# Only source enters the image. Footage and weights are mounted from the host after
+# `make fetch-data`, so the image is the same for every dataset and checkpoint.
+.git
+.venv
+.env
+**/__pycache__
+**/node_modules
+apps/web
+data
+artifacts
+ml/models
+tests
+docs

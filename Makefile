@@ -71,6 +71,9 @@ tokens:  ## Regenerate tokens.css and the evidence swatch page
 	uv run python scripts/maintenance/generate_tokens.py
 	uv run python scripts/maintenance/generate_swatches.py
 
+fetch-data:  ## Download and verify the rendered cases and detector weights (needs gh auth login)
+	uv run python scripts/dataset/fetch_data.py
+
 migrate:  ## Apply database migrations
 	uv run alembic upgrade head
 
