@@ -139,6 +139,12 @@ def test_pipeline_processes_a_case_end_to_end(session: Session, queued_run: Proc
     assert queued_run.status == RunStatus.COMPLETE.value
     assert queued_run.started_at is not None and queued_run.finished_at is not None
     assert queued_run.media_uris == {c: str(CASE_DIR / f"{c}.mp4") for c in result.cameras}
+    # One perception timer per camera and one for persistence, all positive (E9.3).
+    assert {k for k in result.stages_s if k.startswith("perception:")} == {
+        f"perception:{c}" for c in result.cameras
+    }
+    assert all(v > 0 for v in result.stages_s.values())
+    assert "persist:observations" in result.stages_s
 
 
 @needs_db

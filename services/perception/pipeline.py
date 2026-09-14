@@ -15,7 +15,9 @@ from __future__ import annotations
 
 import logging
 import pathlib
+import time
 from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Protocol
@@ -118,6 +120,19 @@ class PipelineResult:
     evidence_nodes: int = 0
     hypotheses: int = 0
     reports: int = 0
+    #: Wall-clock seconds per stage (E9.3). Perception is per camera, the rest per run.
+    #: The profile decides whether anything is worth parallelising; without it the
+    #: answer would be a guess, and the roadmap forbids guessing here.
+    stages_s: dict[str, float] = field(default_factory=dict)
+
+    @contextmanager
+    def timed(self, stage: str) -> Iterator[None]:
+        """Add the wall-clock time of the enclosed block to ``stages_s[stage]``."""
+        start = time.perf_counter()
+        try:
+            yield
+        finally:
+            self.stages_s[stage] = self.stages_s.get(stage, 0.0) + time.perf_counter() - start
 
 
 def process_camera(
@@ -247,15 +262,16 @@ def process_run(
         for clip in clips:
             camera_id = clip.stem
             log.info("run %s: %s", run_id, camera_id)
-            out = process_camera(
-                clip,
-                run_id=run_id,
-                camera_id=camera_id,
-                clock_offset_s=camera_offsets.get(camera_id, 0.0),
-                target_fps=target_fps,
-                detector=detector,
-                tracker_config=config,
-            )
+            with result.timed(f"perception:{camera_id}"):
+                out = process_camera(
+                    clip,
+                    run_id=run_id,
+                    camera_id=camera_id,
+                    clock_offset_s=camera_offsets.get(camera_id, 0.0),
+                    target_fps=target_fps,
+                    detector=detector,
+                    tracker_config=config,
+                )
             result.cameras.append(camera_id)
             result.frames_processed += out.frames
             all_observations.extend(out.observations)
@@ -264,22 +280,24 @@ def process_run(
 
         result.observations = len(all_observations)
         result.segments = len(all_segments)
-        result.observations_written = write_observations(session, all_observations)
-        result.segments_written = write_segments(session, all_segments)
+        with result.timed("persist:observations"):
+            result.observations_written = write_observations(session, all_observations)
+            result.segments_written = write_segments(session, all_segments)
         if scene is None:
             log.warning("run %s: no scene config, skipping event extraction", run_id)
         else:
             config_events = EventConfig()
             cameras = {c["id"]: CameraModel.from_scene(scene, c["id"]) for c in scene["cameras"]}
             heights = class_heights(scene)
-            raw_events = extract_events(
-                run_id,
-                all_observations,
-                load_zones(scene),
-                cameras,
-                heights,
-                config_events,
-            )
+            with result.timed("events"):
+                raw_events = extract_events(
+                    run_id,
+                    all_observations,
+                    load_zones(scene),
+                    cameras,
+                    heights,
+                    config_events,
+                )
             if result.cameras:
                 estimates = estimate_offsets(raw_events, reference=result.cameras[0])
                 result.clock_residuals_s = {c: e.residual_s for c, e in estimates.items()}
@@ -298,16 +316,17 @@ def process_run(
                 for k, v in scene["entities"].items()
                 if not k.startswith("_") and "max_speed_mps" in v
             }
-            links = associate(
-                run_id,
-                build_segment_tracks(
-                    all_segments,
-                    all_observations,
-                    localise_all(all_observations, cameras, heights),
-                    descriptors,
-                ),
-                speeds,
-            )
+            with result.timed("identity"):
+                links = associate(
+                    run_id,
+                    build_segment_tracks(
+                        all_segments,
+                        all_observations,
+                        localise_all(all_observations, cameras, heights),
+                        descriptors,
+                    ),
+                    speeds,
+                )
             result.links = len(links)
             result.links_linked = sum(link.decision.value == "linked" for link in links)
             write_links(session, links)
@@ -330,28 +349,29 @@ def process_run(
             # Each incident's evidence graph is built now, from exactly the data that
             # opened it, and stored with it: the graph an investigator reads later is
             # the one the report was generated from, not a rebuild that could differ.
-            built_at = datetime.now(UTC)
-            for incident in incidents:
-                graph = build_graph(
-                    incident,
-                    events=events,
-                    observations=all_observations,
-                    segments=all_segments,
-                    links=links,
-                    groups=groups,
-                    zones=zones,
-                    created_at=built_at,
-                    event_version=config_events.version,
-                )
-                # Ranked before the graph is stored: ranking adds the candidate-cause
-                # and contradiction edges, and they belong in the same stored graph.
-                hypotheses = rank_hypotheses(incident, graph, events, zones, built_at)
-                write_graph(session, graph)
-                result.hypotheses += write_hypotheses(session, hypotheses)
-                result.reports += write_report(
-                    session, generate_report(incident, graph, hypotheses, events, built_at)
-                )
-                result.evidence_nodes += len(graph.nodes)
+            with result.timed("reasoning"):
+                built_at = datetime.now(UTC)
+                for incident in incidents:
+                    graph = build_graph(
+                        incident,
+                        events=events,
+                        observations=all_observations,
+                        segments=all_segments,
+                        links=links,
+                        groups=groups,
+                        zones=zones,
+                        created_at=built_at,
+                        event_version=config_events.version,
+                    )
+                    # Ranked before the graph is stored: ranking adds the candidate-cause
+                    # and contradiction edges, and they belong in the same stored graph.
+                    hypotheses = rank_hypotheses(incident, graph, events, zones, built_at)
+                    write_graph(session, graph)
+                    result.hypotheses += write_hypotheses(session, hypotheses)
+                    result.reports += write_report(
+                        session, generate_report(incident, graph, hypotheses, events, built_at)
+                    )
+                    result.evidence_nodes += len(graph.nodes)
         transition(session, run_id, RunStatus.COMPLETE)
         session.commit()
     except Exception as exc:
@@ -361,11 +381,12 @@ def process_run(
         raise
 
     log.info(
-        "run %s complete: %d frames, %d observations, %d segments, %d events",
+        "run %s complete: %d frames, %d observations, %d segments, %d events; stages %s",
         run_id,
         result.frames_processed,
         result.observations,
         result.segments,
         result.events,
+        {k: round(v, 2) for k, v in result.stages_s.items()},
     )
     return result
