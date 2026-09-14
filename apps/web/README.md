@@ -32,3 +32,6 @@ The investigator UI: React 19, TypeScript, Vite, Tailwind v4, shadcn/ui, TanStac
   measures the value. A zero would read as idle and healthy.
 - **A status change refetches every case query**, so the inbox, a case and analytics
   never disagree about where an investigation stands.
+- **The replay has one leading pane.** Its presented frames set the shared clock and the
+  other panes are corrected only when they drift past a frame; clip time is shared time
+  plus the camera's clock offset. Any selection with a moment seeks all three.
