@@ -70,3 +70,66 @@ candidates from proximity to the resting object rather than from zone entries.
 
 **Known limit.** Wobble that starts within half a second of arriving still reads as
 movement, because the "before" positions include the approach.
+
+## F6 — an unseen interval before the trigger is written as a claim
+
+**Failure.** The generator wrote *Cannot determine* only for gaps on entities a
+hypothesis named or held against it. case_02's person was in no hypothesis, so the
+interval nobody saw reached the graph and the limitations count but never a claim.
+
+**Change.** `deterministic-0.2.0`: a gap on any non-robot entity that overlaps the
+ranker's look-back before the trigger is claimed. The robot is left out because its
+state at the trigger comes from telemetry, which never goes dark.
+
+**Results** (`reasoning-2026-09-14T153002Z`, with F3): case_02 perfect gains two
+*Cannot determine* claims about P01 before the stop (was none); tune cases gain one or two
+such claims each about entities unseen before their trigger; nothing else moves.
+
+## F5 — a possible cause whose decisive move was unseen
+
+**Failure, traced.** With perfect tracks the extractor *does* emit P01's Z1 entry as a
+bounded event: the crossing fell in the 11.0–14.8 s gap, and the event is stamped at the
+reappearance, 14.8 s, with `during_gap`. The ranker judged it by its stamp, 0.8 s after
+its window closed, and discarded it. There was no candidate to be *possible*.
+
+**Change.** The e-stop ranker judges a bounded event by the interval it happened in.
+It counts if that interval reaches into the look-back; temporal precedence is taken
+from the middle of the part of the interval that precedes the stop; the description
+says *"at some moment between 11 and 14.8 s while no camera saw it"*. The level stays
+capped at *Possible* by the existing bounded-event rule.
+
+**Results** (`post-golden-F5-2026-09-14.log`): case_02 perfect ranks **P01 first,
+Possible**, F01 second. Tune cases unchanged. case_02 on real detections cannot gain:
+P01 is found in 4 of 297 frames after the gap (F2), so there is no reappearance to
+bound the entry with.
+
+## F7 — a blocked zone's earlier contributor
+
+**Failure.** The window opened 10 s before the object's *last* rest, so F01's drop at
+10 s fell outside it; and candidates came only from zone entries and exits, which F3's
+margin removes for a vehicle that only noses up to the edge.
+
+**Change.** (1) `_first_rest`: the window opens before the first of a chain of stops of
+the same class in the same zone, each ending within the pre-margin of the next; events
+carry track ids, not identities, so the chain is by class and place. (2) The
+blocked-zone ranker considers every rest of the object in the window and adds
+candidates from **contact**: a proximity event with the object that overlaps the
+look-back before a rest, including a vehicle still withdrawing after setting it down.
+Zone-entry candidates are kept. `incidents:…` config is unchanged; no new threshold.
+
+**Results** (`post-golden-F7-2026-09-14.log`, F7-alone reasoning re-run; the first
+reasoning run in that log loaded the detector with F4 already edited and its
+detections-mode rows are superseded):
+
+| Measure | Before | After |
+|---|---|---|
+| case_06 window | 14.1–44.9 s | **0.3–44.9 s** |
+| case_06 perfect: ranked causes | none | **F01 (Possible), F02 (Likely contributed)**: both surfaced, F02 second |
+| case_06 detections: ranked causes | none | F01 (Possible), a pallet fragment (Conflicting) — F02 is never detected (F1) |
+| case_04 both modes | F01 first | F01 first, now also citing its contact with the pallet |
+| Tune incidents and windows | — | unchanged |
+
+Scene spec §6.6 asks that both be surfaced with scores and that F02 be no worse than a
+close second; with perfect tracks that now holds. F01 outranks F02 because its contact
+is 0.1 s from the first rest and F02's ends 1.3 s before the last; the ranking is by
+timing, and the spec accepts either order.
