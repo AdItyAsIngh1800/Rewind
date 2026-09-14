@@ -10,7 +10,7 @@ from services.evidence import EvidenceGraph
 from services.reasoning.hypotheses import rank_hypotheses
 from services.reporting import ReportError, generate_report
 from services.tracking import segments_from_observations
-from tests.unit.test_evidence_graph import NOW, ZONES, _scene
+from tests.unit.test_evidence_graph import NOW, ZONES, _scene, _track
 from tests.unit.test_hypotheses import _graph
 
 
@@ -91,3 +91,29 @@ def test_a_citation_to_missing_evidence_stops_the_report() -> None:
     )
     with pytest.raises(ReportError, match="does not contain"):
         generate_report(incident, graph, [forged], events, NOW)
+
+
+def test_an_unseen_interval_before_the_trigger_is_claimed_whoever_it_hides() -> None:
+    """A gap before the stop is written as cannot-determine even when no cause names its entity.
+
+    case_02 named the interval nobody saw in the graph but never said it in a claim,
+    because the person it hid was in no hypothesis (EXP-0010, F6).
+    """
+    scene = _scene()
+    observations = scene["observations"]
+    groups = scene["groups"]
+    assert isinstance(observations, list) and isinstance(groups, dict)
+    scene["observations"] = [
+        *observations,
+        *_track("r", "CAM_C-T009", "pallet", [(4.0, 7.0), (11.0, 20.0)]),
+    ]
+    scene["segments"] = segments_from_observations("r", scene["observations"])  # type: ignore[arg-type]
+    groups["CAM_C-T009"] = "CAM_C-T009"
+    _, _, _, hypotheses, report = _report(scene)
+    assert not any("Pallet" in h.description for h in hypotheses)
+    [claim] = [c for c in report.claims if "pallet (CAM_C-T009) between 7" in c.text]
+    assert claim.evidence_level is EvidenceLevel.UNKNOWN
+    assert claim.text.startswith("Cannot determine: what happened to pallet")
+    assert not any("between 20" in c.text and "pallet" in c.text for c in report.claims), (
+        "a gap after the trigger is not about the moments before it"
+    )

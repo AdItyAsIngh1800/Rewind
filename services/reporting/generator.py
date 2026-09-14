@@ -37,8 +37,9 @@ from packages.schemas import (
     SemanticEvent,
 )
 from services.evidence.graph import EvidenceGraph, id_base
+from services.reasoning.hypotheses import RankingConfig
 
-GENERATOR_VERSION = "deterministic-0.1.0"
+GENERATOR_VERSION = "deterministic-0.2.0"
 
 #: A standing limitation true of every report this system writes, whatever the case.
 STANDING_LIMITATION = (
@@ -144,7 +145,21 @@ def generate_report(
     hides = {
         e.from_node for e in graph.edges if e.relation is Relation.OCCLUDES and e.to_node in named
     }
-    gap_nodes = [n for n in graph.of_type(NodeType.GAP) if n.node_id in hides | against]
+    # The moments before the trigger matter whoever was unseen in them: the entity no
+    # cause names may be the one that caused it (case_02, EXP-0010 F6). The robot is
+    # left out because its state at the trigger comes from telemetry, which never goes
+    # dark, so its own gaps say nothing about the stop.
+    lookback = RankingConfig().lookback_s
+    before_trigger = {
+        e.from_node
+        for e in graph.edges
+        if e.relation is Relation.OCCLUDES
+        and not nodes[e.to_node].label.lower().startswith("robot")
+        and _spans(nodes[e.from_node], trigger.timestamp_s - lookback, trigger.timestamp_s)
+    }
+    gap_nodes = [
+        n for n in graph.of_type(NodeType.GAP) if n.node_id in hides | against | before_trigger
+    ]
     for gap in gap_nodes:
         claim(EvidenceLevel.UNKNOWN, _gap_sentence(gap), [gap.node_id])
     for conflict in graph.of_type(NodeType.CONFLICT):
@@ -176,6 +191,11 @@ def generate_report(
         gaps=[g.node_id for g in all_gaps],
         limitations=_limitations(all_gaps, graph.of_type(NodeType.CONFLICT)),
     )
+
+
+def _spans(node: EvidenceNode, lo: float, hi: float) -> bool:
+    """Return whether a node's interval overlaps ``[lo, hi]``."""
+    return node.interval_s is not None and node.interval_s[0] <= hi and node.interval_s[1] >= lo
 
 
 def _trigger_sentence(incident: Incident, node: EvidenceNode, trigger: SemanticEvent) -> str:
