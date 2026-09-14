@@ -81,20 +81,22 @@ def health() -> dict[str, object]:
 def metrics() -> dict[str, object]:
     """Return plausible metrics so the System Health screen has shape.
 
-    Zeroes would render as an empty dashboard and hide layout problems. The fields the
-    real API cannot measure until E10.2 are ``None`` here too, so the screen's
-    "not measured" state is exercised against the mock as well.
+    Zeroes would render as an empty dashboard and hide layout problems. The ID-switch
+    rate is ``None`` here as in the real API, which never measures it live, so the
+    screen's "not measured" state is exercised against the mock as well.
     """
     return {
         "queue_depth": 2,
         "queue_oldest_age_s": 14.2,
         "worker_last_seen_s": 8.0,
-        "frames_per_second": None,
+        "frames_per_second": 168.4,
+        "peak_memory_mb": 1824.0,
         "tracking_id_switch_rate": None,
         "event_generation_rate": 1.7,
         "incident_detection_rate": 0.08,
         "report_generation_latency_s": 2.4,
-        "api_error_rate": None,
+        "api_error_rate": 0.0,
+        "api_latency_p95_ms": 9.2,
         "worker_retries": 0,
         "dead_letter_jobs": 0,
         "evidence_coverage": 1.0,

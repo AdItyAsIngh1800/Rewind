@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from apps.api import main
 from apps.api.main import PREFIX
+from apps.api.request_stats import requests as request_window
 from packages.database.models import Camera, ProcessingRun
 from packages.database.models import Incident as IncidentRow
 from packages.schemas import (
@@ -221,7 +222,9 @@ def test_metrics_measure_what_is_stored_and_leave_the_rest_unmeasured(
     client: TestClient, session: Session
 ) -> None:
     """Assert stored reports are measured, and what nothing observes yet is null, not zero."""
+    request_window.clear()
     before = client.get(f"{PREFIX}/metrics").json()
+    assert before["api_error_rate"] is None and before["api_latency_p95_ms"] is None
     assert before["evidence_coverage"] is None and before["report_generation_latency_s"] is None
 
     _issue_report(session)
@@ -229,7 +232,12 @@ def test_metrics_measure_what_is_stored_and_leave_the_rest_unmeasured(
     assert (body["evidence_coverage"], body["unsupported_claim_rate"]) == (1.0, 0.0)
     assert body["report_generation_latency_s"] == 90.0
     assert body["event_generation_rate"] is None, "no observations, so no footage to divide by"
-    assert body["frames_per_second"] is None and body["api_error_rate"] is None
+    assert body["frames_per_second"] is None, "no run has recorded its cost"
+    assert body["peak_memory_mb"] is None and body["tracking_id_switch_rate"] is None
+    # The first /metrics call was served and recorded; a 404 is not a server error.
+    assert client.get(f"{PREFIX}/cases/no-such-case").status_code == 404
+    body = client.get(f"{PREFIX}/metrics").json()
+    assert body["api_error_rate"] == 0.0 and body["api_latency_p95_ms"] is not None
 
 
 @needs_db

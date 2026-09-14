@@ -11,7 +11,8 @@ import { duration } from "@/lib/format";
 
 /** A health screen is watched, not read once; stale data here would be a false "all clear". */
 const LIVE = { refetchInterval: 10_000, staleTime: 0 } as const;
-const LATER = "arrives with E10.2";
+const NO_RUN = "no completed run has recorded it";
+const NO_TRAFFIC = "no requests in the last 5 minutes";
 
 const fixed = (v: number | null, digits: number) => (v === null ? null : v.toFixed(digits));
 
@@ -127,12 +128,30 @@ export function HealthPage() {
           value={m?.dead_letter_jobs != null ? String(m.dead_letter_jobs) : null}
           detail={m && (m.dead_letter_jobs === null ? "no worker heartbeat" : "failed every retry, since the worker started")}
         />
-        <StatTile label="Frames per second" value={fixed(m?.frames_per_second ?? null, 1)} detail={m?.frames_per_second == null ? LATER : undefined} />
-        <StatTile label="API error rate" value={fixed(m?.api_error_rate ?? null, 3)} detail={m?.api_error_rate == null ? LATER : undefined} />
+        <StatTile
+          label="Frames per second"
+          value={fixed(m?.frames_per_second ?? null, 1)}
+          detail={m && (m.frames_per_second === null ? NO_RUN : "through perception, recent runs")}
+        />
+        <StatTile
+          label="Peak memory"
+          value={m?.peak_memory_mb != null ? `${Math.round(m.peak_memory_mb)} MB` : null}
+          detail={m && (m.peak_memory_mb === null ? NO_RUN : "highest of recent runs, process and accelerator")}
+        />
+        <StatTile
+          label="API error rate"
+          value={fixed(m?.api_error_rate ?? null, 3)}
+          detail={m && (m.api_error_rate === null ? NO_TRAFFIC : "server errors, last 5 minutes")}
+        />
+        <StatTile
+          label="API latency p95"
+          value={m?.api_latency_p95_ms != null ? `${Math.round(m.api_latency_p95_ms)} ms` : null}
+          detail={m && (m.api_latency_p95_ms === null ? NO_TRAFFIC : "last 5 minutes")}
+        />
         <StatTile
           label="ID-switch rate"
-          value={fixed(m?.tracking_id_switch_rate ?? null, 3)}
-          detail={m?.tracking_id_switch_rate == null ? LATER : undefined}
+          value={null}
+          detail="not measurable live: it needs ground truth. Held-out benchmark: at most 1 switch per camera per case (EXP-0011)"
         />
       </Group>
 

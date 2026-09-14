@@ -97,6 +97,9 @@ export interface ProcessingRun {
   error: string | null;
   media_uris: Record<string, string>;
   captured_at: string | null;
+  frames_processed: number | null;
+  stages_s: Record<string, number>;
+  peak_memory_mb: number | null;
 }
 
 export interface CaseDetail {
@@ -228,11 +231,13 @@ export interface Metrics {
   queue_oldest_age_s: number | null;
   worker_last_seen_s: number | null;
   frames_per_second: number | null;
+  peak_memory_mb: number | null;
   tracking_id_switch_rate: number | null;
   event_generation_rate: number | null;
   incident_detection_rate: number | null;
   report_generation_latency_s: number | null;
   api_error_rate: number | null;
+  api_latency_p95_ms: number | null;
   worker_retries: number | null;
   dead_letter_jobs: number | null;
   evidence_coverage: number | null;

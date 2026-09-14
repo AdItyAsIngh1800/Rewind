@@ -12,16 +12,19 @@ more useful than one that does not exist.
 from __future__ import annotations
 
 import pathlib
+import time
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Path, Query, status
-from fastapi.responses import FileResponse
+from fastapi import Depends, FastAPI, HTTPException, Path, Query, Request, status
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from apps.api.queue import enqueue_run, queue_stats
+from apps.api.request_stats import requests as request_window
 from packages.database.models import Camera, Incident, ProcessingRun
 from packages.database.session import get_session
 from packages.schemas import (
@@ -58,6 +61,7 @@ SAMPLES = pathlib.Path("data/samples")
 API_VERSION = "0.1.0"
 PREFIX = "/api/v1"
 
+
 app = FastAPI(
     title="REWIND",
     version=API_VERSION,
@@ -74,6 +78,25 @@ CaseId = Annotated[str, Path(description="Case (incident) identifier")]
 #: Annotated form rather than a `Depends` default: the default-argument form is the
 #: older FastAPI idiom and evaluates a call at import time.
 DbSession = Annotated[Session, Depends(get_session)]
+
+
+@app.middleware("http")
+async def observe_requests(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """Time every request and note its status, for ``/metrics`` (spec §N).
+
+    A request that raises is recorded as a 500 before the error propagates, so an
+    unhandled failure counts against the error rate rather than disappearing from it.
+    """
+    started = time.perf_counter()
+    status_code = 500
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+        return response
+    finally:
+        request_window.record(status_code, time.perf_counter() - started)
 
 
 # --------------------------------------------------------------------------
@@ -101,9 +124,10 @@ class Metrics(BaseModel):
 
     ``None`` means not measured, never zero. A zero queue or a zero unsupported-claim
     rate reads as "idle and healthy", a claim the API could not back. Queue and worker
-    values are ``None`` while Redis is unreachable or no worker has reported; frame
-    throughput, API error rate and a live ID-switch rate need a running process to
-    observe and arrive with E10.2.
+    values are ``None`` while Redis is unreachable or no worker has reported; throughput
+    and memory while no completed run has recorded them (ADR-0008); API latency and
+    errors while this process has served nothing in the last five minutes. The
+    ID-switch rate is always ``None``: it needs ground truth.
     """
 
     queue_depth: int | None = None
@@ -111,8 +135,19 @@ class Metrics(BaseModel):
     worker_last_seen_s: float | None = Field(
         default=None, description="Seconds since the worker's last heartbeat"
     )
-    frames_per_second: float | None = None
-    tracking_id_switch_rate: float | None = None
+    frames_per_second: float | None = Field(
+        default=None, description="Frames through perception per second, over recent runs"
+    )
+    peak_memory_mb: float | None = Field(
+        default=None, description="Highest peak memory of recent runs, process plus accelerator"
+    )
+    tracking_id_switch_rate: float | None = Field(
+        default=None,
+        description=(
+            "Always null: an ID switch is a track changing which true entity it follows, "
+            "and live footage has no ground truth. The held-out benchmark measures it offline"
+        ),
+    )
     event_generation_rate: float | None = Field(
         default=None, description="Events per minute of processed footage"
     )
@@ -122,7 +157,13 @@ class Metrics(BaseModel):
     report_generation_latency_s: float | None = Field(
         default=None, description="Run start to report issued, mean over reports"
     )
-    api_error_rate: float | None = None
+    api_error_rate: float | None = Field(
+        default=None, description="Share of requests answered 5xx, last five minutes, this process"
+    )
+    api_latency_p95_ms: float | None = Field(
+        default=None,
+        description="95th-percentile request duration, last five minutes, this process",
+    )
     worker_retries: int | None = Field(default=None, description="Since the worker started")
     dead_letter_jobs: int | None = Field(
         default=None, description="Jobs that failed every retry, since the worker started"
@@ -147,6 +188,10 @@ async def metrics(session: DbSession) -> Metrics:
         report_generation_latency_s=stored.report_generation_latency_s,
         evidence_coverage=stored.evidence_coverage,
         unsupported_claim_rate=stored.unsupported_claim_rate,
+        frames_per_second=stored.frames_per_second,
+        peak_memory_mb=stored.peak_memory_mb,
+        api_error_rate=request_window.error_rate(),
+        api_latency_p95_ms=request_window.latency_p95_ms(),
     )
 
 
