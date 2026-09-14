@@ -3,7 +3,8 @@
 # CPU-only torch. The lockfile resolves CUDA wheels on Linux (gigabytes, and no GPU
 # inside Docker on Apple silicon anyway), so the locked set is installed without them
 # and the matching CPU wheels are added. Every other version is the lockfile's.
-# Measured on CPU: 63 FPS, a 45 s three-camera case in 22 s (EXP-0012).
+# Measured in Docker on an M4 (10 cores, 7.7 GB to the VM): 15.6 FPS, a 45 s three-camera
+# case in 87 s. The same CPU wheel path on the macOS host runs at 63 FPS (EXP-0012).
 
 FROM python:3.12-slim-bookworm
 

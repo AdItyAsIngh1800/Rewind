@@ -3,8 +3,9 @@
 #
 # Everything is local and disposable (ADR-0007): a Postgres container, not Supabase,
 # so the stack starts with no account and no secrets. Supabase stays the hosted
-# target through DATABASE_URL. The worker runs the detector on CPU, 63 FPS, a case in
-# about 22 s (EXP-0012); on Apple silicon `make worker` on the host uses MPS instead.
+# target through DATABASE_URL. The worker runs the detector on CPU: in Docker on an M4,
+# 15.6 FPS, a 45 s case in 87 s (Gate 6 review); on Apple silicon `make worker` on the
+# host uses MPS, about 10 s a case (EXP-0012).
 #
 # Footage and weights are mounted read-only from the host, so the image is the same
 # for every dataset and checkpoint. Only the UI is published; the API is reached
