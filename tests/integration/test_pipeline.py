@@ -44,9 +44,9 @@ class GroundTruthDetector:
     produce, which makes everything downstream of it measurable on its own.
     """
 
-    def __init__(self, run_id: str) -> None:
+    def __init__(self, run_id: str, case_dir: pathlib.Path = CASE_DIR) -> None:
         """Index the case's ground truth by camera and frame."""
-        rows = json.loads((CASE_DIR / "observations_gt.json").read_text())
+        rows = json.loads((case_dir / "observations_gt.json").read_text())
         self._by_key: dict[tuple[str, int], list[dict[str, object]]] = {}
         for row in rows:
             key = (str(row["camera_id"]), int(row["frame_index"]))
