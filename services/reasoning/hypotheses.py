@@ -453,11 +453,36 @@ def _blocked_candidates(
         ),
         None,
     )
-    objects = set(index.entities_of(trigger_node))
     object_class = str(trigger.payload.get("entity_class", "object"))
     out: list[_Candidate] = []
     if zone_id is None:
         return out
+    # The object is every track of its class resting in the zone while the trigger's
+    # does, the rule `detect_incidents` uses to call per-camera stops one obstruction.
+    # Identity may have refused to join those tracks, and a contact seen by one camera
+    # must still count against the object another camera's stop triggered on.
+    zone_poly = next(z.polygon for z in zones if z.zone_id == zone_id)
+    t_end = trigger.payload.get("end_s")
+    trigger_end = float(t_end) if isinstance(t_end, int | float) else t_rest
+    objects = set(index.entities_of(trigger_node))
+    for entity_id, observed in index.observed.items():
+        for node in observed:
+            event = index.event_of(node)
+            if event is None or event.event_type is not EventType.STOP:
+                continue
+            if event.payload.get("entity_class") != object_class:
+                continue
+            ex, ey, e_end = (event.payload.get(k) for k in ("x", "y", "end_s"))
+            if not (
+                isinstance(ex, int | float)
+                and isinstance(ey, int | float)
+                and isinstance(e_end, int | float)
+            ):
+                continue
+            if zone_poly.covers(shapely.Point(ex, ey)) and (
+                event.timestamp_s <= trigger_end and t_rest <= e_end
+            ):
+                objects.add(entity_id)
     # Every moment the object came to rest in the window, not only the last: an object
     # set down, nudged and set down again has a contributor at each rest (EXP-0010, F7).
     rests = sorted(

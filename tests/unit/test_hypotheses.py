@@ -272,3 +272,73 @@ def test_both_forklifts_that_handled_the_pallet_are_ranked() -> None:
     assert "came to rest there at 24.1 s" in nudger.description
     placer = next(h for h in ranked if "CAM_A-T002" in h.description)
     assert "came to rest there at 10.3 s" in placer.description
+
+
+def test_a_contact_seen_by_another_camera_still_counts_against_the_object() -> None:
+    """The trigger pallet and the contact pallet are unlinked per-camera tracks of one pallet."""
+    observations = (
+        _track("b", "CAM_A-T001", "pallet", [(4.0, 45.0)])
+        + _track("b", "CAM_B-T001", "pallet", [(4.0, 45.0)])
+        + _track("b", "CAM_B-T002", "forklift", [(4.0, 20.0)])
+    )
+    trigger = _zone_event(
+        5,
+        EventType.STOP,
+        24.1,
+        "CAM_A-T001",
+        "pallet",
+        None,
+        duration_s=20.8,
+        end_s=44.9,
+        x=12.0,
+        y=7.5,
+    )
+    events = [
+        _zone_event(
+            1,
+            EventType.PROXIMITY,
+            22.0,
+            "CAM_B-T002",
+            "forklift",
+            None,
+            other_class="pallet",
+            distance_m=0.2,
+            end_s=23.9,
+        ).model_copy(update={"entity_ids": ["CAM_B-T002", "CAM_B-T001"]}),
+        _zone_event(
+            2,
+            EventType.STOP,
+            24.2,
+            "CAM_B-T001",
+            "pallet",
+            None,
+            duration_s=20.7,
+            end_s=44.9,
+            x=12.1,
+            y=7.4,
+        ),
+        trigger,
+    ]
+    segments = segments_from_observations("b", observations)
+    incident = Incident(
+        incident_id="INC-b-03",
+        run_id="b",
+        incident_class=IncidentClass.ZONE_BLOCKED_UNATTENDED_OBJECT,
+        trigger_event_id=trigger.event_id,
+        detected_at_s=44.1,
+        window_start_s=14.1,
+        window_end_s=44.9,
+        severity=Severity.MEDIUM,
+    )
+    graph = build_graph(
+        incident,
+        events=events,
+        observations=observations,
+        segments=segments,
+        links=[],
+        groups={s.local_track_id: s.local_track_id for s in segments},
+        zones=ZONES,
+        created_at=NOW,
+    )
+    [only] = rank_hypotheses(incident, graph, events, ZONES, NOW)
+    assert "CAM_B-T002" in only.description and "within 0.2 m of the pallet" in only.description
