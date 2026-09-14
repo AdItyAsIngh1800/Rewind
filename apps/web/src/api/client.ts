@@ -7,6 +7,7 @@ import type {
   Incident,
   IncidentStatus,
   Metrics,
+  Replay,
   RunList,
   Timeline,
 } from "./types";
@@ -45,6 +46,7 @@ export const api = {
   getTimeline: (id: string) => get<Timeline>(casePath(id, "/timeline")),
   getEvidence: (id: string) => get<EvidenceGraph>(casePath(id, "/evidence")),
   getReport: (id: string) => get<CaseReport>(casePath(id, "/report")),
+  getReplay: (id: string) => get<Replay>(casePath(id, "/replay")),
   setCaseStatus: (id: string, status: IncidentStatus) =>
     request<Incident>(casePath(id), {
       method: "PATCH",

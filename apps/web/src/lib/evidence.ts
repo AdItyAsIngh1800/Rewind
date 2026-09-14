@@ -78,3 +78,30 @@ export function ticks(start: number, end: number, target = 8): number[] {
 
 /** Snake-case contract values as words: `zone_entry` → `zone entry`. */
 export const words = (value: string) => value.replaceAll("_", " ");
+
+/**
+ * The shared-timebase moment an id points at, for seeking the replay: an event's time,
+ * a node's time or the start of its interval, a track's first sighting. A ranked cause
+ * seeks to the first of its supporting ids that has a time, the approach it rests on.
+ * `null` for what has no moment, such as an entity or a place.
+ */
+export function refTime(id: string, ev: CaseEvidence, nested = false): number | null {
+  const r = resolveRef(id, ev);
+  switch (r.kind) {
+    case "event":
+      return r.event.timestamp_s;
+    case "node":
+      return r.node.timestamp_s ?? r.node.interval_s?.[0] ?? null;
+    case "segment":
+      return r.segment.start_time_s;
+    case "hypothesis":
+      if (nested) return null;
+      for (const support of r.hypothesis.support_refs) {
+        const t = refTime(support, ev, true);
+        if (t !== null) return t;
+      }
+      return null;
+    default:
+      return null;
+  }
+}

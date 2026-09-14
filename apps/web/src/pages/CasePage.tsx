@@ -6,6 +6,7 @@ import { api } from "@/api/client";
 import { INCIDENT_CLASS_LABEL } from "@/api/types";
 import { EvidenceGraphView } from "@/components/case/EvidenceGraphView";
 import { Inspector } from "@/components/case/Inspector";
+import { ReplayPanel } from "@/components/case/ReplayPanel";
 import { ReportView } from "@/components/case/ReportView";
 import { TimelineView } from "@/components/case/TimelineView";
 import { SeverityMark } from "@/components/SeverityMark";
@@ -13,6 +14,7 @@ import { StatusSelect } from "@/components/StatusSelect";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { refTime } from "@/lib/evidence";
 import { clock } from "@/lib/format";
 
 const VIEWS = ["report", "timeline", "evidence"] as const;
@@ -24,7 +26,8 @@ type View = (typeof VIEWS)[number];
  * The open view and the selected evidence id live in the URL, like the inbox filters, so
  * "look at this node" is a link, and browser back walks back through what was inspected.
  * The report opens first because the conclusion is what an investigator came for; the
- * other views are how they check it. The synchronized replay joins these in E8.2.
+ * other views are how they check it. Whatever is selected, in any view, also seeks the
+ * replay to its moment, so every piece of evidence is one click from its footage.
  */
 export function CasePage() {
   const { caseId = "" } = useParams();
@@ -37,7 +40,9 @@ export function CasePage() {
   const timeline = useQuery({ queryKey: ["timeline", caseId], queryFn: () => api.getTimeline(caseId) });
   const graph = useQuery({ queryKey: ["evidence", caseId], queryFn: () => api.getEvidence(caseId) });
   const report = useQuery({ queryKey: ["report", caseId], queryFn: () => api.getReport(caseId) });
+  const replay = useQuery({ queryKey: ["replay", caseId], queryFn: () => api.getReplay(caseId) });
   const evidence = { graph: graph.data, timeline: timeline.data, hypotheses: report.data?.hypotheses };
+  const seekTo = selected ? refTime(selected, evidence) : null;
 
   function update(key: "view" | "ref", value: string | null) {
     const next = new URLSearchParams(params);
@@ -93,6 +98,10 @@ export function CasePage() {
           </>
         )}
       </header>
+
+      <Loaded query={replay} what="replay">
+        {(data) => <ReplayPanel replay={data} seekTo={seekTo} seekKey={selected} />}
+      </Loaded>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <Tabs value={view} onValueChange={(v) => update("view", v)} className="min-w-0">

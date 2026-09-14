@@ -17,8 +17,7 @@ interface Props {
  * not decide, and every camera's tracks. The event table below carries the same events
  * as text, so nothing on the lanes is available only to a pointer.
  *
- * Selecting only opens the inspector for now; seeking the three cameras to the moment
- * arrives with the replay (E8.2).
+ * Selecting an item opens it in the inspector and seeks all three cameras to its moment.
  */
 export function TimelineView({ timeline, graph, triggerAt, selected, onSelect }: Props) {
   const { events, segments } = timeline;

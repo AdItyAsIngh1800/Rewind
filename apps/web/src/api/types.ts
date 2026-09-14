@@ -1,4 +1,4 @@
-// Mirrors packages/schemas (SCHEMA_VERSION 1.0.0). Field names and enum values are
+// Mirrors packages/schemas (SCHEMA_VERSION 1.1.0). Field names and enum values are
 // the frozen contract; changing one here without changing the Pydantic model is a
 // bug that the fixture round-trip in E8.6 will surface.
 
@@ -95,6 +95,8 @@ export interface ProcessingRun {
   started_at: string | null;
   finished_at: string | null;
   error: string | null;
+  media_uris: Record<string, string>;
+  captured_at: string | null;
 }
 
 export interface CaseDetail {
@@ -249,3 +251,23 @@ export const STATUS_LABEL: Record<IncidentStatus, string> = {
   resolved: "Resolved",
   dismissed: "Dismissed (false alert)",
 };
+
+export interface ReplayCamera {
+  camera_id: string;
+  name: string;
+  /** `null` when the run recorded no clip for this camera. */
+  media_url: string | null;
+  /** Clip time = shared time + offset. */
+  clock_offset_s: number;
+  fps: number;
+  width: number;
+  height: number;
+}
+
+export interface Replay {
+  run_id: string;
+  window_start_s: number;
+  window_end_s: number;
+  detected_at_s: number;
+  cameras: ReplayCamera[];
+}
