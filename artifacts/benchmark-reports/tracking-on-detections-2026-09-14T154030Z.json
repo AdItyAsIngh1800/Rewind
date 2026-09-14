@@ -1,0 +1,221 @@
+{
+  "detector": "ml/models/yolo11n-rewind-v1/best.pt",
+  "tracker": "bytetrack:buf30:match0.9:fps10",
+  "cases": {
+    "case_01": {
+      "CAM_A": {
+        "tracked": 562,
+        "spurious": 6,
+        "id_switches": 1,
+        "tracks_created": 3,
+        "true_entities": 2,
+        "fragmentation": {
+          "P01": 2,
+          "R12": 1
+        }
+      },
+      "CAM_B": {
+        "tracked": 800,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "R12": 1,
+          "P01": 1
+        }
+      },
+      "CAM_C": {
+        "tracked": 754,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "R12": 1,
+          "P01": 1
+        }
+      }
+    },
+    "case_02": {
+      "CAM_A": {
+        "tracked": 890,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 3,
+        "true_entities": 3,
+        "fragmentation": {
+          "R12": 1,
+          "F01": 1,
+          "P01": 1
+        }
+      },
+      "CAM_B": {
+        "tracked": 580,
+        "spurious": 17,
+        "id_switches": 1,
+        "tracks_created": 5,
+        "true_entities": 3,
+        "fragmentation": {
+          "R12": 2,
+          "F01": 1,
+          "P01": 1
+        }
+      },
+      "CAM_C": {
+        "tracked": 115,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "R12": 1,
+          "F01": 1
+        }
+      }
+    },
+    "case_03": {
+      "CAM_A": {
+        "tracked": 1292,
+        "spurious": 9,
+        "id_switches": 0,
+        "tracks_created": 4,
+        "true_entities": 3,
+        "fragmentation": {
+          "P02": 1,
+          "P01": 1,
+          "R12": 1
+        }
+      },
+      "CAM_B": {
+        "tracked": 1022,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 3,
+        "true_entities": 3,
+        "fragmentation": {
+          "R12": 1,
+          "P01": 1,
+          "P02": 1
+        }
+      },
+      "CAM_C": {
+        "tracked": 170,
+        "spurious": 1,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "R12": 1,
+          "P01": 1
+        }
+      }
+    },
+    "case_04": {
+      "CAM_A": {
+        "tracked": 410,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "F01": 1,
+          "PL3": 1
+        }
+      },
+      "CAM_B": {
+        "tracked": 394,
+        "spurious": 1,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "F01": 1,
+          "PL3": 1
+        }
+      },
+      "CAM_C": {
+        "tracked": 583,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "F01": 1,
+          "PL3": 1
+        }
+      }
+    },
+    "case_05": {
+      "CAM_A": {
+        "tracked": 510,
+        "spurious": 3,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "P01": 1,
+          "R12": 1
+        }
+      },
+      "CAM_B": {
+        "tracked": 535,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "R12": 1,
+          "P01": 1
+        }
+      },
+      "CAM_C": {
+        "tracked": 399,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "P01": 1,
+          "R12": 1
+        }
+      }
+    },
+    "case_06": {
+      "CAM_A": {
+        "tracked": 385,
+        "spurious": 6,
+        "id_switches": 1,
+        "tracks_created": 3,
+        "true_entities": 2,
+        "fragmentation": {
+          "F01": 1,
+          "PL3": 2
+        }
+      },
+      "CAM_B": {
+        "tracked": 381,
+        "spurious": 0,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "F01": 1,
+          "PL3": 1
+        }
+      },
+      "CAM_C": {
+        "tracked": 540,
+        "spurious": 28,
+        "id_switches": 0,
+        "tracks_created": 2,
+        "true_entities": 2,
+        "fragmentation": {
+          "F01": 1,
+          "PL3": 1
+        }
+      }
+    }
+  },
+  "id_switches": 3
+}

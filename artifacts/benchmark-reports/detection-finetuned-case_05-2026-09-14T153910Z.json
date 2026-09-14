@@ -1,0 +1,58 @@
+{
+  "case_id": "case_05",
+  "model_version": "ml/models/yolo11n-rewind-v1/best.pt:native:conf0.25:iou0.5:edge16:nest0.9",
+  "checkpoint": "ml/models/yolo11n-rewind-v1/best.pt",
+  "device": "mps",
+  "generated_at": "2026-09-14T15:39:10.018375+00:00",
+  "frames_processed": 1350,
+  "per_class": {
+    "person": {
+      "truth": 464,
+      "predicted": 460,
+      "tp": 459,
+      "fp": 1,
+      "fn": 5,
+      "precision": 0.9978,
+      "recall": 0.9892,
+      "f1": 0.9935,
+      "reachable": true,
+      "note": ""
+    },
+    "robot": {
+      "truth": 993,
+      "predicted": 982,
+      "tp": 982,
+      "fp": 0,
+      "fn": 11,
+      "precision": 1.0,
+      "recall": 0.9889,
+      "f1": 0.9944,
+      "reachable": true,
+      "note": ""
+    },
+    "forklift": {
+      "truth": 0,
+      "predicted": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "reachable": true,
+      "note": ""
+    },
+    "pallet": {
+      "truth": 0,
+      "predicted": 2,
+      "tp": 0,
+      "fp": 2,
+      "fn": 0,
+      "precision": 0.0,
+      "recall": 1.0,
+      "f1": 0.0,
+      "reachable": true,
+      "note": ""
+    }
+  }
+}
