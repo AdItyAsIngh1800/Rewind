@@ -19,6 +19,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from apps.worker.settings import worker_settings
+from packages.database.models import ProcessingRun as ProcessingRunRow
 from packages.database.session import make_engine
 from packages.schemas import RunStatus, SemanticEvent
 from services.incidents import load_case_script, state_changes
@@ -108,10 +109,14 @@ async def process_case(ctx: dict[str, Any], run_id: str, case_ref: str) -> dict[
                 telemetry=robot_telemetry(run_id, case_ref),
             )
         except RunConflictError as exc:
-            # A redelivered message for a run that already finished. Not an error:
-            # the work is done and the message can be acknowledged.
+            # A redelivered message for a run that is not QUEUED: it finished on an
+            # earlier attempt, or it was RUNNING when its worker died and the pipeline
+            # has just closed it as FAILED. Either way the message is acknowledged, and
+            # the summary carries the run's real status rather than a presumed one.
             log.info("run %s: %s; nothing to do", run_id, exc)
-            return {"run_id": run_id, "status": RunStatus.COMPLETE.value, "skipped": True}
+            row = session.get(ProcessingRunRow, run_id)
+            status = row.status if row is not None else RunStatus.FAILED.value
+            return {"run_id": run_id, "status": status, "skipped": True}
 
     return {
         "run_id": result.run_id,

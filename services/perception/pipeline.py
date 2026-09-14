@@ -50,7 +50,14 @@ from services.identity import (
 )
 from services.identity.appearance import TrackDescriptors
 from services.incidents import IncidentConfig, detect_incidents, write_incidents
-from services.ingestion import Frame, decode_frames, plan_sampling, probe, transition
+from services.ingestion import (
+    Frame,
+    RunConflictError,
+    decode_frames,
+    plan_sampling,
+    probe,
+    transition,
+)
 from services.perception.persistence import write_observations, write_segments
 from services.reasoning.hypotheses import rank_hypotheses
 from services.reasoning.persistence import write_hypotheses
@@ -228,34 +235,52 @@ def process_run(
     """
     config = tracker_config or TrackerConfig()
     result = PipelineResult(run_id=run_id)
+    run_row = session.get(ProcessingRunRow, run_id)
+    # A run already RUNNING when a worker picks it up was interrupted: the worker that
+    # started it died, and the queue redelivered the job. It cannot be resumed (the
+    # state machine forbids RUNNING -> RUNNING for good reason) and it must not be
+    # reported as done, so it is closed as FAILED with the reason, and the caller learns
+    # why nothing was produced.
+    if run_row is not None and run_row.status == RunStatus.RUNNING.value:
+        transition(
+            session,
+            run_id,
+            RunStatus.FAILED,
+            error="interrupted: a worker stopped while this run was running; resubmit it",
+        )
+        session.commit()
+        raise RunConflictError(f"run {run_id} was interrupted and is now failed")
     transition(session, run_id, RunStatus.RUNNING)
     clips = sorted(case_dir.glob("*.mp4"))
     # Recorded as the run starts reading them, so the replay plays the footage this run's
     # evidence came from, and a failed run still says what it was reading (ADR-0006).
-    run_row = session.get(ProcessingRunRow, run_id)
     if run_row is not None:
         run_row.media_uris = {clip.stem: str(clip) for clip in clips}
-    # Observations and segments reference their camera, so a camera the database has
-    # never seen is registered from its own clip; without this a clean database fails
-    # on the first write. An existing registration is left alone: it may carry a
-    # calibration or a name the clip cannot know.
-    for clip in clips:
-        if session.get(CameraRow, clip.stem) is None:
-            meta = probe(clip)
-            session.add(
-                CameraRow(
-                    camera_id=clip.stem,
-                    name=clip.stem,
-                    source_uri=str(clip),
-                    clock_offset_s=camera_offsets.get(clip.stem, 0.0),
-                    width=meta.width,
-                    height=meta.height,
-                    fps=meta.fps,
-                )
-            )
     session.commit()
 
     try:
+        # Observations and segments reference their camera, so a camera the database
+        # has never seen is registered from its own clip; without this a clean database
+        # fails on the first write. An existing registration is left alone: it may carry
+        # a calibration or a name the clip cannot know. Inside the try because probing
+        # a corrupt clip is the first place a bad input shows, and the run must end
+        # FAILED with the clip named rather than stay RUNNING.
+        for clip in clips:
+            if session.get(CameraRow, clip.stem) is None:
+                meta = probe(clip)
+                session.add(
+                    CameraRow(
+                        camera_id=clip.stem,
+                        name=clip.stem,
+                        source_uri=str(clip),
+                        clock_offset_s=camera_offsets.get(clip.stem, 0.0),
+                        width=meta.width,
+                        height=meta.height,
+                        fps=meta.fps,
+                    )
+                )
+        session.commit()
+
         all_observations: list[Observation] = []
         all_segments: list[TrackSegment] = []
         descriptors: dict[str, NDArray[np.float64]] = {}
