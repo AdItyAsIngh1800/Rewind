@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 #: Bumped whenever any contract in this package changes shape.
 #: A bump requires an ADR and regenerated golden fixtures. See CONTRIBUTING.md.
 #: 1.1.0: `ProcessingRun` records `media_uris` and `captured_at` (ADR-0006), additive.
-SCHEMA_VERSION = "1.1.0"
+SCHEMA_VERSION = "1.2.0"
 
 
 class Contract(BaseModel):

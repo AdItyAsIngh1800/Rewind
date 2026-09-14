@@ -2,9 +2,9 @@
 
 The System Health screen reads these through ``GET /metrics``. Everything here is
 computed from rows the pipeline has written: event and incident rates, how long a run
-takes to issue its report, and the two evidence-quality numbers the project is judged
-on. What only a running process can observe (frame throughput, API latency, a live
-ID-switch rate) arrives with E10.2 and stays ``None`` until then.
+takes to issue its report, the two evidence-quality numbers the project is judged on,
+and what recent runs cost (ADR-0008). API latency and errors are observed by the API
+process itself; a live ID-switch rate needs ground truth and is never computed.
 
 ``None`` is the point. A zero event rate or a zero unsupported-claim rate reads as
 "idle and healthy", which is a claim; "not measured" is not one.
@@ -39,6 +39,14 @@ class StoredMetrics:
     report_generation_latency_s: float | None
     evidence_coverage: float | None
     unsupported_claim_rate: float | None
+    frames_per_second: float | None
+    peak_memory_mb: float | None
+
+
+#: Throughput and memory describe the system as it runs now, so they come from the most
+#: recent runs rather than every run ever stored, which would let a months-old model or
+#: machine speak for the current one.
+RECENT_RUNS = 20
 
 
 def stored_metrics(session: Session) -> StoredMetrics:
@@ -103,10 +111,30 @@ def stored_metrics(session: Session) -> StoredMetrics:
         covered += evidence_coverage(claims) * len(claims)
         unsupported += unsupported_claim_rate(claims, known) * len(claims)
 
+    recent = session.execute(
+        select(ProcessingRun.frames_processed, ProcessingRun.stages_s, ProcessingRun.peak_memory_mb)
+        .where(
+            ProcessingRun.status == RunStatus.COMPLETE.value,
+            ProcessingRun.frames_processed.is_not(None),
+        )
+        .order_by(ProcessingRun.finished_at.desc())
+        .limit(RECENT_RUNS)
+    ).all()
+    frames = sum(row.frames_processed or 0 for row in recent)
+    perception_s = sum(
+        seconds
+        for row in recent
+        for stage, seconds in (row.stages_s or {}).items()
+        if stage.startswith("perception:")
+    )
+    memory = [row.peak_memory_mb for row in recent if row.peak_memory_mb is not None]
+
     return StoredMetrics(
         event_generation_rate=(events or 0) / minutes if minutes else None,
         incident_detection_rate=(incidents or 0) / minutes if minutes else None,
         report_generation_latency_s=sum(latencies) / len(latencies) if latencies else None,
         evidence_coverage=covered / claims_total if claims_total else None,
         unsupported_claim_rate=unsupported / claims_total if claims_total else None,
+        frames_per_second=frames / perception_s if perception_s else None,
+        peak_memory_mb=max(memory) if memory else None,
     )

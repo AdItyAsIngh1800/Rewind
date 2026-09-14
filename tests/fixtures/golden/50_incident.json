@@ -3,7 +3,7 @@
   "incident_class": "robot_estop_human_incursion",
   "incident_id": "INC-0001",
   "run_id": "RUN-GOLD-001",
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "severity": "high",
   "status": "investigating",
   "trigger_event_id": "EVT-0006",

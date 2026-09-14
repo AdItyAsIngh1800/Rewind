@@ -75,6 +75,10 @@ class ProcessingRun(Base):
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     media_uris: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict)
     captured_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    #: What the run cost (ADR-0008); null or empty for runs processed before it was recorded.
+    frames_processed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    stages_s: Mapped[dict[str, float]] = mapped_column(JSONB, default=dict)
+    peak_memory_mb: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class Observation(Base):

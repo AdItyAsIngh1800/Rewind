@@ -10,11 +10,11 @@
         "producer_service": "evidence",
         "producer_version": "0.1.0",
         "run_id": "RUN-GOLD-001",
-        "schema_version": "1.1.0"
+        "schema_version": "1.2.0"
       },
       "relation": "observed_as",
       "run_id": "RUN-GOLD-001",
-      "schema_version": "1.1.0",
+      "schema_version": "1.2.0",
       "to_node": "NODE-V-ZONE1",
       "weight": 0.9
     },
@@ -28,11 +28,11 @@
         "producer_service": "evidence",
         "producer_version": "0.1.0",
         "run_id": "RUN-GOLD-001",
-        "schema_version": "1.1.0"
+        "schema_version": "1.2.0"
       },
       "relation": "precedes",
       "run_id": "RUN-GOLD-001",
-      "schema_version": "1.1.0",
+      "schema_version": "1.2.0",
       "to_node": "NODE-V-PROX",
       "weight": 1.0
     },
@@ -46,11 +46,11 @@
         "producer_service": "reasoning",
         "producer_version": "0.1.0",
         "run_id": "RUN-GOLD-001",
-        "schema_version": "1.1.0"
+        "schema_version": "1.2.0"
       },
       "relation": "candidate_cause_of",
       "run_id": "RUN-GOLD-001",
-      "schema_version": "1.1.0",
+      "schema_version": "1.2.0",
       "to_node": "NODE-V-ESTOP",
       "weight": 0.87
     },
@@ -64,11 +64,11 @@
         "producer_service": "reasoning",
         "producer_version": "0.1.0",
         "run_id": "RUN-GOLD-001",
-        "schema_version": "1.1.0"
+        "schema_version": "1.2.0"
       },
       "relation": "contradicts",
       "run_id": "RUN-GOLD-001",
-      "schema_version": "1.1.0",
+      "schema_version": "1.2.0",
       "to_node": "NODE-V-PROX",
       "weight": 0.3
     }
@@ -90,10 +90,10 @@
         "producer_service": "identity",
         "producer_version": "0.1.0",
         "run_id": "RUN-GOLD-001",
-        "schema_version": "1.1.0"
+        "schema_version": "1.2.0"
       },
       "run_id": "RUN-GOLD-001",
-      "schema_version": "1.1.0",
+      "schema_version": "1.2.0",
       "source_ref": null,
       "timestamp_s": null
     },
@@ -112,10 +112,10 @@
         "producer_service": "identity",
         "producer_version": "0.1.0",
         "run_id": "RUN-GOLD-001",
-        "schema_version": "1.1.0"
+        "schema_version": "1.2.0"
       },
       "run_id": "RUN-GOLD-001",
-      "schema_version": "1.1.0",
+      "schema_version": "1.2.0",
       "source_ref": null,
       "timestamp_s": null
     },
@@ -134,10 +134,10 @@
         "producer_service": "events",
         "producer_version": "0.1.0",
         "run_id": "RUN-GOLD-001",
-        "schema_version": "1.1.0"
+        "schema_version": "1.2.0"
       },
       "run_id": "RUN-GOLD-001",
-      "schema_version": "1.1.0",
+      "schema_version": "1.2.0",
       "source_ref": "EVT-0004",
       "timestamp_s": 12.8
     },
@@ -156,10 +156,10 @@
         "producer_service": "events",
         "producer_version": "0.1.0",
         "run_id": "RUN-GOLD-001",
-        "schema_version": "1.1.0"
+        "schema_version": "1.2.0"
       },
       "run_id": "RUN-GOLD-001",
-      "schema_version": "1.1.0",
+      "schema_version": "1.2.0",
       "source_ref": "EVT-0005",
       "timestamp_s": 13.0
     },
@@ -178,10 +178,10 @@
         "producer_service": "events",
         "producer_version": "0.1.0",
         "run_id": "RUN-GOLD-001",
-        "schema_version": "1.1.0"
+        "schema_version": "1.2.0"
       },
       "run_id": "RUN-GOLD-001",
-      "schema_version": "1.1.0",
+      "schema_version": "1.2.0",
       "source_ref": "EVT-0006",
       "timestamp_s": 13.4
     },
@@ -204,10 +204,10 @@
         "producer_service": "reasoning",
         "producer_version": "0.1.0",
         "run_id": "RUN-GOLD-001",
-        "schema_version": "1.1.0"
+        "schema_version": "1.2.0"
       },
       "run_id": "RUN-GOLD-001",
-      "schema_version": "1.1.0",
+      "schema_version": "1.2.0",
       "source_ref": null,
       "timestamp_s": null
     }

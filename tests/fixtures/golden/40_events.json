@@ -10,7 +10,7 @@
     "evidence_refs": [],
     "payload": {},
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.1.0",
+    "schema_version": "1.2.0",
     "timestamp_s": 6.0,
     "zone_id": "Z3"
   },
@@ -27,7 +27,7 @@
     ],
     "payload": {},
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.1.0",
+    "schema_version": "1.2.0",
     "timestamp_s": 11.5,
     "zone_id": "Z2"
   },
@@ -47,7 +47,7 @@
       "cause": "forklift F01 parked at (13.0, 11.0)"
     },
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.1.0",
+    "schema_version": "1.2.0",
     "timestamp_s": 12.0,
     "zone_id": null
   },
@@ -64,7 +64,7 @@
     ],
     "payload": {},
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.1.0",
+    "schema_version": "1.2.0",
     "timestamp_s": 12.8,
     "zone_id": "Z1"
   },
@@ -86,7 +86,7 @@
       "separation_m": 1.6
     },
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.1.0",
+    "schema_version": "1.2.0",
     "timestamp_s": 13.0,
     "zone_id": null
   },
@@ -107,7 +107,7 @@
       "to": "estop"
     },
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.1.0",
+    "schema_version": "1.2.0",
     "timestamp_s": 13.4,
     "zone_id": null
   },
@@ -124,7 +124,7 @@
     ],
     "payload": {},
     "run_id": "RUN-GOLD-001",
-    "schema_version": "1.1.0",
+    "schema_version": "1.2.0",
     "timestamp_s": 14.4,
     "zone_id": null
   }

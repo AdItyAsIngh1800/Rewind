@@ -59,6 +59,7 @@ from services.ingestion import (
     probe,
     transition,
 )
+from services.observability.resources import peak_memory_mb
 from services.perception.persistence import write_observations, write_segments
 from services.reasoning.hypotheses import rank_hypotheses
 from services.reasoning.persistence import write_hypotheses
@@ -398,6 +399,11 @@ def process_run(
                         session, generate_report(incident, graph, hypotheses, events, built_at)
                     )
                     result.evidence_nodes += len(graph.nodes)
+        # What the run cost, stored on the run it describes (ADR-0008).
+        if run_row is not None:
+            run_row.frames_processed = result.frames_processed
+            run_row.stages_s = {k: round(v, 3) for k, v in result.stages_s.items()}
+            run_row.peak_memory_mb = peak_memory_mb()
         transition(session, run_id, RunStatus.COMPLETE)
         session.commit()
     except Exception as exc:

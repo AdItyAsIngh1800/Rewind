@@ -6,7 +6,7 @@
     "fps": 10.0,
     "height": 720,
     "name": "North-west aisle",
-    "schema_version": "1.1.0",
+    "schema_version": "1.2.0",
     "source_uri": "file://data/samples/gold/CAM_A.mp4",
     "timezone": "UTC",
     "width": 1280
@@ -18,7 +18,7 @@
     "fps": 10.0,
     "height": 720,
     "name": "East end, looking west",
-    "schema_version": "1.1.0",
+    "schema_version": "1.2.0",
     "source_uri": "file://data/samples/gold/CAM_B.mp4",
     "timezone": "UTC",
     "width": 1280
@@ -30,7 +30,7 @@
     "fps": 10.0,
     "height": 720,
     "name": "Intersection overhead",
-    "schema_version": "1.1.0",
+    "schema_version": "1.2.0",
     "source_uri": "file://data/samples/gold/CAM_C.mp4",
     "timezone": "UTC",
     "width": 1280

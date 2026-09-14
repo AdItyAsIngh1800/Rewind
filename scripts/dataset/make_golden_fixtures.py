@@ -127,6 +127,17 @@ def build_run() -> ProcessingRun:
         # No footage ships with the fixtures; these name where it would be, so the
         # replay's "footage could not be loaded" state is what the mock exercises.
         media_uris={c: f"golden/{c}.mp4" for c in ("CAM_A", "CAM_B", "CAM_C")},
+        frames_processed=90,
+        stages_s={
+            "perception:CAM_A": 0.6,
+            "perception:CAM_B": 0.6,
+            "perception:CAM_C": 0.5,
+            "persist:observations": 0.1,
+            "events": 0.01,
+            "identity": 0.01,
+            "reasoning": 0.01,
+        },
+        peak_memory_mb=1137.0,
     )
 
 

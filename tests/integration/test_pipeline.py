@@ -105,6 +105,10 @@ def test_pipeline_processes_a_case_end_to_end(session: Session, queued_run: Proc
     assert queued_run.status == RunStatus.COMPLETE.value
     assert queued_run.started_at is not None and queued_run.finished_at is not None
     assert queued_run.media_uris == {c: str(CASE_DIR / f"{c}.mp4") for c in result.cameras}
+    # What the run cost is stored on the run itself (ADR-0008).
+    assert queued_run.frames_processed == result.frames_processed == 3 * 450
+    assert set(queued_run.stages_s) == {k for k in result.stages_s}
+    assert queued_run.peak_memory_mb is not None and queued_run.peak_memory_mb > 0
     # One perception timer per camera and one for persistence, all positive (E9.3).
     assert {k for k in result.stages_s if k.startswith("perception:")} == {
         f"perception:{c}" for c in result.cameras
@@ -179,6 +183,8 @@ def test_pipeline_extracts_and_persists_events(session: Session, queued_run: Pro
     measured = stored_metrics(session)
     assert measured.event_generation_rate and measured.incident_detection_rate
     assert (measured.evidence_coverage, measured.unsupported_claim_rate) == (1.0, 0.0)
+    assert measured.frames_per_second is not None and measured.frames_per_second > 0
+    assert measured.peak_memory_mb is not None
     assert report.evidence_coverage == 1.0
     known = node_ids | {r.event_id for r in rows} | set(report.ranked_hypotheses)
     assert all(ref in known for c in report.claims for ref in c.evidence_refs)

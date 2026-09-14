@@ -84,6 +84,19 @@ class ProcessingRun(Contract):
         default=None,
         description="Wall-clock start of the run's shared timebase; None for rendered footage",
     )
+    #: What processing the run cost (ADR-0008), recorded by the pipeline when the run
+    #: completes, so a throughput figure stays attached to the run it describes.
+    frames_processed: int | None = Field(
+        default=None, description="Frames decoded and passed through perception, all cameras"
+    )
+    stages_s: dict[str, float] = Field(
+        default_factory=dict,
+        description="Wall-clock seconds per stage; perception is keyed per camera",
+    )
+    peak_memory_mb: float | None = Field(
+        default=None,
+        description="Peak process resident memory plus accelerator driver allocation, MB",
+    )
 
 
 class Observation(Contract):
