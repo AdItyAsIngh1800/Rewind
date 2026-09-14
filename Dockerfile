@@ -20,9 +20,11 @@ ENV VIRTUAL_ENV=/app/.venv \
     PYTHONPATH=/app \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+    UV_LINK_MODE=copy \
+    UV_NO_CACHE=1
 
 COPY pyproject.toml uv.lock ./
+# No uv cache in the layer: it would hold a second copy of every wheel (1.7 GB).
 RUN uv venv \
     && uv export --frozen --extra ml --no-dev --no-hashes --no-emit-project -o /tmp/locked.txt \
     && grep -vE '^(torch==|torchvision==|triton==|cuda-|nvidia-c|nvidia-n)' /tmp/locked.txt > /tmp/cpu.txt \

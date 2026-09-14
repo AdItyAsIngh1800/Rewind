@@ -7,6 +7,10 @@
 #
 # The whole system in containers is docker-compose.yml (E10.1, ADR-0007).
 
+# Its own project name: docker-compose.yml is project `rewind`, and both define a `redis`
+# service, so without this starting the full stack would take over the dev container.
+name: rewind-dev
+
 services:
   redis:
     image: redis:7-alpine
