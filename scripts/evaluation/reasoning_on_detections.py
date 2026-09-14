@@ -52,6 +52,8 @@ log = logging.getLogger(__name__)
 
 #: The entity behind each annotated cause (`cause_gt.json`), for the cases with one.
 CAUSE_ENTITY = {"case_01": "P01", "case_03": "P01", "case_04": "F01"}
+#: The golden pair, from the case scripts, pre-registered in EXP-0010 before opening.
+GOLDEN_CAUSE_ENTITY = {"case_02": "P01", "case_06": "F02"}
 
 
 def _interval_overlap(a: tuple[float, float], b: tuple[float, float]) -> float:
@@ -138,7 +140,7 @@ def score_case(
         ranked_entities.append(
             _entity_of_node(graph, entity_node, truth_of_segment) if entity_node else None
         )
-    cause = CAUSE_ENTITY.get(case_id)
+    cause = {**CAUSE_ENTITY, **GOLDEN_CAUSE_ENTITY}.get(case_id)
 
     # Gaps, per true entity, clipped to the window.
     window = (incident.window_start_s, incident.window_end_s)

@@ -48,13 +48,19 @@ CASES_CONFIG = pathlib.Path("ml/configs/cases_v1.json")
 #: Expected outcome per tune case: class, true trigger time, annotated cause time.
 #: Trigger times are the robot's scripted e-stop (`cases_v1.json`) and, for C04, the
 #: drop at 14 s plus the 20 s dwell (scene spec §6.4). Cause times are the ones
-#: `cause_gt.json` states. The golden cases are deliberately absent.
+#: `cause_gt.json` states. The golden pair was added at E9.1 from the case scripts and
+#: pre-registered in EXP-0010 before either case was opened; it is not a default.
 TRUTH: dict[str, tuple[IncidentClass, float, float] | None] = {
     "case_01": (IncidentClass.ROBOT_ESTOP_HUMAN_INCURSION, 13.4, 12.8),
     "case_03": (IncidentClass.ROBOT_ESTOP_HUMAN_INCURSION, 17.4, 16.9),
     "case_04": (IncidentClass.ZONE_BLOCKED_UNATTENDED_OBJECT, 34.0, 14.0),
     "case_05": None,
 }
+GOLDEN_TRUTH: dict[str, tuple[IncidentClass, float, float] | None] = {
+    "case_02": (IncidentClass.ROBOT_ESTOP_HUMAN_INCURSION, 13.5, 13.0),
+    "case_06": (IncidentClass.ZONE_BLOCKED_UNATTENDED_OBJECT, 44.0, 24.0),
+}
+TRUTH.update(GOLDEN_TRUTH)
 
 
 def score_incidents(
@@ -99,7 +105,7 @@ def main() -> int:
     """Score both modes on every tune case and write a JSON report."""
     configure_logging()
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("cases", nargs="*", default=list(TRUTH))
+    parser.add_argument("cases", nargs="*", default=[c for c in TRUTH if c not in GOLDEN_TRUTH])
     args = parser.parse_args()
     log.info("config: %s", IncidentConfig().version)
 
