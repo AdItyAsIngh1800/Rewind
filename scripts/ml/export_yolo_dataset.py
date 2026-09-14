@@ -25,7 +25,7 @@ from collections import Counter
 from typing import Any
 
 from packages.schemas import EntityClass
-from services.ingestion import decode_frames, probe
+from services.ingestion import case_clips, decode_frames, probe
 from services.observability.logging import configure_logging
 
 log = logging.getLogger(__name__)
@@ -122,7 +122,7 @@ def export_case(case_id: str, split: str, counts: Counter[str]) -> int:
     labels_dir.mkdir(parents=True, exist_ok=True)
 
     written = 0
-    for clip in sorted(case_dir.glob("*.mp4")):
+    for clip in case_clips(case_dir):
         camera_id = clip.stem
         metadata = probe(clip)
         wanted = list(range(0, metadata.frame_count, STRIDE))

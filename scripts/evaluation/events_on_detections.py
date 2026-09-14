@@ -24,6 +24,7 @@ from packages.schemas import Observation, TrackSegment
 from scripts.evaluation.events_on_truth import REPORTS, SAMPLES, SCENE, log_result, score_events
 from services.events import EventConfig, class_heights, localise_all
 from services.identity import associate, build_segment_tracks, entity_groups
+from services.ingestion import case_clips
 from services.observability.logging import configure_logging
 from services.perception.pipeline import process_camera
 from services.tracking import TrackerConfig
@@ -40,7 +41,7 @@ def run_perception(
     rows: list[Observation] = []
     segments: list[TrackSegment] = []
     descriptors: dict[str, NDArray[np.float64]] = {}
-    for clip in sorted((SAMPLES / case_id).glob("*.mp4")):
+    for clip in case_clips(SAMPLES / case_id):
         out = process_camera(
             clip,
             run_id="eval",

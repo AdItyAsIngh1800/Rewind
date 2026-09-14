@@ -44,7 +44,7 @@ from services.events import events_for_run, to_contract
 from services.evidence import graph_for_incident
 from services.identity import link_to_contract, links_for_run
 from services.incidents import incident_to_contract, list_incidents
-from services.ingestion import create_run
+from services.ingestion import case_clips, create_run
 from services.observability.metrics import stored_metrics
 from services.perception.persistence import segment_to_contract, segments_for_run
 from services.reasoning.persistence import hypotheses_for_incident
@@ -236,7 +236,7 @@ async def create_case(body: CreateCaseRequest, session: DbSession) -> CreateCase
             detail=f"No case media for {body.case_ref!r} under {SAMPLES}.",
         )
 
-    clips = sorted(case_dir.glob("*.mp4"))
+    clips = case_clips(case_dir)
     if not clips:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

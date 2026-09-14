@@ -26,6 +26,7 @@ from datetime import UTC, datetime
 from apps.worker.tasks import build_detector, camera_offsets
 from packages.evaluation.metrics import iou
 from packages.schemas import Observation
+from services.ingestion import case_clips
 from services.observability.logging import configure_logging
 from services.perception.pipeline import process_camera
 from services.tracking import TrackerConfig, score_against_truth
@@ -118,7 +119,7 @@ def main() -> int:
         ]
         log.info("%s", case_id)
         cameras: dict[str, object] = {}
-        for clip in sorted((SAMPLES / case_id).glob("*.mp4")):
+        for clip in case_clips(SAMPLES / case_id):
             camera_id = clip.stem
             out = process_camera(
                 clip,

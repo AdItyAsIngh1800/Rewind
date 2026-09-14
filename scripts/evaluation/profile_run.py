@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 from apps.worker.settings import worker_settings
 from apps.worker.tasks import build_detector, camera_offsets, robot_telemetry
 from packages.database.session import make_engine
-from services.ingestion import create_run
+from services.ingestion import case_clips, create_run
 from services.observability.logging import configure_logging
 from services.perception import process_run
 
@@ -55,7 +55,7 @@ def accelerator_mb() -> float | None:
 def profile(case_id: str, session: Session, detector: Any, scene: dict[str, Any]) -> dict[str, Any]:
     """Process one case and return its timings."""
     case_dir = worker_settings.samples_dir / case_id
-    clips = sorted(case_dir.glob("*.mp4"))
+    clips = case_clips(case_dir)
     run, _ = create_run(
         session,
         input_paths=clips,

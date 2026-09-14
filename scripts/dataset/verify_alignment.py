@@ -28,7 +28,7 @@ import cv2
 import numpy as np
 
 from packages.common.color import linear_to_srgb
-from services.ingestion import decode_frames
+from services.ingestion import case_clips, decode_frames
 from services.observability.logging import configure_logging
 
 log = logging.getLogger(__name__)
@@ -141,7 +141,7 @@ def check_case(
         by_key.setdefault((str(row["camera_id"]), int(row["frame_index"])), []).append(row)
 
     mismatches: list[Mismatch] = []
-    for clip in sorted(case_dir.glob("*.mp4")):
+    for clip in case_clips(case_dir):
         camera_id = clip.stem
         wanted = [f for f in SAMPLE_FRAMES if (camera_id, f) in by_key]
         for frame_index, frame in decode_frames(clip, wanted):
@@ -193,7 +193,7 @@ def main() -> int:
             colours[actor] = srgb8(value)
             hues[actor] = hue_sat(value)
 
-    case_ids = args.cases or sorted(d.name for d in SAMPLES.glob("case_*") if any(d.glob("*.mp4")))
+    case_ids = args.cases or sorted(d.name for d in SAMPLES.glob("case_*") if case_clips(d))
     if not case_ids:
         log.info("no rendered cases under %s", SAMPLES)
         return 1

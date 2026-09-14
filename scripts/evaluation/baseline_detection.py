@@ -22,7 +22,7 @@ from typing import Any
 
 from packages.evaluation.metrics import Counts, match_detections
 from packages.schemas import EntityClass
-from services.ingestion import decode_frames, plan_sampling, probe
+from services.ingestion import case_clips, decode_frames, plan_sampling, probe
 from services.observability.logging import configure_logging
 from services.perception import UNREACHABLE_ZERO_SHOT, Detector, DetectorConfig
 
@@ -80,7 +80,7 @@ def observations_for_case(
     predicted: list[dict[str, Any]] = []
     processed = 0
 
-    for clip in sorted((SAMPLES / case_id).glob("*.mp4")):
+    for clip in case_clips(SAMPLES / case_id):
         camera_id = clip.stem
         metadata = probe(clip)
         plan = plan_sampling(

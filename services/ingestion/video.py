@@ -93,6 +93,17 @@ def _parse_rate(value: str) -> float:
     return float(value)
 
 
+def case_clips(case_dir: pathlib.Path) -> list[pathlib.Path]:
+    """Return the camera clips in a case directory, in camera order, skipping hidden files.
+
+    A clip's stem is its camera id, so every stray ``*.mp4`` becomes a camera. macOS
+    writes ``._CAM_A.mp4`` AppleDouble files beside the real ones when a directory is
+    archived or copied to another filesystem; the first published data asset carried
+    56 of them, and the worker failed reading one as a video (E10.1, Gate 6).
+    """
+    return sorted(p for p in case_dir.glob("*.mp4") if not p.name.startswith("."))
+
+
 def probe(path: pathlib.Path) -> VideoMetadata:
     """Read a video's metadata without decoding it."""
     if not path.exists():

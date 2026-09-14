@@ -15,6 +15,7 @@ import pytest
 
 from services.ingestion import (
     IngestionError,
+    case_clips,
     hash_file,
     input_hash,
     plan_sampling,
@@ -276,3 +277,10 @@ def test_probing_a_non_video_is_rejected(tmp_path: pathlib.Path) -> None:
     fake.write_text("this is not a video")
     with pytest.raises(IngestionError):
         probe(fake)
+
+
+def test_case_clips_skip_hidden_files_and_non_clips(tmp_path: pathlib.Path) -> None:
+    """A macOS ``._CAM_A.mp4`` beside the real clip is not a camera (E10.1, Gate 6)."""
+    for name in ["CAM_B.mp4", "CAM_A.mp4", "._CAM_A.mp4", ".hidden.mp4", "notes.txt"]:
+        (tmp_path / name).write_bytes(b"")
+    assert [p.name for p in case_clips(tmp_path)] == ["CAM_A.mp4", "CAM_B.mp4"]

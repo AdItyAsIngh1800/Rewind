@@ -53,6 +53,7 @@ from services.incidents import IncidentConfig, detect_incidents, write_incidents
 from services.ingestion import (
     Frame,
     RunConflictError,
+    case_clips,
     decode_frames,
     plan_sampling,
     probe,
@@ -251,7 +252,7 @@ def process_run(
         session.commit()
         raise RunConflictError(f"run {run_id} was interrupted and is now failed")
     transition(session, run_id, RunStatus.RUNNING)
-    clips = sorted(case_dir.glob("*.mp4"))
+    clips = case_clips(case_dir)
     # Recorded as the run starts reading them, so the replay plays the footage this run's
     # evidence came from, and a failed run still says what it was reading (ADR-0006).
     if run_row is not None:
