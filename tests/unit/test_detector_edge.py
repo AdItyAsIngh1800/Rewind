@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from services.perception.detector import DetectorConfig, cut_by_edge
+from services.perception.detector import DetectorConfig, cut_by_edge, nested_in_larger
 
 MIN = DetectorConfig().edge_min_side_px
 
@@ -25,4 +25,23 @@ def test_small_interior_person_at_range_is_kept() -> None:
 
 def test_version_records_the_edge_rule() -> None:
     """A run's model version must say which edge rule produced its boxes."""
-    assert DetectorConfig().version.endswith(":edge16")
+    assert DetectorConfig().version.endswith(":edge16:nest0.9")
+
+
+NEST = DetectorConfig().nested_min_share
+
+
+def test_second_box_on_a_forklift_front_face_is_dropped() -> None:
+    """case_02 CAM_B frame 112: the whole machine (0.87) and a box on its dark front (0.60)."""
+    whole = (783.0, 472.0, 1124.0, 718.0)
+    front = (871.0, 623.0, 1113.0, 718.0)
+    assert nested_in_larger(front, [whole, front], NEST)
+    assert not nested_in_larger(whole, [whole, front], NEST), "the larger box stays"
+
+
+def test_two_objects_side_by_side_are_both_kept() -> None:
+    """Overlapping neighbours are two objects: neither is mostly inside the other."""
+    left = (100.0, 100.0, 300.0, 300.0)
+    right = (250.0, 100.0, 500.0, 320.0)
+    assert not nested_in_larger(left, [left, right], NEST)
+    assert not nested_in_larger(right, [left, right], NEST)

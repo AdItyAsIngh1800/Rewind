@@ -67,6 +67,13 @@ class DetectorConfig:
     #: re-run). Such a box cannot be localised either, since its centre is not the
     #: entity's. Edge-only because interior people at range measure 13.8 px wide.
     edge_min_side_px: float = 16.0
+    #: A box with this share of its area inside a larger box of the same class is a
+    #: second box on one object, and dropped. NMS misses it: the small box's IoU with
+    #: the large one is low. In case_02 a half-visible forklift at the frame edge got a
+    #: second box on its dark front face, which became a track of its own and was
+    #: linked to the real forklift on two other cameras (EXP-0010, F4). Two objects of
+    #: one class never nest in the image, so no case has to choose the value.
+    nested_min_share: float = 0.9
     device: str = "mps"
     #: Fine-tuned checkpoints predict the project's classes directly, so the COCO
     #: name mapping is bypassed. Set by the training run, not guessed at inference.
@@ -78,7 +85,7 @@ class DetectorConfig:
         suffix = "native" if self.native_classes else "coco"
         return (
             f"{self.checkpoint}:{suffix}:conf{self.confidence}:iou{self.iou}"
-            f":edge{self.edge_min_side_px:g}"
+            f":edge{self.edge_min_side_px:g}:nest{self.nested_min_share:g}"
         )
 
 
@@ -89,6 +96,22 @@ def cut_by_edge(
     x1, y1, x2, y2 = box
     touches = x1 <= 1.0 or y1 <= 1.0 or x2 >= width - 1.0 or y2 >= height - 1.0
     return touches and min(x2 - x1, y2 - y1) < min_side
+
+
+Box = tuple[float, float, float, float]
+
+
+def nested_in_larger(box: Box, others: list[Box], min_share: float) -> bool:
+    """Whether ``box`` has at least ``min_share`` of its area inside a larger box in ``others``."""
+    x1, y1, x2, y2 = box
+    area = (x2 - x1) * (y2 - y1)
+    for ox1, oy1, ox2, oy2 in others:
+        if (ox2 - ox1) * (oy2 - oy1) <= area:
+            continue
+        inter = max(0.0, min(x2, ox2) - max(x1, ox1)) * max(0.0, min(y2, oy2) - max(y1, oy1))
+        if inter / area >= min_share:
+            return True
+    return False
 
 
 class Detector:
@@ -182,6 +205,7 @@ class Detector:
             if boxes is None:
                 continue
 
+            kept: list[tuple[int, EntityClass, Box, float]] = []
             for detection_index, box in enumerate(boxes):
                 label = self.class_names[int(box.cls.item())]
                 entity_class = self._to_entity_class(label)
@@ -197,7 +221,14 @@ class Detector:
                 height, width = frames[position].shape[:2]
                 if cut_by_edge((x1, y1, x2, y2), width, height, self.config.edge_min_side_px):
                     continue
+                kept.append(
+                    (detection_index, entity_class, (x1, y1, x2, y2), float(box.conf.item()))
+                )
 
+            for detection_index, entity_class, (x1, y1, x2, y2), confidence in kept:
+                same_class = [b for _, c, b, _ in kept if c is entity_class]
+                if nested_in_larger((x1, y1, x2, y2), same_class, self.config.nested_min_share):
+                    continue
                 yield Observation(
                     schema_version=SCHEMA_VERSION,
                     observation_id=f"{run_id}-{camera_id}-{source_index:05d}-{detection_index:02d}",
@@ -207,5 +238,5 @@ class Detector:
                     timestamp_s=timestamp,
                     entity_class=entity_class,
                     bbox=BBox(x1=x1, y1=y1, x2=x2, y2=y2),
-                    confidence=float(box.conf.item()),
+                    confidence=confidence,
                 )
