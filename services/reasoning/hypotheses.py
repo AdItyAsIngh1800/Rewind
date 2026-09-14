@@ -151,6 +151,21 @@ def _bounded(event: SemanticEvent) -> bool:
     return bool(event.payload.get("at_first_sight") or event.payload.get("during_gap"))
 
 
+def _happened_between(event: SemanticEvent) -> tuple[float, float]:
+    """Return when an event happened: its stamp, or the gap a bounded event fell in.
+
+    The extractor stamps a crossing that happened while the track was unseen at the
+    reappearance and records the gap in ``during_gap``. Judged by its stamp, a person
+    who entered the lane unseen and reappeared after the stop looks like they entered
+    after it, and the case the project is named for produces no hypothesis (EXP-0010,
+    F5). Judged by the interval, the entry may precede the stop, and is *possible*.
+    """
+    gap = event.payload.get("during_gap")
+    if isinstance(gap, list) and len(gap) == 2:
+        return float(gap[0]), float(gap[1])
+    return event.timestamp_s, event.timestamp_s
+
+
 def _overlaps(node: EvidenceNode, lo: float, hi: float) -> bool:
     if node.interval_s is None:
         return False
@@ -333,10 +348,14 @@ def _estop_candidates(
         support: list[str] = [entity_id]
         for node in observed:
             event = index.event_of(node)
-            if event is None or not (
-                t_stop - cfg.lookback_s <= event.timestamp_s <= t_stop + cfg.timing_tolerance_s
-            ):
+            if event is None:
                 continue
+            earliest, latest = _happened_between(event)
+            if latest < t_stop - cfg.lookback_s or earliest > t_stop + cfg.timing_tolerance_s:
+                continue
+            # The moment it most plausibly happened: its stamp, or for a bounded event
+            # the middle of the part of its gap that precedes the stop.
+            when = (earliest + min(latest, t_stop + cfg.timing_tolerance_s)) / 2
             if event.event_type is EventType.ZONE_ENTRY and event.zone_id in zone_weight:
                 spatial = zone_weight[event.zone_id]
                 zone_node = _zone_node(index, node)
@@ -354,7 +373,7 @@ def _estop_candidates(
                 continue
             support.append(node.node_id)
             components = {
-                "temporal_precedence": math.exp(-max(0.0, t_stop - event.timestamp_s) / cfg.tau_s),
+                "temporal_precedence": math.exp(-max(0.0, t_stop - when) / cfg.tau_s),
                 "spatial": spatial,
                 "evidence_strength": _strength(node, event),
                 "convergence": max(
@@ -376,17 +395,23 @@ def _estop_candidates(
             if best is None or partial > sum(
                 best.components[k] for k in ("temporal_precedence", "spatial", "evidence_strength")
             ):
-                lead = t_stop - event.timestamp_s
+                if earliest == latest:
+                    timing = (
+                        f"at {event.timestamp_s:g} s, {t_stop - event.timestamp_s:.1f} s before "
+                        "the robot's emergency stop"
+                    )
+                else:
+                    timing = (
+                        f"at some moment between {earliest:g} and {latest:g} s while no camera "
+                        "saw it, around the robot's emergency stop"
+                    )
                 best = _Candidate(
                     entity=index.nodes[entity_id],
                     anchor=node,
                     anchor_event=event,
                     components=components,
                     support=[],
-                    description=(
-                        f"{index.nodes[entity_id].label} {what} at {event.timestamp_s:g} s, "
-                        f"{lead:.1f} s before the robot's emergency stop"
-                    ),
+                    description=f"{index.nodes[entity_id].label} {what} {timing}",
                 )
         if best is not None:
             best.support = [*support, trigger_node.node_id]
@@ -433,62 +458,105 @@ def _blocked_candidates(
     out: list[_Candidate] = []
     if zone_id is None:
         return out
+    # Every moment the object came to rest in the window, not only the last: an object
+    # set down, nudged and set down again has a contributor at each rest (EXP-0010, F7).
+    rests = sorted(
+        {t_rest}
+        | {
+            e.timestamp_s
+            for o in objects
+            for n in index.observed[o]
+            if (e := index.event_of(n)) is not None
+            and e.event_type is EventType.STOP
+            and e.timestamp_s < t_rest
+        }
+    )
+
+    def nearest_rest(t: float) -> float:
+        return min(rests, key=lambda r: abs(r - t))
 
     for entity_id, observed in index.observed.items():
         if entity_id in objects:
             continue
         arrivals: list[tuple[EvidenceNode, SemanticEvent]] = []
         departures: list[tuple[EvidenceNode, SemanticEvent]] = []
+        contacts: list[tuple[EvidenceNode, SemanticEvent]] = []
         for node in observed:
             event = index.event_of(node)
+            if event is None:
+                continue
+            rest = nearest_rest(event.timestamp_s)
             if (
-                event is None
-                or event.zone_id != zone_id
-                or abs(event.timestamp_s - t_rest) > cfg.lookback_s
+                event.event_type is EventType.PROXIMITY
+                and event.payload.get("other_class") == object_class
+                and objects & set(index.entities_of(node))
             ):
+                # Contact overlapping the look-back before a rest: whoever was with the
+                # object as it came to rest, including a vehicle still withdrawing its
+                # forks after setting it down. Needs no zone crossing, so one that only
+                # nosed up to the edge still counts.
+                end = event.payload.get("end_s")
+                left = float(end) if isinstance(end, int | float) else event.timestamp_s
+                if (
+                    event.timestamp_s <= rest + cfg.timing_tolerance_s
+                    and left >= rest - cfg.lookback_s
+                ):
+                    contacts.append((node, event))
+                continue
+            if event.zone_id != zone_id or abs(event.timestamp_s - rest) > cfg.lookback_s:
                 continue
             if (
                 event.event_type is EventType.ZONE_ENTRY
-                and event.timestamp_s <= t_rest + cfg.timing_tolerance_s
+                and event.timestamp_s <= rest + cfg.timing_tolerance_s
             ):
                 arrivals.append((node, event))
             elif (
                 event.event_type is EventType.ZONE_EXIT
-                and event.timestamp_s >= t_rest - cfg.timing_tolerance_s
+                and event.timestamp_s >= rest - cfg.timing_tolerance_s
             ):
                 departures.append((node, event))
-        if not arrivals and not departures:
+        if not arrivals and not departures and not contacts:
             continue
-        # The event closest to the moment the object came to rest anchors the
-        # hypothesis; arriving before and leaving after is what "left it" looks like.
+        # The event closest to a rest anchors the hypothesis. Arriving before and
+        # leaving after, or being in contact as it came to rest, is what "left it"
+        # looks like.
         anchor_node, anchor = min(
-            [*arrivals, *departures], key=lambda ne: abs(ne[1].timestamp_s - t_rest)
+            [*arrivals, *departures, *contacts],
+            key=lambda ne: abs(ne[1].timestamp_s - nearest_rest(ne[1].timestamp_s)),
         )
-        convergence = 1.0 if arrivals and departures else 0.5
+        t_anchor_rest = nearest_rest(anchor.timestamp_s)
+        convergence = 1.0 if (arrivals and departures) or contacts else 0.5
         parts = []
         if arrivals:
             parts.append(f"entered {zone_id} at {min(e.timestamp_s for _, e in arrivals):g} s")
         if departures:
             parts.append(f"left at {min(e.timestamp_s for _, e in departures):g} s")
+        if contacts:
+            _, first = min(contacts, key=lambda ne: ne[1].timestamp_s)
+            d = first.payload.get("distance_m")
+            near = f"within {float(d):g} m of" if isinstance(d, int | float) else "beside"
+            parts.append(f"was {near} the {object_class} from {first.timestamp_s:g} s")
         out.append(
             _Candidate(
                 entity=index.nodes[entity_id],
                 anchor=anchor_node,
                 anchor_event=anchor,
                 components={
-                    "temporal_precedence": math.exp(-abs(anchor.timestamp_s - t_rest) / cfg.tau_s),
+                    "temporal_precedence": math.exp(
+                        -abs(anchor.timestamp_s - t_anchor_rest) / cfg.tau_s
+                    ),
                     "spatial": 1.0,
                     "evidence_strength": _strength(anchor_node, anchor),
                     "convergence": convergence,
                 },
                 support=[
                     entity_id,
-                    *(n.node_id for n, _ in [*arrivals, *departures]),
+                    *(n.node_id for n, _ in [*arrivals, *departures, *contacts]),
                     trigger_node.node_id,
                 ],
                 description=(
                     f"{index.nodes[entity_id].label} {' and '.join(parts)}, around when the "
-                    f"{object_class} came to rest there at {t_rest:g} s"
+                    f"{object_class} came to rest there at {t_anchor_rest:g} s"
                 ),
             )
         )
