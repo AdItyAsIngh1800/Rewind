@@ -1,0 +1,138 @@
+{
+  "config": "events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5:merge0.8:edge0.5",
+  "results": [
+    {
+      "case_id": "case_01",
+      "positions": "detections",
+      "tp": 7,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.875,
+      "recall": 1.0,
+      "mean_abs_timing_error_s": 0.05714285714285724,
+      "max_abs_timing_error_s": 0.10000000000000142,
+      "truth_unobservable": 1,
+      "truth_telemetry_only": 2,
+      "predicted_bounded": 1,
+      "predicted_bounded_unmatched": 0,
+      "events_by_type": {
+        "direction_change": 1,
+        "stop": 4,
+        "zone_entry": 5,
+        "zone_exit": 3
+      }
+    },
+    {
+      "case_id": "case_02",
+      "positions": "detections",
+      "tp": 4,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.8,
+      "mean_abs_timing_error_s": 0.04999999999999993,
+      "max_abs_timing_error_s": 0.10000000000000009,
+      "truth_unobservable": 4,
+      "truth_telemetry_only": 2,
+      "predicted_bounded": 5,
+      "predicted_bounded_unmatched": 4,
+      "events_by_type": {
+        "direction_change": 4,
+        "occlusion_end": 2,
+        "occlusion_start": 2,
+        "proximity": 3,
+        "stop": 5,
+        "zone_entry": 7,
+        "zone_exit": 1
+      }
+    },
+    {
+      "case_id": "case_03",
+      "positions": "detections",
+      "tp": 7,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "mean_abs_timing_error_s": 0.07857142857142872,
+      "max_abs_timing_error_s": 0.25,
+      "truth_unobservable": 0,
+      "truth_telemetry_only": 2,
+      "predicted_bounded": 0,
+      "predicted_bounded_unmatched": 0,
+      "events_by_type": {
+        "direction_change": 8,
+        "proximity": 2,
+        "stop": 17,
+        "zone_entry": 4,
+        "zone_exit": 3
+      }
+    },
+    {
+      "case_id": "case_04",
+      "positions": "detections",
+      "tp": 6,
+      "fp": 1,
+      "fn": 2,
+      "precision": 0.8571428571428571,
+      "recall": 0.75,
+      "mean_abs_timing_error_s": 0.08333333333333363,
+      "max_abs_timing_error_s": 0.10000000000000142,
+      "truth_unobservable": 9,
+      "truth_telemetry_only": 0,
+      "predicted_bounded": 4,
+      "predicted_bounded_unmatched": 4,
+      "events_by_type": {
+        "direction_change": 2,
+        "proximity": 1,
+        "stop": 2,
+        "zone_entry": 8,
+        "zone_exit": 3
+      }
+    },
+    {
+      "case_id": "case_05",
+      "positions": "detections",
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "mean_abs_timing_error_s": 0.10000000000000048,
+      "max_abs_timing_error_s": 0.2,
+      "truth_unobservable": 3,
+      "truth_telemetry_only": 0,
+      "predicted_bounded": 0,
+      "predicted_bounded_unmatched": 0,
+      "events_by_type": {
+        "direction_change": 1,
+        "stop": 1,
+        "zone_entry": 2,
+        "zone_exit": 1
+      }
+    },
+    {
+      "case_id": "case_06",
+      "positions": "detections",
+      "tp": 6,
+      "fp": 2,
+      "fn": 8,
+      "precision": 0.75,
+      "recall": 0.42857142857142855,
+      "mean_abs_timing_error_s": 0.3166666666666667,
+      "max_abs_timing_error_s": 0.5,
+      "truth_unobservable": 6,
+      "truth_telemetry_only": 0,
+      "predicted_bounded": 12,
+      "predicted_bounded_unmatched": 6,
+      "events_by_type": {
+        "direction_change": 21,
+        "occlusion_end": 2,
+        "occlusion_start": 2,
+        "proximity": 9,
+        "stop": 9,
+        "zone_entry": 14
+      }
+    }
+  ]
+}

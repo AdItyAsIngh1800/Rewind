@@ -1,0 +1,21 @@
+{
+  "name": "yolo11n-rewind-v2",
+  "base_checkpoint": "yolo11n.pt",
+  "trained_at": "2026-09-14T16:03:45.345760+00:00",
+  "elapsed_s": 908.6,
+  "epochs": 20,
+  "imgsz": 640,
+  "batch": 16,
+  "seed": 0,
+  "hsv_h": 0.5,
+  "device": "mps",
+  "platform": "Darwin arm64",
+  "dataset": "data/yolo/data.yaml",
+  "validation_metrics": {
+    "map50": 0.9942907216494845,
+    "map": 0.982066914061815,
+    "mp": 0.9994559742668172,
+    "mr": 0.9862256698334041
+  },
+  "weights": "ml/models/yolo11n-rewind-v2/best.pt"
+}
