@@ -169,11 +169,14 @@ Unchanged by the hardware decision — see `ADR-0001`.
 
 | Service | Where it runs | Notes |
 |---|---|---|
-| `api` | Host (dev) / container | FastAPI + Uvicorn. Metadata queries target sub-500 ms |
-| `worker` | **Host only in development** | ARQ. Cannot run in Docker in dev — no Metal passthrough |
-| Database | **Supabase (hosted)** | Postgres 17 + Storage + Auth + RLS + pgvector. See `ADR-0003` |
+| `api` | Host (dev) / container (`docker compose up`) | FastAPI + Uvicorn. Metadata queries target sub-500 ms |
+| `worker` | Host (dev, MPS) / container (CPU) | ARQ. No Metal passthrough in Docker, so the container runs the detector on CPU: 63 FPS, a case in 22 s, against 170 FPS on MPS (EXP-0012). Both are well above the 5–10 FPS envelope |
+| Database | Compose: `pgvector/pgvector:pg16` / hosted: **Supabase** | The full stack runs its own disposable Postgres (`ADR-0007`); Supabase is reached through the same settings (`ADR-0003`) |
 | `redis` | Container | Job queue and transient investigation state |
-| `web` | Vite dev server / static build | Investigator dashboard |
+| `web` | Vite dev server / nginx serving the static build | nginx proxies `/api`, so the browser talks to one origin in both |
+
+Footage and weights are mounted read-only into the containers after `make fetch-data`,
+which downloads the `data-v1` release asset and checks it against the dataset manifest.
 
 ### Query latency against the specification's 500 ms target
 

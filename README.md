@@ -15,7 +15,11 @@ generator has no other vocabulary available.
 
 ## Status
 
-Pre-start phase (Weeks 0–1). The pipeline does not run yet.
+The pipeline runs end to end: three rendered camera feeds become an incident, an
+evidence graph, ranked causes and a cited report, viewed in the investigator UI with
+synchronized replay. Held-out results and every known failure are in
+[`artifacts/benchmark-reports/final.md`](artifacts/benchmark-reports/final.md) and
+[`docs/failures/`](docs/failures/README.md).
 
 | | |
 |---|---|
@@ -24,21 +28,59 @@ Pre-start phase (Weeks 0–1). The pipeline does not run yet.
 | Risk register and gate dates | [`docs/risk-register.md`](docs/risk-register.md) |
 | Decisions | [`docs/adr/`](docs/adr/) |
 
-## Quick start
+## Quick start — the whole system
+
+Requires [Docker](https://docs.docker.com/get-docker/), [uv](https://docs.astral.sh/uv/)
+and the [GitHub CLI](https://cli.github.com) signed in with access to this repository.
 
 ```bash
-cp .env.example .env   # then fill in the Supabase values below
-make dev               # build the environment from the lockfile
-make up                # start redis
-make migrate           # apply database migrations to Supabase
-make test              # run the suite
-make help              # list every target
+gh auth login          # once; the repository and its data asset are private
+gh repo clone AdItyAsIngh1800/Rewind
+cd Rewind
+make fetch-data        # 38 MB, every file checked against data/manifests/v1.json
+docker compose up --build
 ```
 
-### Supabase setup
+The first build takes a few minutes. When the log shows `worker` waiting for jobs, open
+**http://localhost:5173** (set `REWIND_WEB_PORT` if that port is taken). The inbox is
+empty until a case is processed:
 
-The database, object storage and auth are Supabase ([`ADR-0003`](docs/adr/ADR-0003-supabase.md)).
-You need a project and four values in `.env`:
+```bash
+curl -X POST localhost:5173/api/v1/cases \
+  -H 'Content-Type: application/json' \
+  -d '{"dataset_version": "v1", "case_ref": "case_01"}'
+```
+
+The worker processes the three clips in about 25 seconds on CPU; reload the inbox and
+open the incident. `case_01` to `case_06` are available. `docker compose down -v`
+stops everything and discards the database.
+
+Everything runs locally: Postgres with pgvector, Redis, the API, the worker and the
+UI ([`ADR-0007`](docs/adr/ADR-0007-local-database-for-the-full-stack.md)). No account
+or secret is needed.
+
+## Development
+
+```bash
+make dev               # the environment from the lockfile, including the ML extra
+make up                # redis
+make migrate           # Alembic, against the database below
+make api               # terminal 1
+make worker            # terminal 2; on Apple silicon the detector uses MPS
+make web               # terminal 3; the UI on http://localhost:5173
+make test              # the suite; integration tests need DATABASE_URL
+make help              # every target
+```
+
+The database is `DATABASE_URL` (any Postgres 16 with pgvector, prepared as in
+[`packages/database/docker-init.sql`](packages/database/docker-init.sql)) or the hosted
+Supabase project below.
+
+### Hosted database: Supabase (optional)
+
+Supabase is the hosted target for the database, object storage and auth
+([`ADR-0003`](docs/adr/ADR-0003-supabase.md)). You need a project and four values in
+`.env` (copy `.env.example`):
 
 | Variable | Where to find it |
 |---|---|
@@ -62,19 +104,6 @@ opaque timeout. `make db-url` shows what you are actually connecting to.
 > **Schema authority:** Alembic owns the tables. Supabase Studio is for *reading* the
 > evidence graph, not for altering it. A change made in Studio is schema drift — if it
 > happens, reflect it back into the SQLAlchemy model and capture it in a migration.
-
-The API contract is browsable without any of the above:
-
-```bash
-uv run uvicorn apps.api.main:app --reload
-# http://localhost:8000/docs
-```
-
-Endpoints whose phase has not landed return **501**, not 404 — the shape is frozen,
-the implementation is pending.
-
-Requires [uv](https://docs.astral.sh/uv/) and Python 3.12. `make dev` installs
-everything else.
 
 > **Gate 6** of this project is that a new developer can run the whole system from
 > this README alone. If you have to touch anything not documented here, the README is

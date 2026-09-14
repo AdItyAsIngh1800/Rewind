@@ -1,17 +1,11 @@
 # Development backing services.
 #
-# Postgres is gone — the database is Supabase (ADR-0003). Only Redis remains, for
-# the ARQ job queue, because a hosted queue would add a network dependency to every
-# job state transition for no benefit at this scale.
-#
-# The application itself runs on the host during development: Docker on Apple
-# silicon has no Metal passthrough, so a containerised worker cannot reach the GPU.
-# See docs/09-deployment.md §8.
+# Redis for the ARQ job queue while the API and worker run on the host, so the worker
+# can use MPS on Apple silicon. The database is DATABASE_URL or Supabase (ADR-0003).
 #
 #   make up
 #
-# The full stack, including containerised app services, lives in
-# docker-compose.yml and arrives with E10.1.
+# The whole system in containers is docker-compose.yml (E10.1, ADR-0007).
 
 services:
   redis:
