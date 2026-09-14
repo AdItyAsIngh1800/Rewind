@@ -25,6 +25,7 @@ from numpy.typing import NDArray
 from sqlalchemy.orm import Session
 
 from packages.common.camera import CameraModel
+from packages.database.models import Camera as CameraRow
 from packages.database.models import ProcessingRun as ProcessingRunRow
 from packages.schemas import Observation, RunStatus, SemanticEvent, TrackSegment
 from services.events import (
@@ -219,6 +220,24 @@ def process_run(
     run_row = session.get(ProcessingRunRow, run_id)
     if run_row is not None:
         run_row.media_uris = {clip.stem: str(clip) for clip in clips}
+    # Observations and segments reference their camera, so a camera the database has
+    # never seen is registered from its own clip; without this a clean database fails
+    # on the first write. An existing registration is left alone: it may carry a
+    # calibration or a name the clip cannot know.
+    for clip in clips:
+        if session.get(CameraRow, clip.stem) is None:
+            meta = probe(clip)
+            session.add(
+                CameraRow(
+                    camera_id=clip.stem,
+                    name=clip.stem,
+                    source_uri=str(clip),
+                    clock_offset_s=camera_offsets.get(clip.stem, 0.0),
+                    width=meta.width,
+                    height=meta.height,
+                    fps=meta.fps,
+                )
+            )
     session.commit()
 
     try:

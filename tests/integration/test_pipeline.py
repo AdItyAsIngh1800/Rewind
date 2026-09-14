@@ -14,6 +14,7 @@ import pathlib
 from collections.abc import Iterator
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from packages.database.models import Camera, ProcessingRun
@@ -318,3 +319,34 @@ def test_a_completed_run_cannot_be_reprocessed_in_place(
             camera_offsets=OFFSETS,
             detector=detector,
         )
+
+
+@needs_db
+def test_a_clean_database_registers_the_cameras_it_reads(session: Session) -> None:
+    """Assert a run processes with no cameras registered, registering each from its clip.
+
+    Found rehearsing the Gate 4/5 walkthrough: nothing outside the tests registered a
+    camera, so the real `POST /cases` path failed on its first observation write against
+    a clean database.
+    """
+    if not any(CASE_DIR.glob("*.mp4")):
+        pytest.skip("case_01 video has not been rendered")
+    session.add(
+        ProcessingRun(
+            run_id="run-clean-db",
+            input_hash="sha256:c",
+            dataset_version="v1",
+            config_version="t",
+            status=RunStatus.QUEUED.value,
+        )
+    )
+    session.flush()
+    process_run(
+        session,
+        run_id="run-clean-db",
+        case_dir=CASE_DIR,
+        camera_offsets=NO_OFFSETS,
+        detector=GroundTruthDetector("run-clean-db"),
+    )
+    registered = {c.camera_id: (c.width, c.height, c.fps) for c in session.scalars(select(Camera))}
+    assert registered == {c: (1280, 720, 10.0) for c in ("CAM_A", "CAM_B", "CAM_C")}
