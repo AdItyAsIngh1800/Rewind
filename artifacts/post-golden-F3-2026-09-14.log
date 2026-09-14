@@ -1,0 +1,320 @@
+=== 20:47:55 scripts/evaluation/events_on_truth.py case_01 case_02 case_03 case_04 case_05 case_06
+config: events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5:merge0.8:edge0.5
+Traceback (most recent call last):
+  File "/Users/adityasingh/codes/Rewind/scripts/evaluation/events_on_truth.py", line 193, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/adityasingh/codes/Rewind/scripts/evaluation/events_on_truth.py", line 162, in main
+    r = score_case(case_id, config, projected=projected)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/adityasingh/codes/Rewind/scripts/evaluation/events_on_truth.py", line 67, in score_case
+    observations = perfect_tracks(SAMPLES / case_id, projected=projected)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/adityasingh/codes/Rewind/scripts/evaluation/events_on_truth.py", line 53, in perfect_tracks
+    rows = json.loads((case_dir / "observations_gt.json").read_text())
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/samples/case_01 case_02 case_03 case_04 case_05 case_06/observations_gt.json'
+=== exit 1 20:47:55
+=== 20:47:55 scripts/evaluation/events_on_detections.py case_01 case_02 case_03 case_04 case_05 case_06
+config: events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5:merge0.8:edge0.5
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+0 pairs compared, 0 linked, 0 unknown
+Traceback (most recent call last):
+  File "/Users/adityasingh/codes/Rewind/scripts/evaluation/events_on_detections.py", line 104, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/adityasingh/codes/Rewind/scripts/evaluation/events_on_detections.py", line 94, in main
+    r = score_events(case_id, observations, config, label="detections", groups=groups)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/adityasingh/codes/Rewind/scripts/evaluation/events_on_truth.py", line 96, in score_events
+    truth = json.loads((case_dir / "events_gt.json").read_text())
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/samples/case_01 case_02 case_03 case_04 case_05 case_06/events_gt.json'
+=== exit 1 20:47:56
+=== 20:47:56 scripts/evaluation/incidents_on_detections.py case_01 case_02 case_03 case_04 case_05 case_06
+config: incidents:estop10/10:dwell20+10/10:zonesZ2
+Traceback (most recent call last):
+  File "/Users/adityasingh/codes/Rewind/scripts/evaluation/incidents_on_detections.py", line 168, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/adityasingh/codes/Rewind/scripts/evaluation/incidents_on_detections.py", line 119, in main
+    perfect = perfect_tracks(SAMPLES / case_id, projected=False)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/adityasingh/codes/Rewind/scripts/evaluation/events_on_truth.py", line 53, in perfect_tracks
+    rows = json.loads((case_dir / "observations_gt.json").read_text())
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.12/Frameworks/Python.framework/Versions/3.12/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/samples/case_01 case_02 case_03 case_04 case_05 case_06/observations_gt.json'
+=== exit 1 20:47:56
+=== 20:47:56 scripts/evaluation/reasoning_on_detections.py case_01 case_02 case_03 case_04 case_06
+perfect    case_01  top1 True top3 True  ranked ['P01'] ['strongly_inferred']  gaps recall 1.0 precision 1.0 (truth 6.2s, named 6.2s)  claims 5 {'confirmed': 3, 'strongly_inferred': 1, 'unknown': 1}  coverage 1.00  unsupported 0.00  graph 20/31
+           Robot R12 reported an emergency stop at 13.4 s. Likely contributed: Person (CAM_A-P01, CAM_B-P01, CAM_C-P01) entered Z1 ROBOT_LANE at 12.8 s, 0.6 s before the robot's emergency stop.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 5 linked, 1 unknown
+detections case_01  top1 True top3 True  ranked ['P01'] ['conflicting']  gaps recall 1.0 precision 0.954 (truth 6.2s, named 6.5s)  claims 6 {'confirmed': 3, 'conflicting': 1, 'unknown': 2}  coverage 1.00  unsupported 0.00  graph 19/30
+           Robot R12 reported an emergency stop at 13.4 s. Conflicting evidence: Person (CAM_A-T004, CAM_B-T002, CAM_C-T002) entered Z1 ROBOT_LANE at 12.8 s, 0.6 s before the robot's emergency stop.
+perfect    case_02  top1 False top3 False  ranked ['F01'] ['possible']  gaps recall 1.0 precision 0.982 (truth 11.1s, named 11.3s)  claims 4 {'confirmed': 3, 'possible': 1}  coverage 1.00  unsupported 0.00  graph 30/55
+           Robot R12 reported an emergency stop at 13.5 s. Possible: Forklift (CAM_A-F01, CAM_B-F01, CAM_C-F01) entered Z1 ROBOT_LANE at 3.7 s, 9.8 s before the robot's emergency stop.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 4 linked, 3 unknown
+detections case_02  top1 False top3 False  ranked ['F01', 'F01'] ['possible', 'possible']  gaps recall 1.0 precision 0.192 (truth 11.1s, named 57.8s)  claims 10 {'confirmed': 3, 'possible': 2, 'unknown': 5}  coverage 1.00  unsupported 0.00  graph 51/97
+           Robot R12 reported an emergency stop at 13.5 s. Possible: Forklift (CAM_A-T002, CAM_B-T008, CAM_C-T002) entered Z1 ROBOT_LANE at 3.95 s, 9.6 s before the robot's emergency stop.
+perfect    case_03  top1 True top3 True  ranked ['P01'] ['strongly_inferred']  gaps recall None precision None (truth 0s, named 0s)  claims 4 {'confirmed': 3, 'strongly_inferred': 1}  coverage 1.00  unsupported 0.00  graph 18/28
+           Robot R12 reported an emergency stop at 17.4 s. Likely contributed: Person (CAM_A-P01, CAM_B-P01, CAM_C-P01) entered Z1 ROBOT_LANE at 16 s, 1.4 s before the robot's emergency stop.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 5 linked, 2 unknown
+detections case_03  top1 True top3 True  ranked ['P01'] ['conflicting']  gaps recall None precision 0.0 (truth 0s, named 8.0s)  claims 6 {'confirmed': 3, 'conflicting': 1, 'unknown': 2}  coverage 1.00  unsupported 0.00  graph 33/59
+           Robot R12 reported an emergency stop at 17.4 s. Conflicting evidence: Person (CAM_A-T002, CAM_B-T002, CAM_C-T002) entered Z1 ROBOT_LANE at 16.2 s, 1.2 s before the robot's emergency stop.
+perfect    case_04  top1 True top3 True  ranked ['F01'] ['strongly_inferred']  gaps recall 1.0 precision 0.996 (truth 22.2s, named 22.3s)  claims 5 {'confirmed': 3, 'strongly_inferred': 1, 'unknown': 1}  coverage 1.00  unsupported 0.00  graph 21/41
+           Pallet stopped at 14.4 s and was still there when the dwell limit was crossed at 34.4 s. Likely contributed: Forklift (CAM_A-F01, CAM_B-F01, CAM_C-F01) entered Z2 at 11.5 s and left at 16.1 s, around when the pallet came to rest there at 14.4 s.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_04  top1 True top3 True  ranked ['F01', 'PL3'] ['strongly_inferred', 'conflicting']  gaps recall 1.0 precision 0.978 (truth 21.9s, named 22.4s)  claims 10 {'confirmed': 3, 'possible': 1, 'strongly_inferred': 1, 'conflicting': 1, 'unknown': 4}  coverage 1.00  unsupported 0.00  graph 27/55
+           Pallet stopped at 15.2 s and was still there when the dwell limit was crossed at 35.2 s. Likely contributed: Forklift (CAM_A-T001, CAM_B-T001, CAM_C-T001) entered Z2 at 11.6 s and left at 16 s, around when the pallet came to rest there at 15.2 s.
+perfect    case_06  top1 False top3 False  ranked [None] ['unknown']  gaps recall 1.0 precision 0.995 (truth 20.4s, named 20.5s)  claims 3 {'confirmed': 1, 'unknown': 2}  coverage 1.00  unsupported 0.00  graph 13/16
+           Pallet stopped at 24.1 s and was still there when the dwell limit was crossed at 44.1 s. No contributing cause could be determined from the evidence.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_06  top1 False top3 False  ranked [None] ['unknown']  gaps recall 0.995 precision 0.871 (truth 20.4s, named 23.3s)  claims 7 {'confirmed': 1, 'unknown': 6}  coverage 1.00  unsupported 0.00  graph 31/45
+           Pallet stopped at 24.1 s and was still there when the dwell limit was crossed at 44.1 s. No contributing cause could be determined from the evidence.
+written to artifacts/benchmark-reports/reasoning-2026-09-14T151842Z.json
+=== exit 0 20:48:42
+=== 20:48:42 scripts/evaluation/localisation_jitter.py
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+/Users/adityasingh/codes/Rewind/.venv/lib/python3.12/site-packages/numpy/lib/_nanfunctions_impl.py:1396: RuntimeWarning: All-NaN slice encountered
+  return _nanquantile_unchecked(
+/Users/adityasingh/codes/Rewind/scripts/evaluation/localisation_jitter.py:120: RuntimeWarning: All-NaN slice encountered
+  np.nanmax(still),
+forklift  abs error n=464 p50 0.43 p95 1.79 max 2.00 | still wobble n=0 p95 nan max nan
+pallet    abs error n=922 p50 0.05 p95 0.06 max 0.42 | still wobble n=922 p95 0.01 max 0.40
+person    abs error n=2809 p50 0.05 p95 1.59 max 3.85 | still wobble n=1326 p95 0.02 max 0.31
+robot     abs error n=3217 p50 0.05 p95 0.73 max 1.28 | still wobble n=1495 p95 0.01 max 0.09
+=== exit 0 20:49:19
+=== ALL DONE 20:49:19
+=== RERUN with case names as separate arguments (the first attempt passed them as one string)
+=== 20:50:11 scripts/evaluation/events_on_truth.py case_01 case_02 case_03 case_04 case_05 case_06
+config: events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5:merge0.8:edge0.5
+truth-xy   case_01  tp  7 fp  0 fn  0  P 1.00 R 1.00  timing max 0.10s  unobservable 1  telemetry 2  bounded 3 (1 unmatched)
+            {'direction_change': 1, 'occlusion_end': 1, 'occlusion_start': 1, 'stop': 3, 'zone_entry': 5, 'zone_exit': 3}
+truth-xy   case_02  tp  4 fp  0 fn  1  P 1.00 R 0.80  timing max 0.10s  unobservable 4  telemetry 2  bounded 3 (2 unmatched)
+            {'direction_change': 3, 'occlusion_end': 3, 'occlusion_start': 3, 'proximity': 3, 'stop': 3, 'zone_entry': 4, 'zone_exit': 2}
+truth-xy   case_03  tp  5 fp  0 fn  2  P 1.00 R 0.71  timing max 0.10s  unobservable 0  telemetry 2  bounded 1 (0 unmatched)
+            {'direction_change': 2, 'proximity': 1, 'stop': 3, 'zone_entry': 3, 'zone_exit': 2}
+truth-xy   case_04  tp  8 fp  0 fn  0  P 1.00 R 1.00  timing max 0.10s  unobservable 9  telemetry 0  bounded 2 (2 unmatched)
+            {'direction_change': 1, 'proximity': 1, 'stop': 1, 'zone_entry': 6, 'zone_exit': 4}
+truth-xy   case_05  tp  3 fp  0 fn  0  P 1.00 R 1.00  timing max 0.10s  unobservable 3  telemetry 0  bounded 1 (0 unmatched)
+            {'direction_change': 1, 'stop': 1, 'zone_entry': 2, 'zone_exit': 1}
+truth-xy   case_06  tp  5 fp  0 fn  9  P 1.00 R 0.36  timing max 0.20s  unobservable 6  telemetry 0  bounded 2 (0 unmatched)
+            {'direction_change': 4, 'proximity': 4, 'stop': 2, 'zone_entry': 4, 'zone_exit': 1}
+projected  case_01  tp  7 fp  1 fn  0  P 0.88 R 1.00  timing max 0.10s  unobservable 1  telemetry 2  bounded 2 (0 unmatched)
+            {'direction_change': 2, 'occlusion_end': 1, 'occlusion_start': 1, 'stop': 4, 'zone_entry': 5, 'zone_exit': 3}
+projected  case_02  tp  4 fp  1 fn  1  P 0.80 R 0.80  timing max 0.10s  unobservable 4  telemetry 2  bounded 3 (2 unmatched)
+            {'direction_change': 5, 'occlusion_end': 3, 'occlusion_start': 3, 'proximity': 3, 'stop': 3, 'zone_entry': 4, 'zone_exit': 3}
+projected  case_03  tp  5 fp  0 fn  2  P 1.00 R 0.71  timing max 0.20s  unobservable 0  telemetry 2  bounded 1 (0 unmatched)
+            {'direction_change': 5, 'proximity': 2, 'stop': 7, 'zone_entry': 3, 'zone_exit': 2}
+projected  case_04  tp  6 fp  1 fn  2  P 0.86 R 0.75  timing max 0.10s  unobservable 9  telemetry 0  bounded 2 (2 unmatched)
+            {'direction_change': 2, 'proximity': 1, 'stop': 1, 'zone_entry': 6, 'zone_exit': 3}
+projected  case_05  tp  3 fp  0 fn  0  P 1.00 R 1.00  timing max 0.20s  unobservable 3  telemetry 0  bounded 1 (0 unmatched)
+            {'direction_change': 1, 'stop': 1, 'zone_entry': 2, 'zone_exit': 1}
+projected  case_06  tp  2 fp  1 fn 12  P 0.67 R 0.14  timing max 0.20s  unobservable 6  telemetry 0  bounded 3 (1 unmatched)
+            {'direction_change': 14, 'proximity': 6, 'stop': 5, 'zone_entry': 4}
+written to artifacts/benchmark-reports/events-on-truth-2026-09-14T152012Z.json
+=== exit 0 20:50:12
+=== 20:50:12 scripts/evaluation/events_on_detections.py case_01 case_02 case_03 case_04 case_05 case_06
+config: events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5:merge0.8:edge0.5
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 5 linked, 1 unknown
+detections case_01  tp  7 fp  1 fn  0  P 0.88 R 1.00  timing max 0.10s  unobservable 1  telemetry 2  bounded 2 (0 unmatched)
+            {'direction_change': 1, 'stop': 4, 'zone_entry': 5, 'zone_exit': 3}
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 4 linked, 3 unknown
+detections case_02  tp  4 fp  3 fn  1  P 0.57 R 0.80  timing max 0.25s  unobservable 4  telemetry 2  bounded 3 (2 unmatched)
+            {'direction_change': 6, 'occlusion_end': 2, 'occlusion_start': 2, 'proximity': 9, 'stop': 6, 'zone_entry': 7, 'zone_exit': 2}
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 5 linked, 2 unknown
+detections case_03  tp  5 fp  0 fn  2  P 1.00 R 0.71  timing max 0.20s  unobservable 0  telemetry 2  bounded 1 (0 unmatched)
+            {'direction_change': 7, 'proximity': 3, 'stop': 7, 'zone_entry': 3, 'zone_exit': 2}
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_04  tp  6 fp  1 fn  2  P 0.86 R 0.75  timing max 0.10s  unobservable 9  telemetry 0  bounded 4 (4 unmatched)
+            {'direction_change': 2, 'proximity': 1, 'stop': 2, 'zone_entry': 8, 'zone_exit': 3}
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 6 linked, 0 unknown
+detections case_05  tp  3 fp  0 fn  0  P 1.00 R 1.00  timing max 0.20s  unobservable 3  telemetry 0  bounded 1 (0 unmatched)
+            {'direction_change': 1, 'stop': 1, 'zone_entry': 2, 'zone_exit': 1}
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_06  tp  2 fp  2 fn 12  P 0.50 R 0.14  timing max 0.40s  unobservable 6  telemetry 0  bounded 4 (3 unmatched)
+            {'direction_change': 11, 'occlusion_end': 3, 'occlusion_start': 3, 'proximity': 2, 'stop': 5, 'zone_entry': 7}
+written to artifacts/benchmark-reports/events-on-detections-2026-09-14T152105Z.json
+=== exit 0 20:51:06
+=== 20:51:06 scripts/evaluation/incidents_on_detections.py case_01 case_02 case_03 case_04 case_05 case_06
+config: incidents:estop10/10:dwell20+10/10:zonesZ2
+perfect    case_01  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 13.4, 3.4, 23.4)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 5 linked, 1 unknown
+detections case_01  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 13.4, 3.4, 23.4)]
+perfect    case_02  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 13.5, 3.5, 23.5)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 4 linked, 3 unknown
+detections case_02  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 13.5, 3.5, 23.5)]
+perfect    case_03  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 17.4, 7.4, 27.4)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 5 linked, 2 unknown
+detections case_03  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 17.4, 7.4, 27.4)]
+perfect    case_04  opened 1  tp 1 fp 0 fn 0  latency 0.4  window covers cause True  [('zone_blocked_unattended_object', 34.4, 4.4, 44.4)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_04  opened 1  tp 1 fp 0 fn 0  latency 1.2  window covers cause True  [('zone_blocked_unattended_object', 35.2, 5.2, 44.9)]
+perfect    case_05  opened 0  tp 0 fp 0 fn 0  latency None  window covers cause None  []
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 6 linked, 0 unknown
+detections case_05  opened 0  tp 0 fp 0 fn 0  latency None  window covers cause None  []
+perfect    case_06  opened 1  tp 1 fp 0 fn 0  latency 0.1  window covers cause True  [('zone_blocked_unattended_object', 44.1, 14.1, 44.9)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_06  opened 1  tp 1 fp 0 fn 0  latency 0.1  window covers cause True  [('zone_blocked_unattended_object', 44.1, 14.1, 44.9)]
+written to artifacts/benchmark-reports/incidents-2026-09-14T152159Z.json
+=== exit 0 20:52:00
+=== RERUN DONE 20:52:00
+=== F3 REVISED: shallow crossings confirmed by depth or movement; F6 set aside for this run
+=== F6 stashed; generator version: deterministic-0.1.0
+=== 20:54:10 scripts/evaluation/events_on_truth.py case_01 case_02 case_03 case_04 case_05 case_06
+config: events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5:merge0.8:edge0.5
+truth-xy   case_01  tp  7 fp  0 fn  0  P 1.00 R 1.00  timing max 0.10s  unobservable 1  telemetry 2  bounded 3 (1 unmatched)
+            {'direction_change': 1, 'occlusion_end': 1, 'occlusion_start': 1, 'stop': 3, 'zone_entry': 5, 'zone_exit': 3}
+truth-xy   case_02  tp  4 fp  0 fn  1  P 1.00 R 0.80  timing max 0.10s  unobservable 4  telemetry 2  bounded 3 (2 unmatched)
+            {'direction_change': 3, 'occlusion_end': 3, 'occlusion_start': 3, 'proximity': 3, 'stop': 3, 'zone_entry': 4, 'zone_exit': 2}
+truth-xy   case_03  tp  7 fp  0 fn  0  P 1.00 R 1.00  timing max 0.10s  unobservable 0  telemetry 2  bounded 1 (0 unmatched)
+            {'direction_change': 2, 'proximity': 1, 'stop': 3, 'zone_entry': 4, 'zone_exit': 3}
+truth-xy   case_04  tp  8 fp  0 fn  0  P 1.00 R 1.00  timing max 0.10s  unobservable 9  telemetry 0  bounded 2 (2 unmatched)
+            {'direction_change': 1, 'proximity': 1, 'stop': 1, 'zone_entry': 6, 'zone_exit': 4}
+truth-xy   case_05  tp  3 fp  0 fn  0  P 1.00 R 1.00  timing max 0.10s  unobservable 3  telemetry 0  bounded 1 (0 unmatched)
+            {'direction_change': 1, 'stop': 1, 'zone_entry': 2, 'zone_exit': 1}
+truth-xy   case_06  tp  5 fp  0 fn  9  P 1.00 R 0.36  timing max 0.20s  unobservable 6  telemetry 0  bounded 2 (0 unmatched)
+            {'direction_change': 4, 'proximity': 4, 'stop': 2, 'zone_entry': 4, 'zone_exit': 1}
+projected  case_01  tp  7 fp  1 fn  0  P 0.88 R 1.00  timing max 0.10s  unobservable 1  telemetry 2  bounded 2 (0 unmatched)
+            {'direction_change': 2, 'occlusion_end': 1, 'occlusion_start': 1, 'stop': 4, 'zone_entry': 5, 'zone_exit': 3}
+projected  case_02  tp  4 fp  1 fn  1  P 0.80 R 0.80  timing max 0.10s  unobservable 4  telemetry 2  bounded 3 (2 unmatched)
+            {'direction_change': 5, 'occlusion_end': 3, 'occlusion_start': 3, 'proximity': 3, 'stop': 3, 'zone_entry': 4, 'zone_exit': 3}
+projected  case_03  tp  7 fp  0 fn  0  P 1.00 R 1.00  timing max 0.20s  unobservable 0  telemetry 2  bounded 1 (0 unmatched)
+            {'direction_change': 5, 'proximity': 2, 'stop': 7, 'zone_entry': 4, 'zone_exit': 3}
+projected  case_04  tp  6 fp  1 fn  2  P 0.86 R 0.75  timing max 0.10s  unobservable 9  telemetry 0  bounded 2 (2 unmatched)
+            {'direction_change': 2, 'proximity': 1, 'stop': 1, 'zone_entry': 6, 'zone_exit': 3}
+projected  case_05  tp  3 fp  0 fn  0  P 1.00 R 1.00  timing max 0.20s  unobservable 3  telemetry 0  bounded 1 (0 unmatched)
+            {'direction_change': 1, 'stop': 1, 'zone_entry': 2, 'zone_exit': 1}
+projected  case_06  tp  2 fp  1 fn 12  P 0.67 R 0.14  timing max 0.20s  unobservable 6  telemetry 0  bounded 3 (1 unmatched)
+            {'direction_change': 14, 'proximity': 6, 'stop': 5, 'zone_entry': 4}
+written to artifacts/benchmark-reports/events-on-truth-2026-09-14T152410Z.json
+=== exit 0 20:54:10
+=== 20:54:10 scripts/evaluation/events_on_detections.py case_01 case_02 case_03 case_04 case_05 case_06
+config: events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5:merge0.8:edge0.5
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 5 linked, 1 unknown
+detections case_01  tp  7 fp  1 fn  0  P 0.88 R 1.00  timing max 0.10s  unobservable 1  telemetry 2  bounded 2 (0 unmatched)
+            {'direction_change': 1, 'stop': 4, 'zone_entry': 5, 'zone_exit': 3}
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 4 linked, 3 unknown
+detections case_02  tp  4 fp  3 fn  1  P 0.57 R 0.80  timing max 0.25s  unobservable 4  telemetry 2  bounded 3 (2 unmatched)
+            {'direction_change': 6, 'occlusion_end': 2, 'occlusion_start': 2, 'proximity': 9, 'stop': 6, 'zone_entry': 7, 'zone_exit': 2}
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 5 linked, 2 unknown
+detections case_03  tp  7 fp  0 fn  0  P 1.00 R 1.00  timing max 0.20s  unobservable 0  telemetry 2  bounded 1 (0 unmatched)
+            {'direction_change': 7, 'proximity': 3, 'stop': 7, 'zone_entry': 4, 'zone_exit': 3}
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_04  tp  6 fp  1 fn  2  P 0.86 R 0.75  timing max 0.10s  unobservable 9  telemetry 0  bounded 4 (4 unmatched)
+            {'direction_change': 2, 'proximity': 1, 'stop': 2, 'zone_entry': 8, 'zone_exit': 3}
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 6 linked, 0 unknown
+detections case_05  tp  3 fp  0 fn  0  P 1.00 R 1.00  timing max 0.20s  unobservable 3  telemetry 0  bounded 1 (0 unmatched)
+            {'direction_change': 1, 'stop': 1, 'zone_entry': 2, 'zone_exit': 1}
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_06  tp  2 fp  2 fn 12  P 0.50 R 0.14  timing max 0.40s  unobservable 6  telemetry 0  bounded 4 (3 unmatched)
+            {'direction_change': 11, 'occlusion_end': 3, 'occlusion_start': 3, 'proximity': 2, 'stop': 5, 'zone_entry': 7}
+written to artifacts/benchmark-reports/events-on-detections-2026-09-14T152505Z.json
+=== exit 0 20:55:05
+=== 20:55:05 scripts/evaluation/incidents_on_detections.py case_01 case_02 case_03 case_04 case_05 case_06
+config: incidents:estop10/10:dwell20+10/10:zonesZ2
+perfect    case_01  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 13.4, 3.4, 23.4)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 5 linked, 1 unknown
+detections case_01  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 13.4, 3.4, 23.4)]
+perfect    case_02  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 13.5, 3.5, 23.5)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 4 linked, 3 unknown
+detections case_02  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 13.5, 3.5, 23.5)]
+perfect    case_03  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 17.4, 7.4, 27.4)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 5 linked, 2 unknown
+detections case_03  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 17.4, 7.4, 27.4)]
+perfect    case_04  opened 1  tp 1 fp 0 fn 0  latency 0.4  window covers cause True  [('zone_blocked_unattended_object', 34.4, 4.4, 44.4)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_04  opened 1  tp 1 fp 0 fn 0  latency 1.2  window covers cause True  [('zone_blocked_unattended_object', 35.2, 5.2, 44.9)]
+perfect    case_05  opened 0  tp 0 fp 0 fn 0  latency None  window covers cause None  []
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 6 linked, 0 unknown
+detections case_05  opened 0  tp 0 fp 0 fn 0  latency None  window covers cause None  []
+perfect    case_06  opened 1  tp 1 fp 0 fn 0  latency 0.1  window covers cause True  [('zone_blocked_unattended_object', 44.1, 14.1, 44.9)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_06  opened 1  tp 1 fp 0 fn 0  latency 0.1  window covers cause True  [('zone_blocked_unattended_object', 44.1, 14.1, 44.9)]
+written to artifacts/benchmark-reports/incidents-2026-09-14T152600Z.json
+=== exit 0 20:56:01
+=== 20:56:01 scripts/evaluation/reasoning_on_detections.py case_01 case_02 case_03 case_04 case_06
+perfect    case_01  top1 True top3 True  ranked ['P01'] ['strongly_inferred']  gaps recall 1.0 precision 1.0 (truth 6.2s, named 6.2s)  claims 5 {'confirmed': 3, 'strongly_inferred': 1, 'unknown': 1}  coverage 1.00  unsupported 0.00  graph 20/31
+           Robot R12 reported an emergency stop at 13.4 s. Likely contributed: Person (CAM_A-P01, CAM_B-P01, CAM_C-P01) entered Z1 ROBOT_LANE at 12.8 s, 0.6 s before the robot's emergency stop.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 5 linked, 1 unknown
+detections case_01  top1 True top3 True  ranked ['P01'] ['conflicting']  gaps recall 1.0 precision 0.954 (truth 6.2s, named 6.5s)  claims 6 {'confirmed': 3, 'conflicting': 1, 'unknown': 2}  coverage 1.00  unsupported 0.00  graph 19/30
+           Robot R12 reported an emergency stop at 13.4 s. Conflicting evidence: Person (CAM_A-T004, CAM_B-T002, CAM_C-T002) entered Z1 ROBOT_LANE at 12.8 s, 0.6 s before the robot's emergency stop.
+perfect    case_02  top1 False top3 False  ranked ['F01'] ['possible']  gaps recall 1.0 precision 0.982 (truth 11.1s, named 11.3s)  claims 4 {'confirmed': 3, 'possible': 1}  coverage 1.00  unsupported 0.00  graph 30/55
+           Robot R12 reported an emergency stop at 13.5 s. Possible: Forklift (CAM_A-F01, CAM_B-F01, CAM_C-F01) entered Z1 ROBOT_LANE at 3.7 s, 9.8 s before the robot's emergency stop.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 4 linked, 3 unknown
+detections case_02  top1 False top3 False  ranked ['F01', 'F01'] ['possible', 'possible']  gaps recall 1.0 precision 0.192 (truth 11.1s, named 57.8s)  claims 10 {'confirmed': 3, 'possible': 2, 'unknown': 5}  coverage 1.00  unsupported 0.00  graph 51/97
+           Robot R12 reported an emergency stop at 13.5 s. Possible: Forklift (CAM_A-T002, CAM_B-T008, CAM_C-T002) entered Z1 ROBOT_LANE at 3.95 s, 9.6 s before the robot's emergency stop.
+perfect    case_03  top1 True top3 True  ranked ['P01'] ['strongly_inferred']  gaps recall None precision None (truth 0s, named 0s)  claims 5 {'confirmed': 4, 'strongly_inferred': 1}  coverage 1.00  unsupported 0.00  graph 20/34
+           Robot R12 reported an emergency stop at 17.4 s. Likely contributed: Person (CAM_A-P01, CAM_B-P01, CAM_C-P01) entered Z1 ROBOT_LANE at 16 s, 1.4 s before the robot's emergency stop.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 5 linked, 2 unknown
+detections case_03  top1 True top3 True  ranked ['P01'] ['conflicting']  gaps recall None precision 0.0 (truth 0s, named 8.0s)  claims 7 {'confirmed': 4, 'conflicting': 1, 'unknown': 2}  coverage 1.00  unsupported 0.00  graph 35/65
+           Robot R12 reported an emergency stop at 17.4 s. Conflicting evidence: Person (CAM_A-T002, CAM_B-T002, CAM_C-T002) entered Z1 ROBOT_LANE at 16.2 s, 1.2 s before the robot's emergency stop.
+perfect    case_04  top1 True top3 True  ranked ['F01'] ['strongly_inferred']  gaps recall 1.0 precision 0.996 (truth 22.2s, named 22.3s)  claims 5 {'confirmed': 3, 'strongly_inferred': 1, 'unknown': 1}  coverage 1.00  unsupported 0.00  graph 21/41
+           Pallet stopped at 14.4 s and was still there when the dwell limit was crossed at 34.4 s. Likely contributed: Forklift (CAM_A-F01, CAM_B-F01, CAM_C-F01) entered Z2 at 11.5 s and left at 16.1 s, around when the pallet came to rest there at 14.4 s.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_04  top1 True top3 True  ranked ['F01', 'PL3'] ['strongly_inferred', 'conflicting']  gaps recall 1.0 precision 0.978 (truth 21.9s, named 22.4s)  claims 10 {'confirmed': 3, 'possible': 1, 'strongly_inferred': 1, 'conflicting': 1, 'unknown': 4}  coverage 1.00  unsupported 0.00  graph 27/55
+           Pallet stopped at 15.2 s and was still there when the dwell limit was crossed at 35.2 s. Likely contributed: Forklift (CAM_A-T001, CAM_B-T001, CAM_C-T001) entered Z2 at 11.6 s and left at 16 s, around when the pallet came to rest there at 15.2 s.
+perfect    case_06  top1 False top3 False  ranked [None] ['unknown']  gaps recall 1.0 precision 0.995 (truth 20.4s, named 20.5s)  claims 3 {'confirmed': 1, 'unknown': 2}  coverage 1.00  unsupported 0.00  graph 13/16
+           Pallet stopped at 24.1 s and was still there when the dwell limit was crossed at 44.1 s. No contributing cause could be determined from the evidence.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_06  top1 False top3 False  ranked [None] ['unknown']  gaps recall 0.995 precision 0.871 (truth 20.4s, named 23.3s)  claims 7 {'confirmed': 1, 'unknown': 6}  coverage 1.00  unsupported 0.00  graph 31/45
+           Pallet stopped at 24.1 s and was still there when the dwell limit was crossed at 44.1 s. No contributing cause could be determined from the evidence.
+written to artifacts/benchmark-reports/reasoning-2026-09-14T152652Z.json
+=== exit 0 20:56:52
+=== F6 restored; generator version: deterministic-0.2.0
+=== F3 REVISED DONE 20:56:52
