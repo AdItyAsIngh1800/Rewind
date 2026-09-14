@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from packages.schemas import SCHEMA_VERSION, BBox, EntityClass, Observation
+from services.observability.logging import adopt_logger
 
 log = logging.getLogger(__name__)
 
@@ -130,6 +131,8 @@ class Detector:
         self.config = config or DetectorConfig()
         try:
             from ultralytics import YOLO
+
+            adopt_logger("ultralytics")
         except ImportError as exc:
             raise DetectorError("ultralytics is not installed; run `uv sync --all-extras`") from exc
         try:

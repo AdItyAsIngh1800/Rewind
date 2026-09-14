@@ -26,6 +26,9 @@ DEFAULT_LEVEL = "INFO"
 #: put plain-text lines into an otherwise structured stream.
 _SELF_CONFIGURED = ("uvicorn", "uvicorn.error", "uvicorn.access", "arq")
 
+#: The format ``configure_logging`` last installed, so a logger adopted later follows it.
+_installed_format = "console"
+
 
 def json_formatter() -> logging.Formatter:
     """Return a formatter that renders a stdlib record as one JSON object."""
@@ -55,7 +58,9 @@ def configure_logging(level: int | str | None = None, fmt: str | None = None) ->
     silently keeping an earlier one.
 
     """
+    global _installed_format
     chosen = fmt or os.environ.get("REWIND_LOG_FORMAT", "console")
+    _installed_format = chosen
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(json_formatter() if chosen == "json" else logging.Formatter("%(message)s"))
     logging.basicConfig(
@@ -65,6 +70,19 @@ def configure_logging(level: int | str | None = None, fmt: str | None = None) ->
     )
     if chosen == "json":
         for name in _SELF_CONFIGURED:
-            server = logging.getLogger(name)
-            server.handlers.clear()
-            server.propagate = True
+            adopt_logger(name)
+
+
+def adopt_logger(name: str) -> None:
+    """Route a library logger that installs its own handler through the configured one.
+
+    For libraries imported after ``configure_logging`` ran: Ultralytics creates its
+    logger with a stdout handler when the detector first loads it, on the worker's first
+    job, so no startup step can reach it. Only when ``configure_logging`` installed JSON;
+    at a terminal the library's own output is what a person expects to read.
+    """
+    if _installed_format != "json":
+        return
+    library = logging.getLogger(name)
+    library.handlers.clear()
+    library.propagate = True

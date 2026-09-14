@@ -7,7 +7,7 @@ import logging
 
 import pytest
 
-from services.observability.logging import configure_logging
+from services.observability.logging import adopt_logger, configure_logging
 
 
 def test_json_format_renders_level_logger_timestamp_and_the_formatted_message(
@@ -47,3 +47,18 @@ def test_console_format_prints_the_bare_message(capsys: pytest.CaptureFixture[st
     configure_logging(fmt="console")
     logging.getLogger("rewind.test").info("plain %s", "text")
     assert capsys.readouterr().out.strip().splitlines()[-1] == "plain text"
+
+
+def test_a_library_logger_created_after_configuration_is_adopted_in_json_mode(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ultralytics adds its own stdout handler on first import, after startup."""
+    monkeypatch.setenv("REWIND_LOG_FORMAT", "json")
+    configure_logging()
+    late = logging.getLogger("late.library")
+    late.addHandler(logging.StreamHandler())
+    late.propagate = False
+    adopt_logger("late.library")
+    late.info("model loaded")
+    record = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert record["logger"] == "late.library" and record["event"] == "model loaded"

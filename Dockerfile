@@ -40,7 +40,9 @@ COPY packages ./packages
 COPY services ./services
 COPY ml/configs ./ml/configs
 
-# Ultralytics writes its settings under the home directory.
+# Ultralytics keeps a settings file. Named explicitly, because without it the library
+# warns that ~/.config is not writable (it does not exist yet) and falls back here anyway.
+ENV YOLO_CONFIG_DIR=/tmp/Ultralytics
 RUN useradd --create-home rewind
 USER rewind
 
