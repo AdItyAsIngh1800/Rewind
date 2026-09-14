@@ -1,0 +1,192 @@
+=== 19:18:07 scripts/evaluation/baseline_detection.py --case case_02 --checkpoint ml/models/yolo11n-rewind-v1/best.pt --native-classes
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+scoring case_02 with ml/models/yolo11n-rewind-v1/best.pt:native:conf0.25:iou0.5:edge16
+  CAM_A: 450 frames, 890 detections so far
+  CAM_B: 450 frames, 1870 detections so far
+  CAM_C: 450 frames, 1985 detections so far
+
+# Detection baseline — case_02
+
+- **Generated:** 2026-09-14 13:48 UTC
+- **Model:** `ml/models/yolo11n-rewind-v1/best.pt:native:conf0.25:iou0.5:edge16`
+- **Device:** `mps`
+- **Frames processed:** 1350
+
+| Class | Truth | Predicted | TP | FP | FN | Precision | Recall | Note |
+|---|---|---|---|---|---|---|---|---|
+| `person` | 321 | 24 | 21 | 3 | 300 | 0.875 | 0.065 |  |
+| `robot` | 645 | 640 | 639 | 1 | 6 | 0.998 | 0.991 |  |
+| `forklift` | 927 | 1321 | 908 | 413 | 19 | 0.687 | 0.980 |  |
+| `pallet` | 0 | 0 | 0 | 0 | 0 | 1.000 | 1.000 |  |
+
+## Reading this
+
+A recall of zero against a non-zero truth count means one of two very different things, and the note column says which: the model looked and failed, or the checkpoint has no class for that entity at all. Aggregating these into one figure would hide the distinction, which is the whole reason ADR-0004 records this baseline separately.
+
+written to artifacts/benchmark-reports/detection-finetuned-case_02-2026-09-14T134818Z.md and artifacts/benchmark-reports/detection-finetuned-case_02-2026-09-14T134818Z.json
+=== exit 0 19:18:18
+=== 19:18:18 scripts/evaluation/baseline_detection.py --case case_06 --checkpoint ml/models/yolo11n-rewind-v1/best.pt --native-classes
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+scoring case_06 with ml/models/yolo11n-rewind-v1/best.pt:native:conf0.25:iou0.5:edge16
+  CAM_A: 450 frames, 391 detections so far
+  CAM_B: 450 frames, 772 detections so far
+  CAM_C: 450 frames, 1313 detections so far
+
+# Detection baseline — case_06
+
+- **Generated:** 2026-09-14 13:48 UTC
+- **Model:** `ml/models/yolo11n-rewind-v1/best.pt:native:conf0.25:iou0.5:edge16`
+- **Device:** `mps`
+- **Frames processed:** 1350
+
+| Class | Truth | Predicted | TP | FP | FN | Precision | Recall | Note |
+|---|---|---|---|---|---|---|---|---|
+| `person` | 0 | 0 | 0 | 0 | 0 | 1.000 | 1.000 |  |
+| `robot` | 0 | 0 | 0 | 0 | 0 | 1.000 | 1.000 |  |
+| `forklift` | 994 | 284 | 257 | 27 | 737 | 0.905 | 0.259 |  |
+| `pallet` | 1045 | 1029 | 1015 | 14 | 30 | 0.986 | 0.971 |  |
+
+## Reading this
+
+A recall of zero against a non-zero truth count means one of two very different things, and the note column says which: the model looked and failed, or the checkpoint has no class for that entity at all. Aggregating these into one figure would hide the distinction, which is the whole reason ADR-0004 records this baseline separately.
+
+written to artifacts/benchmark-reports/detection-finetuned-case_06-2026-09-14T134828Z.md and artifacts/benchmark-reports/detection-finetuned-case_06-2026-09-14T134828Z.json
+=== exit 0 19:18:28
+=== 19:18:28 scripts/evaluation/baseline_detection.py --case case_02
+loaded yolo11n.pt on mps
+scoring case_02 with yolo11n.pt:coco:conf0.25:iou0.5:edge16
+  CAM_A: 450 frames, 0 detections so far
+  CAM_B: 450 frames, 0 detections so far
+  CAM_C: 450 frames, 0 detections so far
+
+# Detection baseline — case_02
+
+- **Generated:** 2026-09-14 13:48 UTC
+- **Model:** `yolo11n.pt:coco:conf0.25:iou0.5:edge16`
+- **Device:** `mps`
+- **Frames processed:** 1350
+
+| Class | Truth | Predicted | TP | FP | FN | Precision | Recall | Note |
+|---|---|---|---|---|---|---|---|---|
+| `person` | 321 | 0 | 0 | 0 | 321 | 1.000 | 0.000 |  |
+| `robot` | 645 | 0 | 0 | 0 | 645 | 1.000 | 0.000 | no COCO class exists for this entity |
+| `forklift` | 927 | 0 | 0 | 0 | 927 | 1.000 | 0.000 | reached only via the COCO `truck` class, a poor stand-in |
+| `pallet` | 0 | 0 | 0 | 0 | 0 | 1.000 | 1.000 | no COCO class exists for this entity |
+
+## Reading this
+
+A recall of zero against a non-zero truth count means one of two very different things, and the note column says which: the model looked and failed, or the checkpoint has no class for that entity at all. Aggregating these into one figure would hide the distinction, which is the whole reason ADR-0004 records this baseline separately.
+
+written to artifacts/benchmark-reports/detection-baseline-case_02-2026-09-14T134837Z.md and artifacts/benchmark-reports/detection-baseline-case_02-2026-09-14T134837Z.json
+=== exit 0 19:18:37
+=== 19:18:37 scripts/evaluation/baseline_detection.py --case case_06
+loaded yolo11n.pt on mps
+scoring case_06 with yolo11n.pt:coco:conf0.25:iou0.5:edge16
+  CAM_A: 450 frames, 0 detections so far
+  CAM_B: 450 frames, 0 detections so far
+  CAM_C: 450 frames, 0 detections so far
+
+# Detection baseline — case_06
+
+- **Generated:** 2026-09-14 13:48 UTC
+- **Model:** `yolo11n.pt:coco:conf0.25:iou0.5:edge16`
+- **Device:** `mps`
+- **Frames processed:** 1350
+
+| Class | Truth | Predicted | TP | FP | FN | Precision | Recall | Note |
+|---|---|---|---|---|---|---|---|---|
+| `person` | 0 | 0 | 0 | 0 | 0 | 1.000 | 1.000 |  |
+| `robot` | 0 | 0 | 0 | 0 | 0 | 1.000 | 1.000 | no COCO class exists for this entity |
+| `forklift` | 994 | 0 | 0 | 0 | 994 | 1.000 | 0.000 | reached only via the COCO `truck` class, a poor stand-in |
+| `pallet` | 1045 | 0 | 0 | 0 | 1045 | 1.000 | 0.000 | no COCO class exists for this entity |
+
+## Reading this
+
+A recall of zero against a non-zero truth count means one of two very different things, and the note column says which: the model looked and failed, or the checkpoint has no class for that entity at all. Aggregating these into one figure would hide the distinction, which is the whole reason ADR-0004 records this baseline separately.
+
+written to artifacts/benchmark-reports/detection-baseline-case_06-2026-09-14T134846Z.md and artifacts/benchmark-reports/detection-baseline-case_06-2026-09-14T134846Z.json
+=== exit 0 19:18:46
+=== 19:18:46 scripts/evaluation/tracking_on_detections.py case_02 case_06
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+detector: ml/models/yolo11n-rewind-v1/best.pt  tracker: bytetrack:buf30:match0.9:fps10
+case_02
+  CAM_A   890 tracked    0 spurious   0 switches   3 tracks for 3 entities  {'R12': 1, 'F01': 1, 'P01': 1}
+  CAM_B   980 tracked  417 spurious   2 switches   7 tracks for 3 entities  {'R12': 2, 'F01': 2, 'P01': 1}
+  CAM_C   115 tracked    0 spurious   0 switches   2 tracks for 2 entities  {'R12': 1, 'F01': 1}
+case_06
+  CAM_A   391 tracked   12 spurious   0 switches   3 tracks for 2 entities  {'F01': 1, 'PL3': 1}
+  CAM_B   381 tracked    0 spurious   0 switches   2 tracks for 2 entities  {'F01': 1, 'PL3': 1}
+  CAM_C   541 tracked   29 spurious   0 switches   2 tracks for 2 entities  {'F01': 1, 'PL3': 1}
+total id switches across 2 cases, real detections: 2
+written to artifacts/benchmark-reports/tracking-on-detections-2026-09-14T134904Z.json
+=== exit 0 19:19:05
+=== 19:19:05 scripts/evaluation/events_on_truth.py case_02 case_06
+config: events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5:merge0.8
+truth-xy   case_02  tp  4 fp  0 fn  1  P 1.00 R 0.80  timing max 0.10s  unobservable 4  telemetry 2  bounded 3 (2 unmatched)
+            {'direction_change': 3, 'occlusion_end': 3, 'occlusion_start': 3, 'proximity': 3, 'stop': 3, 'zone_entry': 4, 'zone_exit': 2}
+truth-xy   case_06  tp 11 fp  0 fn  3  P 1.00 R 0.79  timing max 0.20s  unobservable 6  telemetry 0  bounded 2 (0 unmatched)
+            {'direction_change': 4, 'proximity': 4, 'stop': 2, 'zone_entry': 7, 'zone_exit': 4}
+projected  case_02  tp  4 fp  1 fn  1  P 0.80 R 0.80  timing max 0.10s  unobservable 4  telemetry 2  bounded 3 (2 unmatched)
+            {'direction_change': 5, 'occlusion_end': 3, 'occlusion_start': 3, 'proximity': 3, 'stop': 3, 'zone_entry': 4, 'zone_exit': 3}
+projected  case_06  tp  7 fp  8 fn  7  P 0.47 R 0.50  timing max 0.20s  unobservable 6  telemetry 0  bounded 3 (1 unmatched)
+            {'direction_change': 14, 'proximity': 6, 'stop': 5, 'zone_entry': 10, 'zone_exit': 6}
+written to artifacts/benchmark-reports/events-on-truth-2026-09-14T134905Z.json
+=== exit 0 19:19:05
+=== 19:19:05 scripts/evaluation/events_on_detections.py case_02 case_06
+config: events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5:merge0.8
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 4 linked, 3 unknown
+detections case_02  tp  4 fp 11 fn  1  P 0.27 R 0.80  timing max 0.25s  unobservable 4  telemetry 2  bounded 3 (2 unmatched)
+            {'direction_change': 6, 'occlusion_end': 2, 'occlusion_start': 2, 'proximity': 9, 'stop': 6, 'zone_entry': 10, 'zone_exit': 7}
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_06  tp  6 fp  5 fn  8  P 0.55 R 0.43  timing max 0.40s  unobservable 6  telemetry 0  bounded 4 (3 unmatched)
+            {'direction_change': 11, 'occlusion_end': 3, 'occlusion_start': 3, 'proximity': 2, 'stop': 5, 'zone_entry': 10, 'zone_exit': 4}
+written to artifacts/benchmark-reports/events-on-detections-2026-09-14T134923Z.json
+=== exit 0 19:19:24
+=== 19:19:24 scripts/evaluation/identity_on_detections.py case_02 case_06
+config: assoc:thr0.75:amb0.1:w0.35/0.4/0.25:gap15.0
+7 pairs compared, 7 linked, 0 unknown
+perfect    case_02  segments  8  compared  7  linked  7  unknown  0  false links 0 (rate 0.00)  true pairs 7  recall 1.00
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 4 linked, 3 unknown
+detections case_02  segments 12  compared  7  linked  4  unknown  3  false links 2 (rate 0.50)  true pairs 11  recall 0.18
+7 pairs compared, 1 linked, 6 unknown
+no-appear  case_02  segments 12  compared  7  linked  1  unknown  6  false links 0 (rate 0.00)  true pairs 11  recall 0.09
+9 pairs compared, 7 linked, 2 unknown
+perfect    case_06  segments  9  compared  9  linked  7  unknown  2  false links 0 (rate 0.00)  true pairs 9  recall 0.78
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_06  segments  7  compared  6  linked  4  unknown  2  false links 0 (rate 0.00)  true pairs 6  recall 0.67
+6 pairs compared, 3 linked, 3 unknown
+no-appear  case_06  segments  7  compared  6  linked  3  unknown  3  false links 0 (rate 0.00)  true pairs 6  recall 0.50
+written to artifacts/benchmark-reports/identity-2026-09-14T134942Z.json
+=== exit 0 19:19:42
+=== 19:19:42 scripts/evaluation/incidents_on_detections.py case_02 case_06
+config: incidents:estop10/10:dwell20+10/10:zonesZ2
+perfect    case_02  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 13.5, 3.5, 23.5)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 4 linked, 3 unknown
+detections case_02  opened 1  tp 1 fp 0 fn 0  latency 0.0  window covers cause True  [('robot_estop_human_incursion', 13.5, 3.5, 23.5)]
+perfect    case_06  opened 1  tp 1 fp 0 fn 0  latency 0.1  window covers cause True  [('zone_blocked_unattended_object', 44.1, 14.1, 44.9)]
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_06  opened 1  tp 1 fp 0 fn 0  latency 0.1  window covers cause True  [('zone_blocked_unattended_object', 44.1, 14.1, 44.9)]
+written to artifacts/benchmark-reports/incidents-2026-09-14T135000Z.json
+=== exit 0 19:20:00
+=== 19:20:00 scripts/evaluation/reasoning_on_detections.py case_02 case_06
+perfect    case_02  top1 False top3 False  ranked ['F01'] ['possible']  gaps recall 1.0 precision 0.982 (truth 11.1s, named 11.3s)  claims 4 {'confirmed': 3, 'possible': 1}  coverage 1.00  unsupported 0.00  graph 30/55
+           Robot R12 reported an emergency stop at 13.5 s. Possible: Forklift (CAM_A-F01, CAM_B-F01, CAM_C-F01) entered Z1 ROBOT_LANE at 3.7 s, 9.8 s before the robot's emergency stop.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+7 pairs compared, 4 linked, 3 unknown
+detections case_02  top1 False top3 False  ranked ['F01', 'F01'] ['possible', 'possible']  gaps recall 1.0 precision 0.192 (truth 11.1s, named 57.8s)  claims 11 {'confirmed': 4, 'possible': 2, 'unknown': 5}  coverage 1.00  unsupported 0.00  graph 59/121
+           Robot R12 reported an emergency stop at 13.5 s. Possible: Forklift (CAM_A-T002, CAM_B-T008, CAM_C-T002) entered Z1 ROBOT_LANE at 11.2 s, 2.3 s before the robot's emergency stop.
+perfect    case_06  top1 True top3 True  ranked ['F02'] ['strongly_inferred']  gaps recall 1.0 precision 0.995 (truth 20.4s, named 20.5s)  claims 3 {'confirmed': 2, 'strongly_inferred': 1}  coverage 1.00  unsupported 0.00  graph 16/23
+           Pallet stopped at 24.1 s and was still there when the dwell limit was crossed at 44.1 s. Likely contributed: Forklift (CAM_A-F02, CAM_B-F02, CAM_C-F02) entered Z2 at 22 s, around when the pallet came to rest there at 24.1 s.
+loaded ml/models/yolo11n-rewind-v1/best.pt on mps
+6 pairs compared, 4 linked, 2 unknown
+detections case_06  top1 False top3 False  ranked [None] ['unknown']  gaps recall 0.995 precision 0.871 (truth 20.4s, named 23.3s)  claims 7 {'confirmed': 1, 'unknown': 6}  coverage 1.00  unsupported 0.00  graph 34/51
+           Pallet stopped at 24.1 s and was still there when the dwell limit was crossed at 44.1 s. No contributing cause could be determined from the evidence.
+written to artifacts/benchmark-reports/reasoning-2026-09-14T135019Z.json
+=== exit 0 19:20:19
+=== ALL DONE 19:20:19

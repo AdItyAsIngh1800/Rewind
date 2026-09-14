@@ -1,0 +1,97 @@
+{
+  "config": "incidents:estop10/10:dwell20+10/10:zonesZ2",
+  "results": [
+    {
+      "case_id": "case_02",
+      "mode": "perfect",
+      "incidents": [
+        {
+          "schema_version": "1.1.0",
+          "incident_id": "INC-eval-01",
+          "run_id": "eval",
+          "incident_class": "robot_estop_human_incursion",
+          "trigger_event_id": "EVT-eval-TEL-0001",
+          "detected_at_s": 13.5,
+          "window_start_s": 3.5,
+          "window_end_s": 23.5,
+          "severity": "high",
+          "status": "new"
+        }
+      ],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_s": 0.0,
+      "window_covers_cause": true
+    },
+    {
+      "case_id": "case_02",
+      "mode": "detections",
+      "incidents": [
+        {
+          "schema_version": "1.1.0",
+          "incident_id": "INC-eval-01",
+          "run_id": "eval",
+          "incident_class": "robot_estop_human_incursion",
+          "trigger_event_id": "EVT-eval-TEL-0001",
+          "detected_at_s": 13.5,
+          "window_start_s": 3.5,
+          "window_end_s": 23.5,
+          "severity": "high",
+          "status": "new"
+        }
+      ],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_s": 0.0,
+      "window_covers_cause": true
+    },
+    {
+      "case_id": "case_06",
+      "mode": "perfect",
+      "incidents": [
+        {
+          "schema_version": "1.1.0",
+          "incident_id": "INC-eval-01",
+          "run_id": "eval",
+          "incident_class": "zone_blocked_unattended_object",
+          "trigger_event_id": "EVT-eval-CAM_A-0014",
+          "detected_at_s": 44.1,
+          "window_start_s": 14.1,
+          "window_end_s": 44.9,
+          "severity": "medium",
+          "status": "new"
+        }
+      ],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_s": 0.1,
+      "window_covers_cause": true
+    },
+    {
+      "case_id": "case_06",
+      "mode": "detections",
+      "incidents": [
+        {
+          "schema_version": "1.1.0",
+          "incident_id": "INC-eval-01",
+          "run_id": "eval",
+          "incident_class": "zone_blocked_unattended_object",
+          "trigger_event_id": "EVT-eval-CAM_A-0011",
+          "detected_at_s": 44.1,
+          "window_start_s": 14.1,
+          "window_end_s": 44.9,
+          "severity": "medium",
+          "status": "new"
+        }
+      ],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "latency_s": 0.1,
+      "window_covers_cause": true
+    }
+  ]
+}
