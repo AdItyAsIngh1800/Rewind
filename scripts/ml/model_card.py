@@ -10,7 +10,12 @@ what the model does well is marketing; the point of writing one is that the next
 person knows what it cannot do before they rely on it.
 
     uv run python scripts/ml/model_card.py --name yolo11n-rewind-v1 \
-        --evaluation artifacts/benchmark-reports/detection-finetuned-case_05-<stamp>.json
+        --evaluation artifacts/benchmark-reports/detection-finetuned-case_05-<stamp>.json \
+        --golden artifacts/benchmark-reports/detection-finetuned-case_02-<stamp>.json ...
+
+`--golden` adds the held-out numbers once E9.1 has produced them. Limitations found on
+those cases are prose, and prose specific to one checkpoint belongs beside its training
+record: `ml/models/<name>/limitations.md` is appended verbatim when present.
 """
 
 from __future__ import annotations
@@ -29,8 +34,42 @@ MODELS = pathlib.Path("ml/models")
 CARDS = pathlib.Path("artifacts/model-cards")
 
 
+def _class_rows(per_class: dict[str, Any]) -> str:
+    """Render one evaluation's per-class rows, marking classes the case lacks."""
+    rows = []
+    for cls, m in per_class.items():
+        if m["truth"] == 0:
+            rows.append(f"| `{cls}` | 0 | — | — | — |")
+            continue
+        rows.append(
+            f"| `{cls}` | {m['truth']} | {m['precision']:.3f} | {m['recall']:.3f} | {m['f1']:.3f} |"
+        )
+    return "\n".join(rows)
+
+
+def _golden_section(golden: list[dict[str, Any]]) -> str:
+    """Render the held-out cases, the one number the training loop never saw."""
+    if not golden:
+        return ""
+    parts = ["## Held-out (E9.1)\n"]
+    parts.append(
+        "The golden cases were opened once, under EXP-0010's pre-registration, after the "
+        "checkpoint was fixed. These are the only numbers on this card that neither "
+        "trained nor selected the model.\n"
+    )
+    for ev in golden:
+        parts.append(f"`{ev['case_id']}` ({ev['frames_processed']} frames):\n")
+        parts.append("| Class | Truth | Precision | Recall | F1 |\n|---|---|---|---|---|")
+        parts.append(_class_rows(ev["per_class"]) + "\n")
+    return "\n".join(parts) + "\n"
+
+
 def render(
-    training: dict[str, Any], evaluation: dict[str, Any], zero_shot: dict[str, Any] | None
+    training: dict[str, Any],
+    evaluation: dict[str, Any],
+    zero_shot: dict[str, Any] | None,
+    golden: list[dict[str, Any]] | None = None,
+    limitations: str = "",
 ) -> str:
     """Render the card as markdown."""
     name = training["name"]
@@ -58,8 +97,12 @@ def render(
         names = ", ".join(f"`{c}`" for c in unmeasured)
         unmeasured_note = (
             f"\n\n**Unmeasured classes: {names}.** The evaluation case contains none of "
-            "them, so this card makes no claim about their detection at all. The first "
-            "independent number for them arrives in E9.1 from the golden cases."
+            "them, so this card makes no claim about their detection at all. "
+            + (
+                "Their only independent numbers are in the held-out section."
+                if golden
+                else "The first independent number for them arrives in E9.1 from the golden cases."
+            )
         )
 
     zero_shot_note = ""
@@ -132,7 +175,7 @@ truth at IoU 0.5.
 |---|---|---|---|---|---|
 {table}
 {zero_shot_note}
-## Limitations
+{_golden_section(golden or [])}## Limitations
 
 **This model has only ever seen boxes.** It was trained and evaluated on untextured
 primitives in a single synthetic scene under one lighting setup. Its scores say it can
@@ -148,16 +191,18 @@ the numbers above are a ceiling for this scene rather than an estimate for any o
 
 **The validation case selected the checkpoint.** `best.pt` is the epoch with the
 highest validation mAP, so `case_05` is not a fully independent test. The unbiased
-number arrives in E9.1 from the golden cases.
+number is the held-out section{"" if golden else ", once E9.1 has run"}.
 
 **Class balance is uneven.** `forklift` and `pallet` appear in far fewer frames than
 `person` and `robot`, because only one of the three training cases contains them.
 Their scores rest on less evidence.{unmeasured_note}
 
+{limitations}
 ## Provenance
 
 Training record: `{pathlib.Path(training["weights"]).parent / "training.json"}`
 Evaluation: `{evaluation.get("_source", "see benchmark-reports")}`
+Held-out: {", ".join(f"`{g['_source']}`" for g in golden or []) or "not yet measured"}
 """
 
 
@@ -168,16 +213,20 @@ def main() -> int:
     parser.add_argument("--name", required=True)
     parser.add_argument("--evaluation", type=pathlib.Path, required=True)
     parser.add_argument("--zero-shot", type=pathlib.Path, default=None)
+    parser.add_argument("--golden", type=pathlib.Path, nargs="*", default=[])
     args = parser.parse_args()
 
     training = json.loads((MODELS / args.name / "training.json").read_text())
     evaluation = json.loads(args.evaluation.read_text())
     evaluation["_source"] = str(args.evaluation)
     zero_shot = json.loads(args.zero_shot.read_text()) if args.zero_shot else None
+    golden = [json.loads(path.read_text()) | {"_source": str(path)} for path in args.golden]
+    limits = MODELS / args.name / "limitations.md"
+    limitations = limits.read_text() if limits.exists() else ""
 
     CARDS.mkdir(parents=True, exist_ok=True)
     out = CARDS / f"{args.name}.md"
-    out.write_text(render(training, evaluation, zero_shot))
+    out.write_text(render(training, evaluation, zero_shot, golden, limitations))
     log.info("wrote %s", out)
     return 0
 
