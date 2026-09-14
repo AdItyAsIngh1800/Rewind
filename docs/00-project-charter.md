@@ -113,6 +113,14 @@ kept for the record.
 | Cause ranking, top-3 / top-1 | — | **1.00 / ≥ 0.67** (Gate 4) | Measured 1.00 / 1.00 on three tune incidents; top-1 tolerates one close call under ambiguity (C06) |
 | Gap recall (unseen seconds named) | — | **≥ 0.90** (Gate 4) | Measured 1.00 wherever truth has a gap |
 
+**Accepted limitations on the golden pair** (EXP-0010, EXP-0011; measured, not
+excused): a person at a fifth of their silhouette behind a vehicle is not detected, and
+the interval is reported as *Cannot determine* instead (F2); a forklift of a colour absent
+from the tune data is not detected by the default model (F1, next attempt an E1
+re-render); a fragment of a forklift at a frame edge can be linked to that forklift on
+other cameras (F4, partial). Every one is visible in the report as a gap or a refused
+link, never as a claim.
+
 ## 7. Locked technical decisions
 
 | Decision | Choice | Record |

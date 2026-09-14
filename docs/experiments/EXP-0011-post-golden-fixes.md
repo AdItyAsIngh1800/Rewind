@@ -1,8 +1,8 @@
 # EXP-0011: Post-golden fixes for EXP-0010's failures
 
 - **Date:** 2026-09-14
-- **Status:** In progress. One section per fix, in the owner's order: F3, F6, F5, F7, F4, F1.
-  F2 (a mostly hidden person) is accepted as a documented limitation, not fixed.
+- **Status:** Closed 2026-09-14. One section per fix, in the owner's order: F3, F6, F5,
+  F7, F4, F1; F2 accepted as a documented limitation. Verdict at the end.
 
 | Field | Value |
 |---|---|
@@ -172,3 +172,131 @@ real forklift, and the links join it to that forklift on the other cameras, so n
 trajectory between two real entities is invented; but the metric counts them and the
 false-link rate on case_02 stays 0.50. A fragment at the frame edge is the visibility
 limit accepted under F2, seen from the identity layer.
+
+## F1 — a forklift of a colour the detector never saw
+
+**Failure.** F02 is navy; the only forklift in the tune cases is F01, in another colour.
+`yolo11n-rewind-v1` learned *forklift* as F01's colour and found F02 in 0 of 697 boxes.
+
+**Change, time-boxed to one training run.** `yolo11n-rewind-v2`: the same recipe as v1
+(`yolo11n.pt`, 20 epochs, seed 0, tune cases only, `case_05` for validation) with hue
+jitter raised from Ultralytics' default of 0.015 to **0.5**, the full hue circle. That is
+the one value that makes colour uninformative rather than merely varied, so no case chose
+it. `scripts/ml/train_detector.py --hsv-h` records it in `training.json`.
+
+**Results** (`artifacts/post-golden-F1-2026-09-14.log`, every harness, all six cases,
+`REWIND_DETECTOR_CHECKPOINT` pointing at v2; v1 numbers are the F4 run on the same day
+with the same F3–F7 code):
+
+| Measure | v1 | v2 |
+|---|---|---|
+| Validation mAP50-95, `case_05` | 0.986 | 0.982 |
+| Tune detection: person recall (case_01 / 03 / 05) | 0.998 / 0.979 / 0.989 | 0.998 / 0.981 / 0.976 |
+| Tune detection: robot recall, forklift and pallet on case_04 | ≥ 0.989; 0.998 / 0.999 | ≥ 0.992; 1.000 / 0.999 |
+| Tune ID switches, events, identity, incidents, causes | — | **identical to v1** in every row |
+| case_06 forklift precision / recall | 0.908 / 0.259 | **0.981 / 0.938** — F02 is found on all three cameras |
+| case_06 zone events, detections | 0.60 / 0.21 | 0.75 / 0.43 |
+| case_06 detections: ranked causes | F01, a pallet fragment | **F01, F02**, F01 again, a pallet fragment: F02 in the top two (spec §6.6), every one *Conflicting* |
+| case_06 cross-camera recall / false links | 0.38 / 0 | 0.08 / 0 |
+| case_02 forklift precision / recall | 0.986 / 0.980 | 1.000 / **0.466** |
+| case_02 person precision / recall | 0.875 / 0.065 | **0.257** / 0.056 |
+| case_02 ID switches, worst camera | 1 | **3** (CAM_A and CAM_B; floor ≤ 2) |
+| case_02 zone events, detections | 0.57 / 0.80 | 1.00 / 0.80 |
+| case_02 false links / cross-camera recall | 2 of 4 (0.50) / 0.22 | 2 of 6 (0.33) / 0.40 |
+| Golden zone events pooled, detections | 0.58 / 0.37 | 0.83 / 0.53 |
+| Cause top-3 on five incidents, detections | 3 of 5 | **4 of 5** |
+| Evidence coverage / unsupported claims, every report | 1.00 / 0.00 | 1.00 / 0.00 |
+
+**What v2 fixed.** F02. Colour was the whole of the failure: with it removed from the
+model's reach, the navy forklift is detected at 0.938 recall, tracked on every camera,
+and ranked as a cause with real detections, which nothing before could do.
+
+**What v2 broke, traced.** Per camera on case_02, v2 finds **0 of 449** forklift boxes
+on CAM_B, where F01 stands cut off by the frame's bottom edge (the F4 view), and 48 of
+its 52 false *person* boxes sit in frames whose only truth is that forklift: on CAM_A
+three of F01's tracks flip class between *forklift* and *person*. v1 recognised the
+truncated forklift by F01's colour. A colour-blind model has to know the shape, and no
+tune case shows a forklift cut by a frame edge (case_04's F01 is always whole), so it has
+never seen one. The regression is the colour shortcut being taken away from a view the
+training data cannot teach by shape.
+
+**Why F1 stops here.** A second run with a lower hue jitter would be chosen to bring
+case_02's number back: tuning on a golden case. The fix that addresses both cases is
+data, not training: a forklift of a second colour, or seen truncated, in a tune case
+(E1 re-render; not in the time box). Whether v2 is promoted is an owner decision, taken
+below.
+
+**Promotion: v1 stays the worker default.** Owner decision, on the rule that also
+decided identity refusal and F2: a guarantee that holds is never traded for progress on
+one that does not. v1 passes case_02's ID-switch floor; v2 breaches it. v2 is kept as
+measured (`ml/models/yolo11n-rewind-v2/`, no model card, never a default), because its
+failure pattern says what fixes F1: not more colour augmentation, but a forklift of a
+second colour or one seen truncated in the tune data. That is an E1 re-render, and the
+next attempt at F1 once this record is closed.
+
+## F2 — a person mostly hidden is not found: accepted, not fixed
+
+**Failure.** On CAM_A, case_02's P01 stands behind the parked forklift at a median
+visibility of 0.20; the detector finds 4 of 297 boxes (v1) or 3 (v2). Ground truth emits
+a box at any visibility of 0.15 or more (scene spec §7), so the person-recall floor counts
+those frames and fails at 0.065.
+
+**Why it is not fixed.** Owner decision. Recall on a fifth of a silhouette is a detector
+capability that the tune data neither contains nor could be made to contain without
+changing the floor's meaning; a lower emission threshold in ground truth would move the
+number, not the system. The design answer already exists: what a camera cannot usably
+see is an *unseen interval*, and F6 now writes that interval as a *Cannot determine*
+claim. On case_02 with real detections the gap is named at recall 1.00, so the report
+is silent about nothing.
+
+**What it costs.** Person recall and precision on case_02 stay under the floor, on every
+detector; the false links of F4's fragment are the same limit seen from the identity
+layer. The system's promise for such an interval is stated uncertainty, not detection.
+Recorded in the charter's limitations and the ledger.
+
+## Verdict: the golden pair after the fixes
+
+Post-golden state = v1 detector with F3, F4, F6, F5 and F7 (`post-golden-F4-2026-09-14.log`,
+reasoning from its F7-amended re-run). Held-out = EXP-0010. Pooled numbers add the tune
+incidents as EXP-0010 did.
+
+| Charter floor | Floor | Held-out (EXP-0010) | Post-golden | Moved by |
+|---|---|---|---|---|
+| Person detection recall / precision | ≥ 0.95 / ≥ 0.95 | 0.065 / 0.875 **FAIL** | 0.065 / 0.875 **FAIL** | — (F2 accepted) |
+| Robot detection recall / precision | ≥ 0.95 | 0.991 / 0.998 PASS | 0.991 / 0.998 PASS | — |
+| ID switches, worst camera | ≤ 2 | 2 PASS | **1** PASS | F4 |
+| Zone events, real pipeline, P / R | ≥ 0.85 / ≥ 0.90 | 0.38 / 0.53 **FAIL** | 0.58 / 0.37 **FAIL** | F3 (precision up, edge touches lost) |
+| Event timing error, max | ≤ 0.5 s | 0.40 s PASS | 0.40 s PASS | — |
+| Cross-camera false-link rate | ≤ 0.05 | 0.25 (2 of 8) **FAIL** | 0.29 (2 of 7) **FAIL** | F4 moved the links to a fragment, did not remove them |
+| Cross-camera recall | ≥ 0.65 | 0.35 **FAIL** | 0.29 **FAIL** | fewer forklift tracks to link after F4 |
+| Evidence coverage, every report | ≥ 0.95 | 1.00 PASS | 1.00 PASS | — |
+| Unsupported-claim rate | 0.00 | 0.00 PASS | 0.00 PASS | — |
+| Gap recall | ≥ 0.90 | ≥ 0.995 PASS | ≥ 0.995 PASS | — |
+| Cause top-3, detections, five incidents | 1.00 | 3 of 5 **FAIL** | 3 of 5 **FAIL** | F1 not promoted; v2 would give 4 of 5 |
+| Cause top-1, detections | ≥ 0.67 | 0.60 **FAIL** | 0.60 **FAIL** | — |
+| Cause top-1 / top-3, perfect tracks | (not a floor) | 0.80 / 1.00 | **0.80 / 1.00**, now with both golden causes ranked | F5, F7 |
+
+| Behaviour the golden cases exist for | Held-out, perfect / detections | Post-golden, perfect / detections |
+|---|---|---|
+| C02.3 P01 hypothesis worded *Possible* | FAIL / FAIL | **PASS** / FAIL (P01 unseen after the gap, F2) |
+| C02.4 *Cannot determine* claim citing the gap | FAIL / FAIL | **PASS / PASS** |
+| C02.5 Not confidently wrong | PASS / false *Observed* claim | PASS / **PASS** |
+| C06.2 F01 and F02 both ranked with scores | FAIL / FAIL | **PASS** / FAIL (F02 undetected, F1) |
+| C06.3 F02 in the top two | PASS / FAIL | PASS (second) / FAIL |
+
+**Reading.** Every reasoning-layer failure (F3, F5, F6, F7) is fixed, and with perfect
+tracks both golden cases now behave as their spec asks. Nothing at the charter-floor
+level changed verdict, because the floors that failed are perception floors, and the two
+perception fixes were partial (F4) or not promoted (F1). The report side of the thesis,
+that a reconstruction is evidence-traceable and says when it cannot know, holds on the
+golden pair with real detections: coverage 1.00, unsupported 0.00, the unseen interval
+named as a claim, and no false *Observed* statement left.
+
+**What the golden pair still fails on, and where each goes.**
+
+| Failure | Status | Next attempt |
+|---|---|---|
+| F1 navy forklift | v2 measured, not promoted | E1 re-render: a second forklift colour or a truncated forklift view in a tune case; retrain; measure |
+| F2 hidden person | accepted limitation | none; the *Cannot determine* claim is the design answer |
+| F4 fragment links | partial | identity refuses a track that is an edge fragment (short, at the frame edge, one camera): candidate rule, thresholds from tune cases |
+| F3 cost on case_06 edge touches | accepted with F7 | a touch-and-reverse rule would be shaped on case_06; leave |

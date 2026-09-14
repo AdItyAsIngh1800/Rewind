@@ -67,6 +67,34 @@ incidents from EXP-0009 (3 of 3 top-1 in detections mode). In perfect-track mode
 | Forklift | 0.687 / 0.980 | 0.905 / 0.259 | No floor: F02 is never detected (EXP-0010); a floor set on this would describe the colour gap, not the detector |
 | Pallet | — | 0.986 / 0.971 | ≥ 0.95, consistent with case_04 (1.000 / 0.999) |
 
+## Post-golden, beside the held-out numbers (EXP-0011)
+
+Measured 2026-09-14 after the fixes F3–F7 and the F1 retrain, with `case_02` and
+`case_06` open; the held-out columns above are not replaced. Detector `yolo11n-rewind-v1`
+(v2 measured, not promoted). Log `artifacts/post-golden-F4-2026-09-14.log`.
+
+| Metric | Floor | Held-out | Post-golden |
+|---|---|---|---|
+| Detection recall / precision, person | ≥ 0.95 / ≥ 0.95 | 0.065 / 0.875 **FAIL** | 0.065 / 0.875 **FAIL** |
+| Detection recall / precision, robot | ≥ 0.95 | 0.991 / 0.998 PASS | 0.991 / 0.998 PASS |
+| ID switches, worst camera | ≤ 2 | 2 PASS | 1 PASS |
+| Zone-event precision / recall, real pipeline | ≥ 0.85 / ≥ 0.90 | 0.38 / 0.53 **FAIL** | 0.58 / 0.37 **FAIL** |
+| Event timing error, max | ≤ 0.5 s | 0.40 s PASS | 0.40 s PASS |
+| Cross-camera false-link rate | ≤ 0.05 | 0.25 **FAIL** | 0.29 **FAIL** |
+| Cross-camera recall | ≥ 0.65 | 0.35 **FAIL** | 0.29 **FAIL** |
+| Evidence coverage / unsupported-claim rate | ≥ 0.95 / 0.00 | 1.00 / 0.00 PASS | 1.00 / 0.00 PASS |
+| Gap recall | ≥ 0.90 | ≥ 0.995 PASS | ≥ 0.995 PASS |
+| Cause top-3 / top-1, detections | 1.00 / ≥ 0.67 | 3 of 5 / 0.60 **FAIL** | 3 of 5 / 0.60 **FAIL** |
+| Cause top-3 / top-1, perfect tracks | — | 1.00 / 0.80 | 1.00 / 0.80, both golden causes now ranked |
+
+| Behaviour | Held-out (perfect / detections) | Post-golden |
+|---|---|---|
+| C02.3 P01 worded *Possible* | FAIL / FAIL | PASS / FAIL |
+| C02.4 *Cannot determine* claim cites the gap | FAIL / FAIL | PASS / PASS |
+| C02.5 Not confidently wrong | PASS / one false *Observed* claim | PASS / PASS |
+| C06.2 Both forklifts ranked | FAIL / FAIL | PASS / FAIL |
+| C06.3 F02 in the top two | PASS / FAIL | PASS / FAIL |
+
 ## Raw reports
 
 `detection-finetuned-case_02-2026-09-14T134818Z` · `detection-finetuned-case_06-2026-09-14T134828Z` ·
