@@ -43,6 +43,9 @@ web:  ## Run the investigator UI dev server (proxies /api to :8000 — run make 
 web-build:  ## Type-check and bundle the UI (the CI gate)
 	cd apps/web && pnpm build
 
+ui-check:  ## Browser checks of replay sync and evidence navigation (needs make api, make web, agent-browser)
+	uv run pytest -q tests/ui
+
 mock:  ## Serve golden fixtures at the real API endpoints
 	uv run uvicorn scripts.mock_api:app --reload --port 8000
 
