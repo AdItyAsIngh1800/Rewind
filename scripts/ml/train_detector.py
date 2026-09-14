@@ -61,7 +61,12 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         # Augmentation is a training-time transform on frames, and does not conflict
         # with the scene spec's constant-lighting rule, which fixes the *rendered*
         # scene so detection failures stay attributable.
-        hsv_h=0.015,
+        #
+        # Hue jitter is the fraction of the hue wheel a frame may be shifted by. At the
+        # Ultralytics default of 0.015 the detector learned *forklift* as F01's colour
+        # and never detected the navy F02 (EXP-0010, F1); at 0.5 every hue occurs in
+        # training, so class has to come from shape.
+        hsv_h=args.hsv_h,
         hsv_s=0.5,
         hsv_v=0.4,
         fliplr=0.5,
@@ -105,6 +110,7 @@ def train(args: argparse.Namespace) -> dict[str, Any]:
         "imgsz": args.imgsz,
         "batch": args.batch,
         "seed": args.seed,
+        "hsv_h": args.hsv_h,
         "device": args.device,
         "platform": f"{platform.system()} {platform.machine()}",
         "dataset": str(DATA),
@@ -126,6 +132,12 @@ def main() -> int:
     parser.add_argument("--batch", type=int, default=16)
     parser.add_argument("--device", default="mps")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--hsv-h",
+        type=float,
+        default=0.015,
+        help="hue jitter as a fraction of the hue wheel; v1 used the 0.015 default",
+    )
     args = parser.parse_args()
 
     log.info(
