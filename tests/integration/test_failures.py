@@ -95,6 +95,8 @@ def test_a_corrupt_clip_on_a_clean_database_still_fails_the_run(
     any frame is read. A probe that raises there is as much a failure of the run as a
     decode error later, and the run must say so rather than stay RUNNING.
     """
+    if not any(CASE_DIR.glob("*.mp4")):
+        pytest.skip("case_01 video has not been rendered")
     run = ProcessingRun(
         run_id="run-corrupt-clean",
         input_hash="sha256:t",

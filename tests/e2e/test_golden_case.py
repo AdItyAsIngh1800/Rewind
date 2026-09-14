@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import pathlib
 
+import pytest
 import shapely
 from sqlalchemy.orm import Session
 
@@ -45,6 +46,8 @@ def test_the_occluded_incursion_is_reconstructed_as_the_spec_requires(
     session: Session, queued_run: ProcessingRun
 ) -> None:
     """Run case_02 and check every behaviour the scene spec lists for it."""
+    if not any(CASE_DIR.glob("*.mp4")):
+        pytest.skip("case_02 video has not been rendered")
     detector = GroundTruthDetector(queued_run.run_id, CASE_DIR)
     result = process_run(
         session,
