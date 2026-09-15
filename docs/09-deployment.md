@@ -207,6 +207,11 @@ make verify-security   # fails loudly if any table ships without RLS
 The weekly keep-alive workflow repeats the outside-in half of that check using only
 the anon key, so no privileged credential lives in CI.
 
+RLS is the database's own guard against direct clients. The role boundary users meet —
+two roles, HTTP Basic, footage on one side and derived evidence on the other — is in
+the API, because the API reaches the database as its owner and RLS never sees whose
+request it is serving (`ADR-0009`, `docs/10-security-and-privacy.md`).
+
 ### Consequence for Gate 6
 
 Gate 6 is "a new developer can run the system from the repository". With a hosted

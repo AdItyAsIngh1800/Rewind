@@ -27,6 +27,7 @@ synchronized replay. Held-out results and every known failure are in
 | Charter and scope freeze | [`docs/00-project-charter.md`](docs/00-project-charter.md) |
 | Risk register and gate dates | [`docs/risk-register.md`](docs/risk-register.md) |
 | Decisions | [`docs/adr/`](docs/adr/) |
+| Security, privacy, retention | [`docs/10-security-and-privacy.md`](docs/10-security-and-privacy.md) |
 
 ## Quick start — the whole system
 
@@ -42,11 +43,11 @@ docker compose up --build
 ```
 
 The first build takes a few minutes. When the log shows `worker` waiting for jobs, open
-**http://localhost:5173** (set `REWIND_WEB_PORT` if that port is taken). The inbox is
-empty until a case is processed:
+**http://localhost:5173** (set `REWIND_WEB_PORT` if that port is taken) and sign in as
+`investigator` / `rewind`. The inbox is empty until a case is processed:
 
 ```bash
-curl -X POST localhost:5173/api/v1/cases \
+curl -u investigator:rewind -X POST localhost:5173/api/v1/cases \
   -H 'Content-Type: application/json' \
   -d '{"dataset_version": "v1", "case_ref": "case_01"}'
 ```
@@ -58,7 +59,10 @@ stops everything and discards the database.
 
 Everything runs locally: Postgres with pgvector, Redis, the API, the worker and the
 UI ([`ADR-0007`](docs/adr/ADR-0007-local-database-for-the-full-stack.md)). No account
-or secret is needed.
+or secret is needed beyond the two demo sign-ins — `investigator` sees footage and
+changes cases, `analyst` sees only the derived evidence — which `REWIND_USERS` in
+`.env` replaces before anyone else can reach the UI
+([`docs/10-security-and-privacy.md`](docs/10-security-and-privacy.md)).
 
 ## Development
 
@@ -132,6 +136,10 @@ system — see [`ADR-0001`](docs/adr/ADR-0001-modular-monolith.md).
 - REWIND is a decision-support tool. It must not be used as an autonomous
   disciplinary, legal or safety adjudicator.
 - Every generated report states its own evidence limitations and uncertainty.
+
+Every generated report repeats this in its limitations, so it travels with the report.
+Who may see footage, what is logged when they do, and how long anything is kept:
+[`docs/10-security-and-privacy.md`](docs/10-security-and-privacy.md).
 
 ## Licence and attribution
 
