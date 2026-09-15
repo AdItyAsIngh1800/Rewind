@@ -550,7 +550,11 @@ def build_report() -> Report:
         gaps=["NODE-GAP-CAMC"],
         limitations=(
             "CAM_C was occluded by forklift F01 between 12.0 s and 14.4 s. No camera "
-            "establishes contact during that interval, so no contact is claimed."
+            "establishes contact during that interval, so no contact is claimed. "
+            "Responsible use: this report is decision support for a human investigation. "
+            "It must not be used as an autonomous disciplinary, legal or safety "
+            "adjudicator. It identifies no person; entities are tracked objects, never "
+            "faces."
         ),
     )
 

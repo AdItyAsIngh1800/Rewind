@@ -9,6 +9,7 @@ from packages.schemas import EvidenceLevel, Hypothesis, Incident, NodeType, Repo
 from services.evidence import EvidenceGraph
 from services.reasoning.hypotheses import rank_hypotheses
 from services.reporting import ReportError, generate_report
+from services.reporting.generator import RESPONSIBLE_USE
 from services.tracking import segments_from_observations
 from tests.unit.test_evidence_graph import NOW, ZONES, _scene, _track
 from tests.unit.test_hypotheses import _graph
@@ -59,7 +60,7 @@ def test_report_runs_observed_then_inferred_then_unknown() -> None:
     assert report.summary.startswith(
         "Robot R12 reported an emergency stop at 13.4 s. Likely contributed:"
     )
-    assert report.limitations
+    assert report.limitations.endswith(RESPONSIBLE_USE), "spec §M, on every report"
 
 
 def test_an_unseen_approach_is_reported_as_possible_not_likely() -> None:

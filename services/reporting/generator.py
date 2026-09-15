@@ -39,7 +39,7 @@ from packages.schemas import (
 from services.evidence.graph import EvidenceGraph, id_base
 from services.reasoning.hypotheses import RankingConfig
 
-GENERATOR_VERSION = "deterministic-0.2.1"
+GENERATOR_VERSION = "deterministic-0.3.0"
 
 #: A standing limitation true of every report this system writes, whatever the case.
 STANDING_LIMITATION = (
@@ -47,6 +47,14 @@ STANDING_LIMITATION = (
     "single-camera back-projection and can be off by up to a metre for large or partly "
     "hidden objects. Physical contact is never inferred from video, and ranked causes "
     "are inferences, not findings."
+)
+
+#: Spec §M, on every report. It rides in ``limitations`` because it is a limit on what the
+#: report may be used for, identical on every report and never read apart from the rest.
+RESPONSIBLE_USE = (
+    "Responsible use: this report is decision support for a human investigation. It "
+    "must not be used as an autonomous disciplinary, legal or safety adjudicator. It "
+    "identifies no person; entities are tracked objects, never faces."
 )
 
 
@@ -250,4 +258,5 @@ def _limitations(gaps: Sequence[EvidenceNode], conflicts: Sequence[EvidenceNode]
     if conflicts:
         parts.append(f"{len(conflicts)} cross-camera identity question(s) left undecided.")
     parts.append(STANDING_LIMITATION)
+    parts.append(RESPONSIBLE_USE)
     return " ".join(parts)
