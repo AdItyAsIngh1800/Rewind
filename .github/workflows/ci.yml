@@ -98,3 +98,25 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # `tsc -b` is the web type gate; `vite build` proves the bundle assembles.
       - run: pnpm build
+
+  # The compose stack's two images build on a clean machine (Gate 6). Built, not
+  # pushed; a smoke import proves the API image is runnable, not merely assembled.
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: rewind-app:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - run: docker run --rm rewind-app:ci python -c "import apps.api.main, apps.worker.main"
+      - uses: docker/build-push-action@v6
+        with:
+          context: apps/web
+          tags: rewind-web:ci
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
