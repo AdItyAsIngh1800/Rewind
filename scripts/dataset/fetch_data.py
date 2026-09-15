@@ -2,9 +2,9 @@
 
 Both are gitignored: the footage is 38 MB of rendered video and the weights are a
 trained artefact, and neither belongs in version control. They are published once as
-the ``data-v1`` release asset and checked here against what the repository already
+the ``data-v1.1`` release asset and checked here against what the repository already
 records: every clip and annotation against ``data/manifests/v1.json`` (E1.3), the
-weights against ``ml/models/yolo11n-rewind-v1/best.pt.sha256``. A download that does
+weights against ``ml/models/yolo11n-rewind-v3/best.pt.sha256``. A download that does
 not match is reported file by file and fails, so a corrupted or substituted asset can
 never be processed as if it were the benchmark data.
 
@@ -28,12 +28,12 @@ from services.observability.logging import configure_logging
 
 log = logging.getLogger(__name__)
 
-RELEASE = "data-v1"
-ASSET = "rewind-data-v1.tar.gz"
-MANIFEST = pathlib.Path("data/manifests/v1.json")
+RELEASE = "data-v1.1"
+ASSET = "rewind-data-v1.1.tar.gz"
+MANIFEST = pathlib.Path("data/manifests/v1.1.json")
 SAMPLES = pathlib.Path("data/samples")
-WEIGHTS = pathlib.Path("ml/models/yolo11n-rewind-v1/best.pt")
-WEIGHTS_SUM = pathlib.Path("ml/models/yolo11n-rewind-v1/best.pt.sha256")
+WEIGHTS = pathlib.Path("ml/models/yolo11n-rewind-v3/best.pt")
+WEIGHTS_SUM = pathlib.Path("ml/models/yolo11n-rewind-v3/best.pt.sha256")
 
 
 def problems() -> list[str]:

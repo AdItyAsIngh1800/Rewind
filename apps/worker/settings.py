@@ -18,7 +18,7 @@ class WorkerSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix="REWIND_", extra="ignore")
 
     redis_url: str = "redis://localhost:6379/0"
-    detector_checkpoint: pathlib.Path = pathlib.Path("ml/models/yolo11n-rewind-v1/best.pt")
+    detector_checkpoint: pathlib.Path = pathlib.Path("ml/models/yolo11n-rewind-v3/best.pt")
     detector_confidence: float = 0.25
     detector_device: str = "mps"
     samples_dir: pathlib.Path = pathlib.Path("data/samples")

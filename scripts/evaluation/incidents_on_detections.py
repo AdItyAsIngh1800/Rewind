@@ -55,6 +55,8 @@ TRUTH: dict[str, tuple[IncidentClass, float, float] | None] = {
     "case_03": (IncidentClass.ROBOT_ESTOP_HUMAN_INCURSION, 17.4, 16.9),
     "case_04": (IncidentClass.ZONE_BLOCKED_UNATTENDED_OBJECT, 34.0, 14.0),
     "case_05": None,
+    # case_07 is case_04's script with F02 as the forklift (EXP-0013): same drop, same dwell.
+    "case_07": (IncidentClass.ZONE_BLOCKED_UNATTENDED_OBJECT, 34.0, 14.0),
 }
 GOLDEN_TRUTH: dict[str, tuple[IncidentClass, float, float] | None] = {
     "case_02": (IncidentClass.ROBOT_ESTOP_HUMAN_INCURSION, 13.5, 13.0),

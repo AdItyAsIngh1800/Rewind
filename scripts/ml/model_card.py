@@ -26,6 +26,7 @@ import logging
 import pathlib
 from typing import Any
 
+from scripts.ml.export_yolo_dataset import TRAIN_CASES
 from services.observability.logging import configure_logging
 
 log = logging.getLogger(__name__)
@@ -47,16 +48,28 @@ def _class_rows(per_class: dict[str, Any]) -> str:
     return "\n".join(rows)
 
 
-def _golden_section(golden: list[dict[str, Any]]) -> str:
-    """Render the held-out cases, the one number the training loop never saw."""
+def _golden_section(golden: list[dict[str, Any]], post_golden: str | None) -> str:
+    """Render the golden cases: held-out for the checkpoint that met them sealed, post-golden after.
+
+    A checkpoint trained after EXP-0010 cannot call these numbers held-out, whatever it
+    scores: the cases were open when its data was designed. The card says which it is.
+    """
     if not golden:
         return ""
-    parts = ["## Held-out (E9.1)\n"]
-    parts.append(
-        "The golden cases were opened once, under EXP-0010's pre-registration, after the "
-        "checkpoint was fixed. These are the only numbers on this card that neither "
-        "trained nor selected the model.\n"
-    )
+    if post_golden:
+        parts = [f"## Golden cases, post-golden ({post_golden})\n"]
+        parts.append(
+            "`case_02` and `case_06` were opened in EXP-0010 before this checkpoint's data "
+            "existed, so these are not held-out numbers. They are measured beside the "
+            "held-out ones in `artifacts/benchmark-reports/final.md`, never in their place.\n"
+        )
+    else:
+        parts = ["## Held-out (E9.1)\n"]
+        parts.append(
+            "The golden cases were opened once, under EXP-0010's pre-registration, after the "
+            "checkpoint was fixed. These are the only numbers on this card that neither "
+            "trained nor selected the model.\n"
+        )
     for ev in golden:
         parts.append(f"`{ev['case_id']}` ({ev['frames_processed']} frames):\n")
         parts.append("| Class | Truth | Precision | Recall | F1 |\n|---|---|---|---|---|")
@@ -70,6 +83,7 @@ def render(
     zero_shot: dict[str, Any] | None,
     golden: list[dict[str, Any]] | None = None,
     limitations: str = "",
+    post_golden: str | None = None,
 ) -> str:
     """Render the card as markdown."""
     name = training["name"]
@@ -138,7 +152,7 @@ It is a **fine-tuned** model, not one trained from scratch: pretrained initialis
 | | |
 |---|---|
 | Source | `{training["dataset"]}`, exported by `scripts/ml/export_yolo_dataset.py` |
-| Training cases | `case_01`, `case_03`, `case_04` |
+| Training cases | {", ".join(f"`{c}`" for c in TRAIN_CASES)} |
 | Validation case | `case_05`, the negative case |
 | Held out entirely | `case_02`, `case_06` — golden, not opened until E9.1 |
 | Frames | every 5th at 10 FPS, 1280x720, three cameras |
@@ -175,7 +189,7 @@ truth at IoU 0.5.
 |---|---|---|---|---|---|
 {table}
 {zero_shot_note}
-{_golden_section(golden or [])}## Limitations
+{_golden_section(golden or [], post_golden)}## Limitations
 
 **This model has only ever seen boxes.** It was trained and evaluated on untextured
 primitives in a single synthetic scene under one lighting setup. Its scores say it can
@@ -214,6 +228,11 @@ def main() -> int:
     parser.add_argument("--evaluation", type=pathlib.Path, required=True)
     parser.add_argument("--zero-shot", type=pathlib.Path, default=None)
     parser.add_argument("--golden", type=pathlib.Path, nargs="*", default=[])
+    parser.add_argument(
+        "--post-golden",
+        default=None,
+        help="the experiment record; marks the golden numbers as post-golden, not held-out",
+    )
     args = parser.parse_args()
 
     training = json.loads((MODELS / args.name / "training.json").read_text())
@@ -226,7 +245,7 @@ def main() -> int:
 
     CARDS.mkdir(parents=True, exist_ok=True)
     out = CARDS / f"{args.name}.md"
-    out.write_text(render(training, evaluation, zero_shot, golden, limitations))
+    out.write_text(render(training, evaluation, zero_shot, golden, limitations, args.post_golden))
     log.info("wrote %s", out)
     return 0
 

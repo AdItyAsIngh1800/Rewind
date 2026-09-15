@@ -51,7 +51,7 @@ from services.tracking import segments_from_observations
 log = logging.getLogger(__name__)
 
 #: The entity behind each annotated cause (`cause_gt.json`), for the cases with one.
-CAUSE_ENTITY = {"case_01": "P01", "case_03": "P01", "case_04": "F01"}
+CAUSE_ENTITY = {"case_01": "P01", "case_03": "P01", "case_04": "F01", "case_07": "F02"}
 #: The golden pair, from the case scripts, pre-registered in EXP-0010 before opening.
 GOLDEN_CAUSE_ENTITY = {"case_02": "P01", "case_06": "F02"}
 
