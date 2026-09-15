@@ -1,0 +1,163 @@
+{
+  "config": "events:stop0.1/1.0:turn60.0/0.5:prox1.5:occ0.5:merge0.8:edge0.5",
+  "results": [
+    {
+      "case_id": "case_01",
+      "positions": "detections",
+      "tp": 7,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.875,
+      "recall": 1.0,
+      "mean_abs_timing_error_s": 0.0571428571428572,
+      "max_abs_timing_error_s": 0.10000000000000142,
+      "truth_unobservable": 1,
+      "truth_telemetry_only": 2,
+      "predicted_bounded": 2,
+      "predicted_bounded_unmatched": 0,
+      "events_by_type": {
+        "direction_change": 1,
+        "stop": 8,
+        "zone_entry": 5,
+        "zone_exit": 3
+      }
+    },
+    {
+      "case_id": "case_02",
+      "positions": "detections",
+      "tp": 4,
+      "fp": 4,
+      "fn": 1,
+      "precision": 0.5,
+      "recall": 0.8,
+      "mean_abs_timing_error_s": 0.012499999999999956,
+      "max_abs_timing_error_s": 0.04999999999999982,
+      "truth_unobservable": 4,
+      "truth_telemetry_only": 2,
+      "predicted_bounded": 3,
+      "predicted_bounded_unmatched": 2,
+      "events_by_type": {
+        "direction_change": 5,
+        "occlusion_end": 1,
+        "occlusion_start": 1,
+        "proximity": 3,
+        "stop": 6,
+        "zone_entry": 8,
+        "zone_exit": 2
+      }
+    },
+    {
+      "case_id": "case_03",
+      "positions": "detections",
+      "tp": 7,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "mean_abs_timing_error_s": 0.035714285714285206,
+      "max_abs_timing_error_s": 0.1999999999999993,
+      "truth_unobservable": 0,
+      "truth_telemetry_only": 2,
+      "predicted_bounded": 1,
+      "predicted_bounded_unmatched": 0,
+      "events_by_type": {
+        "direction_change": 10,
+        "occlusion_end": 1,
+        "occlusion_start": 1,
+        "proximity": 4,
+        "stop": 6,
+        "zone_entry": 4,
+        "zone_exit": 3
+      }
+    },
+    {
+      "case_id": "case_04",
+      "positions": "detections",
+      "tp": 6,
+      "fp": 1,
+      "fn": 2,
+      "precision": 0.8571428571428571,
+      "recall": 0.75,
+      "mean_abs_timing_error_s": 0.08333333333333363,
+      "max_abs_timing_error_s": 0.10000000000000142,
+      "truth_unobservable": 9,
+      "truth_telemetry_only": 0,
+      "predicted_bounded": 4,
+      "predicted_bounded_unmatched": 4,
+      "events_by_type": {
+        "direction_change": 4,
+        "proximity": 1,
+        "stop": 2,
+        "zone_entry": 8,
+        "zone_exit": 3
+      }
+    },
+    {
+      "case_id": "case_05",
+      "positions": "detections",
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "mean_abs_timing_error_s": 0.06666666666666643,
+      "max_abs_timing_error_s": 0.1999999999999993,
+      "truth_unobservable": 3,
+      "truth_telemetry_only": 0,
+      "predicted_bounded": 1,
+      "predicted_bounded_unmatched": 0,
+      "events_by_type": {
+        "direction_change": 1,
+        "stop": 1,
+        "zone_entry": 2,
+        "zone_exit": 1
+      }
+    },
+    {
+      "case_id": "case_06",
+      "positions": "detections",
+      "tp": 4,
+      "fp": 2,
+      "fn": 10,
+      "precision": 0.6666666666666666,
+      "recall": 0.2857142857142857,
+      "mean_abs_timing_error_s": 0.27500000000000036,
+      "max_abs_timing_error_s": 0.40000000000000036,
+      "truth_unobservable": 6,
+      "truth_telemetry_only": 0,
+      "predicted_bounded": 9,
+      "predicted_bounded_unmatched": 6,
+      "events_by_type": {
+        "direction_change": 25,
+        "occlusion_end": 1,
+        "occlusion_start": 1,
+        "proximity": 8,
+        "stop": 6,
+        "zone_entry": 11,
+        "zone_exit": 1
+      }
+    },
+    {
+      "case_id": "case_07",
+      "positions": "detections",
+      "tp": 4,
+      "fp": 10,
+      "fn": 2,
+      "precision": 0.2857142857142857,
+      "recall": 0.6666666666666666,
+      "mean_abs_timing_error_s": 0.04999999999999982,
+      "max_abs_timing_error_s": 0.1999999999999993,
+      "truth_unobservable": 8,
+      "truth_telemetry_only": 0,
+      "predicted_bounded": 6,
+      "predicted_bounded_unmatched": 6,
+      "events_by_type": {
+        "direction_change": 4,
+        "proximity": 2,
+        "stop": 5,
+        "zone_entry": 13,
+        "zone_exit": 7
+      }
+    }
+  ]
+}

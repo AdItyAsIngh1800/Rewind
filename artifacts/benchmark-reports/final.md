@@ -73,27 +73,33 @@ Measured 2026-09-14 after the fixes F3–F7 and the F1 retrain, with `case_02` a
 `case_06` open; the held-out columns above are not replaced. Detector `yolo11n-rewind-v1`
 (v2 measured, not promoted). Log `artifacts/post-golden-F4-2026-09-14.log`.
 
-| Metric | Floor | Held-out | Post-golden |
-|---|---|---|---|
-| Detection recall / precision, person | ≥ 0.95 / ≥ 0.95 | 0.065 / 0.875 **FAIL** | 0.065 / 0.875 **FAIL** |
-| Detection recall / precision, robot | ≥ 0.95 | 0.991 / 0.998 PASS | 0.991 / 0.998 PASS |
-| ID switches, worst camera | ≤ 2 | 2 PASS | 1 PASS |
-| Zone-event precision / recall, real pipeline | ≥ 0.85 / ≥ 0.90 | 0.38 / 0.53 **FAIL** | 0.58 / 0.37 **FAIL** |
-| Event timing error, max | ≤ 0.5 s | 0.40 s PASS | 0.40 s PASS |
-| Cross-camera false-link rate | ≤ 0.05 | 0.25 **FAIL** | 0.29 **FAIL** |
-| Cross-camera recall | ≥ 0.65 | 0.35 **FAIL** | 0.29 **FAIL** |
-| Evidence coverage / unsupported-claim rate | ≥ 0.95 / 0.00 | 1.00 / 0.00 PASS | 1.00 / 0.00 PASS |
-| Gap recall | ≥ 0.90 | ≥ 0.995 PASS | ≥ 0.995 PASS |
-| Cause top-3 / top-1, detections | 1.00 / ≥ 0.67 | 3 of 5 / 0.60 **FAIL** | 3 of 5 / 0.60 **FAIL** |
-| Cause top-3 / top-1, perfect tracks | — | 1.00 / 0.80 | 1.00 / 0.80, both golden causes now ranked |
+| Metric | Floor | Held-out | Post-golden (v1) | Post-golden, v3 (EXP-0013) |
+|---|---|---|---|---|
+| Detection recall / precision, person | ≥ 0.95 / ≥ 0.95 | 0.065 / 0.875 **FAIL** | 0.065 / 0.875 **FAIL** | 0.062 / 0.870 **FAIL** (F2) |
+| Detection recall / precision, robot | ≥ 0.95 | 0.991 / 0.998 PASS | 0.991 / 0.998 PASS | 0.992 / 0.998 PASS |
+| Detection recall / precision, forklift (unscored) | — | 0.980 / 0.687 (C02); 0.259 / 0.905 (C06) | 0.980 / 0.986; 0.259 / 0.908 | 0.996 / 0.999; **0.930 / 0.956** |
+| ID switches, worst camera | ≤ 2 | 2 PASS | 1 PASS | **4 FAIL** (C06 CAM_A, F9; C02: 1) |
+| Zone-event precision / recall, real pipeline | ≥ 0.85 / ≥ 0.90 | 0.38 / 0.53 **FAIL** | 0.58 / 0.37 **FAIL** | 0.57 / 0.47 **FAIL** |
+| Event timing error, max | ≤ 0.5 s | 0.40 s PASS | 0.40 s PASS | 0.40 s PASS |
+| Cross-camera false-link rate | ≤ 0.05 | 0.25 **FAIL** | 0.29 **FAIL** | **0.00 PASS** |
+| Cross-camera recall | ≥ 0.65 | 0.35 **FAIL** | 0.29 **FAIL** | 0.16 **FAIL** |
+| Evidence coverage / unsupported-claim rate | ≥ 0.95 / 0.00 | 1.00 / 0.00 PASS | 1.00 / 0.00 PASS | 1.00 / 0.00 PASS |
+| Gap recall | ≥ 0.90 | ≥ 0.995 PASS | ≥ 0.995 PASS | 1.00 PASS |
+| Cause top-3 / top-1, detections | 1.00 / ≥ 0.67 | 3 of 5 / 0.60 **FAIL** | 3 of 5 / 0.60 **FAIL** | 4 of 5 / 0.60 **FAIL** |
+| Cause top-3 / top-1, perfect tracks | — | 1.00 / 0.80 | 1.00 / 0.80, both golden causes now ranked | 1.00 / 0.80 |
 
-| Behaviour | Held-out (perfect / detections) | Post-golden |
-|---|---|---|
-| C02.3 P01 worded *Possible* | FAIL / FAIL | PASS / FAIL |
-| C02.4 *Cannot determine* claim cites the gap | FAIL / FAIL | PASS / PASS |
-| C02.5 Not confidently wrong | PASS / one false *Observed* claim | PASS / PASS |
-| C06.2 Both forklifts ranked | FAIL / FAIL | PASS / FAIL |
-| C06.3 F02 in the top two | PASS / FAIL | PASS / FAIL |
+The v3 column is `yolo11n-rewind-v3`, trained after the golden run on the tune cases
+plus `case_07` (dataset `v1.1`), promoted 2026-09-15 (EXP-0013). Pooled zone events
+for v3: C02 0.50 / 0.80, C06 0.67 / 0.29. The one regression, C06 CAM_A's switches,
+is a pallet track flipping while a forklift pushes it (F9); v1 never saw the pusher.
+
+| Behaviour | Held-out (perfect / detections) | Post-golden | v3 |
+|---|---|---|---|
+| C02.3 P01 worded *Possible* | FAIL / FAIL | PASS / FAIL | PASS / FAIL (F2) |
+| C02.4 *Cannot determine* claim cites the gap | FAIL / FAIL | PASS / PASS | PASS / PASS |
+| C02.5 Not confidently wrong | PASS / one false *Observed* claim | PASS / PASS | PASS / PASS |
+| C06.2 Both forklifts ranked | FAIL / FAIL | PASS / FAIL | PASS / **PASS** (v3) |
+| C06.3 F02 in the top two | PASS / FAIL | PASS / FAIL | PASS / **PASS** (v3) |
 
 ## Raw reports
 
