@@ -83,6 +83,19 @@ def me() -> dict[str, str]:
     return {"name": "mock", "role": "investigator"}
 
 
+@app.get(f"{PREFIX}/sources", tags=["operations"])
+def sources() -> list[dict[str, object]]:
+    """Offer one source, already processed, so the inbox's dialog has something to show."""
+    return [
+        {
+            "case_ref": "case_01",
+            "clips": 3,
+            "latest_run_id": "RUN-0001",
+            "latest_run_status": "complete",
+        }
+    ]
+
+
 @app.get(f"{PREFIX}/metrics", tags=["operations"])
 def metrics() -> dict[str, object]:
     """Return plausible metrics so the System Health screen has shape.

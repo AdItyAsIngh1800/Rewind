@@ -240,6 +240,48 @@ def list_runs(
     return RunList(runs=[_run_contract(r) for r in rows], total=total)
 
 
+class Source(BaseModel):
+    """Footage the API can process: a case directory under the samples root."""
+
+    case_ref: str
+    clips: int
+    latest_run_id: str | None = Field(description="The most recent run of this footage, if any")
+    latest_run_status: str | None = None
+
+
+@app.get(f"{PREFIX}/sources", response_model=list[Source], tags=["operations"])
+def list_sources(session: DbSession, user: AnyUser) -> list[Source]:
+    """List the footage that can be processed, so the inbox can offer it by name.
+
+    Not in specification §F, whose verification script (roadmap Part 6) nevertheless
+    starts with "create a case, entirely through the browser". A run knows its footage
+    by the paths it recorded (ADR-0006), which is how each source finds its latest run.
+
+    ponytail: scans every run's media paths; index the case directory on the run if the
+    run table ever grows past a few thousand rows.
+    """
+    latest: dict[str, ProcessingRun] = {}
+    for run in session.scalars(
+        select(ProcessingRun).order_by(ProcessingRun.started_at.asc().nulls_first())
+    ):
+        for uri in run.media_uris.values():
+            latest[pathlib.Path(uri).parent.name] = run
+    return (
+        [
+            Source(
+                case_ref=case_dir.name,
+                clips=len(case_clips(case_dir)),
+                latest_run_id=latest[case_dir.name].run_id if case_dir.name in latest else None,
+                latest_run_status=latest[case_dir.name].status if case_dir.name in latest else None,
+            )
+            for case_dir in sorted(SAMPLES.iterdir())
+            if case_dir.is_dir() and not case_dir.name.startswith(".")
+        ]
+        if SAMPLES.is_dir()
+        else []
+    )
+
+
 # --------------------------------------------------------------------------
 # Case lifecycle — shapes frozen, implementations pending
 # --------------------------------------------------------------------------

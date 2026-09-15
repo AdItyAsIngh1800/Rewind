@@ -119,6 +119,7 @@ def test_openapi_covers_every_specification_endpoint() -> None:
         f"{PREFIX}/me",
         f"{PREFIX}/metrics",
         f"{PREFIX}/runs",
+        f"{PREFIX}/sources",
     }
     assert expected == set(spec["paths"])
 

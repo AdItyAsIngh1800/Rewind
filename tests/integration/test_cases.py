@@ -313,6 +313,29 @@ def test_replay_streams_recorded_footage_and_refuses_anything_else(
 
 @needs_db
 @pytest.mark.usefixtures("cases")
+def test_sources_list_the_footage_and_its_latest_run(
+    client: TestClient, session: Session, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A case directory is a source; one a run recorded shows that run, one never run shows none."""
+    for name, clips in (("case_x", 1), ("case_y", 2)):
+        (tmp_path / name).mkdir()
+        for i in range(clips):
+            (tmp_path / name / f"CAM_{i}.mp4").write_bytes(b"\0")
+    (tmp_path / ".hidden").mkdir()
+    monkeypatch.setattr(main, "SAMPLES", tmp_path)
+    run = session.get(ProcessingRun, RUN)
+    assert run is not None
+    run.media_uris = {"CAM_0": str(tmp_path / "case_x" / "CAM_0.mp4")}
+    session.flush()
+
+    assert client.get(f"{PREFIX}/sources").json() == [
+        {"case_ref": "case_x", "clips": 1, "latest_run_id": RUN, "latest_run_status": "complete"},
+        {"case_ref": "case_y", "clips": 2, "latest_run_id": None, "latest_run_status": None},
+    ]
+
+
+@needs_db
+@pytest.mark.usefixtures("cases")
 def test_reprocessing_queues_the_same_footage_as_a_new_run_beside_the_old(
     client: TestClient, session: Session, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

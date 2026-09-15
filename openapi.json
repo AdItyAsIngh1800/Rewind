@@ -1453,6 +1453,49 @@
         "title": "Severity",
         "type": "string"
       },
+      "Source": {
+        "description": "Footage the API can process: a case directory under the samples root.",
+        "properties": {
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "clips": {
+            "title": "Clips",
+            "type": "integer"
+          },
+          "latest_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The most recent run of this footage, if any",
+            "title": "Latest Run Id"
+          },
+          "latest_run_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Run Status"
+          }
+        },
+        "required": [
+          "case_ref",
+          "clips",
+          "latest_run_id"
+        ],
+        "title": "Source",
+        "type": "object"
+      },
       "StatusChange": {
         "description": "A change to where an investigation stands.",
         "properties": {
@@ -2354,6 +2397,37 @@
           }
         ],
         "summary": "List Runs",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/sources": {
+      "get": {
+        "description": "List the footage that can be processed, so the inbox can offer it by name.\n\nNot in specification \u00a7F, whose verification script (roadmap Part 6) nevertheless\nstarts with \"create a case, entirely through the browser\". A run knows its footage\nby the paths it recorded (ADR-0006), which is how each source finds its latest run.\n\nponytail: scans every run's media paths; index the case directory on the run if the\nrun table ever grows past a few thousand rows.",
+        "operationId": "list_sources_api_v1_sources_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Source"
+                  },
+                  "title": "Response List Sources Api V1 Sources Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
+        "summary": "List Sources",
         "tags": [
           "operations"
         ]
