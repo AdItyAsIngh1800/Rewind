@@ -38,6 +38,11 @@ loading / empty / error cycles, a copy re-read.
    role.
 4. **Header on one line at phone width**: nowrap labels, the account name hidden
    below `sm`, the role kept.
+5. **A login page and a sign-out** (`ADR-0011`), replacing the browser's Basic prompt:
+   a split layout, the product statement and the two roles on the left, the form on
+   the right, the responsible-use line under both; stacks to one column on a phone.
+   The page appears in place of whatever route has no session, so a deep link
+   survives signing in.
 
 ## What was not changed, and why
 

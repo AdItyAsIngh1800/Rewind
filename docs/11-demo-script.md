@@ -18,8 +18,8 @@ docker compose up --build         # wait for "worker … waiting for jobs"
 
 Have two terminals visible: one with the compose log, one for `curl`. Set the
 browser to a 1440-wide window; the case page's three panes need the width. Close
-other tabs on `localhost:5173` — a stale Basic session will skip the sign-in you want
-on camera.
+other tabs on `localhost:5173`, or sign out first, so the login page is the first
+thing on camera.
 
 Queue `case_02` before you start talking (on CPU each case takes about ninety seconds)
 so it is ready by scene 8; `case_01` is queued on camera in scene 3:
@@ -42,8 +42,8 @@ the log: one API, one worker, Postgres, Redis, nginx. Nothing else.
 
 ### 2. Sign in and System Health (0:45–1:30)
 
-Open `http://localhost:5173`. The browser prompts; sign in as `investigator`. Show
-the header: `investigator · investigator`. Go to **System health**: queue depth,
+Open `http://localhost:5173`. The login page states the two roles; sign in as
+`investigator`. Show the header: `investigator · investigator`, and **Sign out**. Go to **System health**: queue depth,
 worker heartbeat, frames per second and peak memory arriving from the first run,
 evidence coverage and unsupported-claim rate as "not measured" until a report exists.
 *Null means not measured. A zero here would be a claim the system cannot back.*
@@ -106,7 +106,7 @@ passes its behaviours anyway. Numbers and failure frames:
 
 ### 9. The role boundary (6:45–7:15)
 
-New private window; sign in as `analyst`. Open `case_02`: the three panes say *Raw
+**Sign out**, sign in as `analyst`. Open `case_02`: the three panes say *Raw
 footage is restricted to investigators*; the timeline, graph and report are intact.
 Try to change the status: *Not saved: analyst is an analyst; footage and changes need an
 investigator*. In the terminal:
@@ -132,7 +132,8 @@ what each cost. *The plan was not followed. It was measured against.*
   has finished.
 - A pane says footage could not be loaded: the clip path is not under `data/samples`;
   `make fetch-data` and reprocess.
-- Sign-in loops: the browser holds an old Basic session; use a private window.
+- Signed in as the wrong role: **Sign out** in the header; the login page comes back
+  in place.
 - No incident for `case_02`: check `docker compose logs worker` for the run's error;
   the run is marked FAILED with the reason, never silently queued.
 

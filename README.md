@@ -50,8 +50,8 @@ docker compose up --build
 ```
 
 The first build takes a few minutes. When the log shows `worker` waiting for jobs, open
-**http://localhost:5173** (set `REWIND_WEB_PORT` if that port is taken) and sign in as
-`investigator` / `rewind`. The inbox is empty until a case is processed: click
+**http://localhost:5173** (set `REWIND_WEB_PORT` if that port is taken) and sign in on
+the login page as `investigator` / `rewind`. The inbox is empty until a case is processed: click
 **Process footage**, pick `case_01`, and queue the run. The same thing from a terminal:
 
 ```bash

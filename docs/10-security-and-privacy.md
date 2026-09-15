@@ -8,7 +8,7 @@ putting the system in front of anyone but yourself.
 | No face recognition | Charter §4 non-goal. The detector classifies four object classes; no model here embeds or matches faces, and the report says so on every copy. |
 | Only legally usable video | The dataset is entirely simulated (`docs/dataset/`, risk R11). Any real footage is the operator's responsibility to have the right to process. |
 | Raw video separated from derived metadata | §1 below: the `analyst` role never receives a frame. |
-| Role-based access before multi-user deployment | §1: HTTP Basic, two roles, `ADR-0009`. |
+| Role-based access before multi-user deployment | §1: two roles, a login page on a session cookie or HTTP Basic, `ADR-0009`, `ADR-0011`. |
 | Access to sensitive evidence logged | §2: an append-only audit table and a structured log event. |
 | Retention and deletion rules | §3. |
 | Not an autonomous adjudicator | README "Responsible use", and the closing sentence of every report's limitations. |
@@ -38,12 +38,18 @@ the need, and user management is a charter non-goal.
 `analyst:rewind` so Gate 6 needs no secret. Change them in `.env` before the UI is
 reachable by anyone else. The API refuses to start with no accounts configured.
 
-**Transport.** HTTP Basic sends the password with every request. On a laptop, over
-`localhost`, that is fine; anywhere else, the UI's origin must be TLS. The compose
-stack publishes only the UI port, and the API is reached through it.
+**Signing in.** The UI has a login page (`ADR-0011`): the name and password go to
+`POST /session`, which sets a signed, `HttpOnly` session cookie that expires after
+twelve hours; **Sign out** in the header clears it. The same accounts work as HTTP
+Basic for `curl` and scripts (`-u name:password`). Removing an account from
+`REWIND_USERS`, or changing its role, ends its sessions at the next request.
+`REWIND_SESSION_SECRET` signs the cookies; leave it unset for one API process (a
+restart then signs everyone out), set it when running more than one.
 
-**Signing out** is closing the browser; Basic credentials live in the browser's memory
-for the session.
+**Transport.** The password travels with the login request, and the cookie with every
+request after. On a laptop, over `localhost`, that is fine; anywhere else, the UI's
+origin must be TLS: `docker-compose.prod.yml` puts Caddy in front. The compose stack
+publishes only the UI port, and the API is reached through it.
 
 ## 2. What is logged
 
