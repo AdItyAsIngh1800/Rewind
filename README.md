@@ -30,7 +30,7 @@ synchronized replay. Held-out results and every known failure are in
 | Architecture and data flow | [`docs/03-architecture.md`](docs/03-architecture.md) |
 | ML design and experiments | [`docs/06-ml-design.md`](docs/06-ml-design.md), [`docs/experiments/`](docs/experiments/) |
 | Evaluation plan and results | [`docs/07-evaluation-plan.md`](docs/07-evaluation-plan.md), [`artifacts/benchmark-reports/final.md`](artifacts/benchmark-reports/final.md) |
-| Deployment and hardware | [`docs/09-deployment.md`](docs/09-deployment.md) |
+| Deployment and hardware, and running it on a server | [`docs/09-deployment.md`](docs/09-deployment.md) |
 | Security, privacy, retention | [`docs/10-security-and-privacy.md`](docs/10-security-and-privacy.md) |
 | Final report, audit, postmortem | [`docs/12-final-report.md`](docs/12-final-report.md), [`docs/audit/final-audit.md`](docs/audit/final-audit.md), [`docs/incidents/`](docs/incidents/) |
 | Demo script, presentation, future work | [`docs/11-demo-script.md`](docs/11-demo-script.md), [`docs/13-presentation.md`](docs/13-presentation.md), [`docs/14-future-work.md`](docs/14-future-work.md) |

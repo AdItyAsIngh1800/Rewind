@@ -1,0 +1,30 @@
+# TLS in front of the stack, for a single server with a domain name (docs/09-deployment.md §9).
+#
+#   REWIND_DOMAIN=rewind.example.org REWIND_USERS=... \
+#     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Caddy obtains and renews the certificate itself; the UI's port is no longer
+# published on the host, so the only way in is https. HTTP Basic is safe only over
+# TLS, which is why this file exists (ADR-0009).
+services:
+  web:
+    ports: !override []
+    expose:
+      - "80"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      REWIND_DOMAIN: ${REWIND_DOMAIN:?set REWIND_DOMAIN to the server's DNS name}
+    command: caddy reverse-proxy --from "https://{$REWIND_DOMAIN}" --to web:80
+    volumes:
+      - caddy_data:/data
+    depends_on:
+      - web
+
+volumes:
+  caddy_data:

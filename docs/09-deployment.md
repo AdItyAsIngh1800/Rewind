@@ -227,3 +227,63 @@ timeline using only that section.
 > "clone and run" test, where correctness matters and speed does not. This is a real
 > architectural consequence of the hardware decision and is called out in the Gate 6
 > criteria rather than discovered during it.
+
+## 9. Beyond the laptop
+
+What the stack needs, wherever it runs: a Python process for the API, a long-running
+Python process for the worker with the detector weights and the footage on disk,
+Postgres 16 with `pgvector`, Redis, and a static UI served from the same origin as
+the API so HTTP Basic covers `<video>` requests (`ADR-0009`). CPU is enough at
+12–16 FPS; there is no GPU requirement, and the image ships CPU-only PyTorch.
+
+### One server (recommended)
+
+A VM with 2 vCPU, 8 GB RAM and 20 GB disk, Docker installed, a DNS name pointing at
+it. Hetzner CX32, AWS `t3.large`, GCE `e2-standard-2`, all around $20–30 a month.
+
+```bash
+gh repo clone AdItyAsIngh1800/Rewind && cd Rewind
+make fetch-data
+cat > .env <<'ENV'
+REWIND_USERS=ana:<long password>:analyst,ivo:<long password>:investigator
+REWIND_DOMAIN=rewind.example.org
+ENV
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+`docker-compose.prod.yml` puts Caddy in front: it obtains the certificate from Let's
+Encrypt, renews it, and is the only published port, so credentials never travel in
+clear. Everything else is the compose stack the README describes. Back up the
+`pgdata` volume if the runs matter; the footage is under `data/samples` and is
+reproducible from the release asset.
+
+### Firebase
+
+Firebase Hosting serves static files and cannot run the API, the worker, Postgres
+or Redis, so Firebase alone cannot host this. The Google path that works is Firebase
+Hosting for `apps/web/dist` with a rewrite of `/api/**` to a **Cloud Run** service
+running the API image (same origin, so Basic auth still covers footage), the worker
+as a second Cloud Run service with `--no-cpu-throttling` and min instances 1 (it
+must stay up to take jobs; a job is 90 s of CPU), **Cloud SQL** for Postgres (has
+`pgvector`), **Memorystore** for Redis, and the footage and weights on a mounted GCS
+bucket. Five managed services, roughly $60–100 a month idle, and the worker's
+read-only volume mounts become bucket mounts. It works; it is not simpler than one
+server, and nothing in the stack gains from it at three cameras.
+
+### Platforms with a Postgres and a Redis attached
+
+Fly.io, Railway and Render run the API and worker images, attach Postgres (check
+for `pgvector`) and Redis, and terminate TLS. The 3.3 GB image is the awkward part:
+build times and instance memory. Fly's `fly launch` from the Dockerfile plus a
+volume for `data/samples` is the shortest of the three.
+
+### Supabase stays an option for the database
+
+`DATABASE_URL` pointing at the Supabase session pooler (`ADR-0003`, §8) works from
+any of the above; the compose `db` service is then simply not started.
+
+### If the worker must be faster
+
+A GPU VM (`g4dn.xlarge` or similar) and a CUDA build of PyTorch in the Dockerfile in
+place of the CPU wheels; `REWIND_DETECTOR_DEVICE=cuda`. Nothing else changes. Not
+needed for batch reconstruction at half real time.
