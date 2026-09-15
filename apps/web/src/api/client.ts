@@ -17,16 +17,33 @@ import type {
 
 const BASE = "/api/v1";
 
+/** A non-2xx answer, keeping the status so the shell can tell "signed out" from "broken". */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
+/** Called on any 401, so the shell can show the login page whatever query hit it. */
+export let onUnauthorized: () => void = () => {};
+export function setOnUnauthorized(fn: () => void) {
+  onUnauthorized = fn;
+}
+
 /** Call the API, throwing on non-2xx so TanStack Query sees an error state. */
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, init);
   if (!res.ok) {
+    if (res.status === 401) onUnauthorized();
     // FastAPI puts the reason in `detail`; "case X has no report; reprocess its run"
     // tells an investigator more than "404 Not Found".
     const detail = await res.json().then((b: { detail?: unknown }) => b.detail, () => undefined);
-    throw new Error(typeof detail === "string" ? detail : `${res.status} ${res.statusText} for ${path}`);
+    throw new ApiError(typeof detail === "string" ? detail : `${res.status} ${res.statusText} for ${path}`, res.status);
   }
-  return (await res.json()) as T;
+  return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
 }
 
 function get<T>(path: string, params?: object): Promise<T> {
@@ -58,6 +75,13 @@ export const api = {
     }),
   getHealth: () => get<Health>("/health"),
   me: () => get<Me>("/me"),
+  login: (name: string, password: string) =>
+    request<Me>("/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, password }),
+    }),
+  logout: () => request<void>("/session", { method: "DELETE" }),
   getMetrics: () => get<Metrics>("/metrics"),
   listRuns: (limit = 50) => get<RunList>("/runs", { limit: String(limit) }),
   listSources: () => get<Source[]>("/sources"),
