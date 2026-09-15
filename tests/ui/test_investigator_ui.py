@@ -20,6 +20,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import pathlib
 import shutil
 import subprocess
 import urllib.error
@@ -273,3 +274,45 @@ def test_clicking_a_graph_node_seeks_the_cameras(case: Case) -> None:
     )
     assert clicked, f"no graph node labelled {case.nodes[node]['label']!r}"
     assert_seeked_to(case, selected_ref() or "")
+
+
+def test_footage_can_be_queued_from_the_inbox(case: Case) -> None:
+    """The inbox's dialog lists the API's sources and queues a run without leaving the page.
+
+    Queues the footage the checked case was processed from, so the API answers with the
+    existing run (idempotent) and the suite leaves no new work behind.
+    """
+    runs = _get("/runs?limit=50")["runs"]
+    processed = {
+        pathlib.PurePosixPath(u).parent.name for r in runs for u in r["media_uris"].values()
+    }
+    assert processed, "no run has recorded its footage; nothing safe to re-queue"
+    case_ref = sorted(processed)[0]
+
+    ab("open", f"{UI}/")
+    ab("wait", "--fn", "!!document.querySelector('button')")
+    opened = js(
+        "(() => { const b = [...document.querySelectorAll('button')]"
+        ".find(b => b.textContent === 'Process footage');"
+        " if (!b) return false; b.click(); return true; })()"
+    )
+    assert opened, "no Process footage button; is the browser signed in as an investigator?"
+    ab(
+        "wait",
+        "--fn",
+        "document.querySelector('dialog').open"
+        " && document.querySelectorAll('dialog option').length > 0",
+    )
+    options = js("[...document.querySelectorAll('dialog option')].map(o => o.value)")
+    assert case_ref in options, f"{case_ref} not offered among {options}"
+    js(
+        "(() => { const s = document.querySelector('dialog select');"
+        f" s.value = {json.dumps(case_ref)};"
+        " s.dispatchEvent(new Event('change', {bubbles: true}));"
+        " [...document.querySelectorAll('dialog button')]"
+        ".find(b => b.textContent === 'Queue run').click(); })()"
+    )
+    ab("wait", "--fn", "!!document.querySelector('dialog [role=status], dialog [role=alert]')")
+    status = js("document.querySelector('dialog [role=status]')?.textContent ?? ''")
+    assert status.startswith(("Queued", "Already processed as")), status
+    assert "run-" in status or "RUN-" in status, status
