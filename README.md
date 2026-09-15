@@ -27,7 +27,14 @@ synchronized replay. Held-out results and every known failure are in
 | Charter and scope freeze | [`docs/00-project-charter.md`](docs/00-project-charter.md) |
 | Risk register and gate dates | [`docs/risk-register.md`](docs/risk-register.md) |
 | Decisions | [`docs/adr/`](docs/adr/) |
+| Architecture and data flow | [`docs/03-architecture.md`](docs/03-architecture.md) |
+| ML design and experiments | [`docs/06-ml-design.md`](docs/06-ml-design.md), [`docs/experiments/`](docs/experiments/) |
+| Evaluation plan and results | [`docs/07-evaluation-plan.md`](docs/07-evaluation-plan.md), [`artifacts/benchmark-reports/final.md`](artifacts/benchmark-reports/final.md) |
+| Deployment and hardware | [`docs/09-deployment.md`](docs/09-deployment.md) |
 | Security, privacy, retention | [`docs/10-security-and-privacy.md`](docs/10-security-and-privacy.md) |
+| Final report, audit, postmortem | [`docs/12-final-report.md`](docs/12-final-report.md), [`docs/audit/final-audit.md`](docs/audit/final-audit.md), [`docs/incidents/`](docs/incidents/) |
+| Demo script, presentation, future work | [`docs/11-demo-script.md`](docs/11-demo-script.md), [`docs/13-presentation.md`](docs/13-presentation.md), [`docs/14-future-work.md`](docs/14-future-work.md) |
+| Deviation ledger | [`docs/deviation-ledger.md`](docs/deviation-ledger.md) |
 
 ## Quick start — the whole system
 

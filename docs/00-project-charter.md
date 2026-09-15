@@ -71,23 +71,25 @@ Written down so they can be pointed at in Week 12 when they start sounding reaso
 ## 5. Definition of Done
 
 Copied verbatim from the master specification §P. Each line is a gate on delivery, not
-an aspiration.
+an aspiration. Ticked at the final audit (`docs/audit/final-audit.md` §1, with the
+evidence per line): `[x]` met, `[~]` partially met — both partials are perception floors
+on the held-out cases.
 
-- [ ] 1. Three camera clips can be ingested and processed
-- [ ] 2. Detection and tracking meet the benchmark threshold *(threshold set at Gate 1 — see §6)*
-- [ ] 3. Events are timestamped and queryable
-- [ ] 4. At least one incident class is automatically detected
-- [ ] 5. An investigation window is created automatically
-- [ ] 6. Cross-camera evidence is assembled
-- [ ] 7. Evidence graph is generated
-- [ ] 8. Cause hypotheses are ranked
-- [ ] 9. Unknown and occluded intervals are explicit
-- [ ] 10. Investigator UI supports replay and timeline inspection
-- [ ] 11. Report is evidence-grounded
-- [ ] 12. Critical logic has automated tests
-- [ ] 13. Benchmark results and failure cases are documented
-- [ ] 14. Repository can be started from the README
-- [ ] 15. Architecture, ML, security, evaluation and deployment documentation are complete
+- [x] 1. Three camera clips can be ingested and processed
+- [~] 2. Detection and tracking meet the benchmark threshold *(threshold set at Gate 1 — see §6)*
+- [x] 3. Events are timestamped and queryable
+- [x] 4. At least one incident class is automatically detected
+- [x] 5. An investigation window is created automatically
+- [~] 6. Cross-camera evidence is assembled
+- [x] 7. Evidence graph is generated
+- [x] 8. Cause hypotheses are ranked
+- [x] 9. Unknown and occluded intervals are explicit
+- [x] 10. Investigator UI supports replay and timeline inspection
+- [x] 11. Report is evidence-grounded
+- [x] 12. Critical logic has automated tests
+- [x] 13. Benchmark results and failure cases are documented
+- [x] 14. Repository can be started from the README
+- [x] 15. Architecture, ML, security, evaluation and deployment documentation are complete
 
 ## 6. Benchmark thresholds — provisional
 
