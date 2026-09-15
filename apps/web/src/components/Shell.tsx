@@ -1,4 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
 import { NavLink, Outlet } from "react-router";
+import { api } from "@/api/client";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -7,8 +9,11 @@ const NAV = [
   { to: "/health", label: "System health" },
 ];
 
-/** Application chrome: a single-row header and the routed page beneath it. */
+/** Application chrome: a single-row header, who is signed in, and the routed page beneath. */
 export function Shell() {
+  // The browser holds the credentials (HTTP Basic); the header shows the role they carry,
+  // so an analyst knows why the replay offers no footage before opening a case.
+  const me = useQuery({ queryKey: ["me"], queryFn: api.me, staleTime: Infinity });
   return (
     <div className="min-h-dvh">
       <header className="flex h-12 items-center gap-6 border-b border-border px-4">
@@ -30,6 +35,11 @@ export function Shell() {
             </NavLink>
           ))}
         </nav>
+        {me.data && (
+          <span className="ml-auto text-xs text-text-muted" aria-label="Signed in as">
+            {me.data.name} · {me.data.role}
+          </span>
+        )}
       </header>
       <main className="mx-auto max-w-7xl px-4 py-5">
         <Outlet />

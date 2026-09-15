@@ -9,6 +9,8 @@ interface Props {
   /** Shared-timebase seconds to seek to when `seekKey` changes; `null` leaves the playhead. */
   seekTo: number | null;
   seekKey: string | null;
+  /** Whether the signed-in role may watch raw footage; analysts see derived evidence only. */
+  footage: boolean;
 }
 
 const RATES = [0.25, 0.5, 1, 2];
@@ -30,7 +32,7 @@ function within(video: HTMLVideoElement, t: number): number {
  * Clip time is shared time plus the camera's clock offset: ingestion subtracted the
  * offset to reach the shared clock, so the player adds it back.
  */
-export function ReplayPanel({ replay, seekTo, seekKey }: Props) {
+export function ReplayPanel({ replay, seekTo, seekKey, footage }: Props) {
   const panes = replay.cameras;
   const videos = useRef<(HTMLVideoElement | null)[]>([]);
   const [time, setTime] = useState(replay.window_start_s);
@@ -38,7 +40,7 @@ export function ReplayPanel({ replay, seekTo, seekKey }: Props) {
   const [rate, setRate] = useState(1);
   const [end, setEnd] = useState(replay.window_end_s);
   const [failed, setFailed] = useState<Record<string, boolean>>({});
-  const lead = panes.findIndex((p) => p.media_url !== null && !failed[p.camera_id]);
+  const lead = footage ? panes.findIndex((p) => p.media_url !== null && !failed[p.camera_id]) : -1;
   const frame = 1 / (panes[lead]?.fps ?? 10);
 
   function seek(shared: number) {
@@ -118,7 +120,7 @@ export function ReplayPanel({ replay, seekTo, seekKey }: Props) {
         {panes.map((p, i) => (
           <figure key={p.camera_id} className="flex min-w-0 flex-col gap-1">
             <div className="aspect-video max-w-full overflow-hidden rounded-md bg-ground">
-              {p.media_url && !failed[p.camera_id] ? (
+              {footage && p.media_url && !failed[p.camera_id] ? (
                 <video
                   ref={(el) => {
                     videos.current[i] = el;
@@ -140,7 +142,11 @@ export function ReplayPanel({ replay, seekTo, seekKey }: Props) {
                 />
               ) : (
                 <p className="flex size-full items-center justify-center p-3 text-center text-xs text-text-muted">
-                  {p.media_url ? "Footage could not be loaded" : "No footage recorded for this run; reprocess it to replay"}
+                  {!footage
+                    ? "Raw footage is restricted to investigators; the timeline, evidence and report are the derived record"
+                    : p.media_url
+                      ? "Footage could not be loaded"
+                      : "No footage recorded for this run; reprocess it to replay"}
                 </p>
               )}
             </div>

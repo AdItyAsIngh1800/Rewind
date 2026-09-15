@@ -41,6 +41,7 @@ export function CasePage() {
   const graph = useQuery({ queryKey: ["evidence", caseId], queryFn: () => api.getEvidence(caseId) });
   const report = useQuery({ queryKey: ["report", caseId], queryFn: () => api.getReport(caseId) });
   const replay = useQuery({ queryKey: ["replay", caseId], queryFn: () => api.getReplay(caseId) });
+  const me = useQuery({ queryKey: ["me"], queryFn: api.me, staleTime: Infinity });
   const evidence = { graph: graph.data, timeline: timeline.data, hypotheses: report.data?.hypotheses };
   const seekTo = selected ? refTime(selected, evidence) : null;
 
@@ -100,7 +101,9 @@ export function CasePage() {
       </header>
 
       <Loaded query={replay} what="replay">
-        {(data) => <ReplayPanel replay={data} seekTo={seekTo} seekKey={selected} />}
+        {(data) => (
+          <ReplayPanel replay={data} seekTo={seekTo} seekKey={selected} footage={me.data?.role === "investigator"} />
+        )}
       </Loaded>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">

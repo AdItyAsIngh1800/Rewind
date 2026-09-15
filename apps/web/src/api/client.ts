@@ -6,6 +6,7 @@ import type {
   Health,
   Incident,
   IncidentStatus,
+  Me,
   Metrics,
   Replay,
   RunList,
@@ -54,6 +55,7 @@ export const api = {
       body: JSON.stringify({ status }),
     }),
   getHealth: () => get<Health>("/health"),
+  me: () => get<Me>("/me"),
   getMetrics: () => get<Metrics>("/metrics"),
   listRuns: (limit = 50) => get<RunList>("/runs", { limit: String(limit) }),
 };

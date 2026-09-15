@@ -217,6 +217,12 @@ export interface CaseReport {
   hypotheses: Hypothesis[];
 }
 
+/** Who the API takes the caller to be. Analysts read derived evidence; investigators also watch footage. */
+export interface Me {
+  name: string;
+  role: "analyst" | "investigator";
+}
+
 export interface Health {
   status: string;
   api_version: string;
