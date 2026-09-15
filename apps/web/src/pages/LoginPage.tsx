@@ -57,7 +57,7 @@ export function LoginPage() {
           Sign in
         </h2>
         <label className="flex flex-col gap-1 text-sm">
-          Account
+          Account or email
           <input
             name="name"
             autoComplete="username"
@@ -87,8 +87,9 @@ export function LoginPage() {
           {login.isPending ? "Signing in" : "Sign in"}
         </Button>
         <p className="text-xs text-text-muted">
-          Accounts are set by the operator in <span className="font-mono">REWIND_USERS</span>; the compose stack ships
-          demo ones. Sessions last twelve hours.
+          An account is one the operator set in <span className="font-mono">REWIND_USERS</span> — the compose stack
+          ships demo ones — or a Supabase one, signed in with its email. Either way the same form, and sessions last
+          twelve hours.
         </p>
       </form>
     </main>

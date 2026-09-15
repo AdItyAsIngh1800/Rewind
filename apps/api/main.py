@@ -29,9 +29,9 @@ from apps.api.auth import (
     SESSION_TTL_S,
     AnyUser,
     Investigator,
-    authenticate,
     issue_session,
     log_evidence_access,
+    sign_in,
 )
 from apps.api.queue import enqueue_run, queue_stats
 from apps.api.request_stats import requests as request_window
@@ -202,12 +202,16 @@ class Credentials(BaseModel):
 def open_session(body: Credentials, response: Response) -> Me:
     """Sign the browser in: check the account and set the session cookie (ADR-0011).
 
+    The account is a ``REWIND_USERS`` one or a Supabase one, tried in that order
+    (ADR-0012); one form and one cookie either way, so the page cannot get the two out
+    of step and nothing past this point knows the difference.
+
     ``HttpOnly`` so a script on the page cannot read it, ``SameSite=Lax`` so a
     cross-site page cannot ride it; the UI's origin is expected to be TLS anywhere but
     a laptop (`docs/10-security-and-privacy.md`), which is where the cookie's
     confidentiality comes from, the same as Basic's.
     """
-    user = authenticate(body.name, body.password)
+    user = sign_in(body.name, body.password)
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "wrong name or password")
     response.set_cookie(

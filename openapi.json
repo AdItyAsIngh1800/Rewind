@@ -2670,7 +2670,7 @@
         ]
       },
       "post": {
-        "description": "Sign the browser in: check the account and set the session cookie (ADR-0011).\n\n``HttpOnly`` so a script on the page cannot read it, ``SameSite=Lax`` so a\ncross-site page cannot ride it; the UI's origin is expected to be TLS anywhere but\na laptop (`docs/10-security-and-privacy.md`), which is where the cookie's\nconfidentiality comes from, the same as Basic's.",
+        "description": "Sign the browser in: check the account and set the session cookie (ADR-0011).\n\nThe account is a ``REWIND_USERS`` one or a Supabase one, tried in that order\n(ADR-0012); one form and one cookie either way, so the page cannot get the two out\nof step and nothing past this point knows the difference.\n\n``HttpOnly`` so a script on the page cannot read it, ``SameSite=Lax`` so a\ncross-site page cannot ride it; the UI's origin is expected to be TLS anywhere but\na laptop (`docs/10-security-and-privacy.md`), which is where the cookie's\nconfidentiality comes from, the same as Basic's.",
         "operationId": "open_session_api_v1_session_post",
         "requestBody": {
           "content": {

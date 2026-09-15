@@ -8,9 +8,14 @@ through review, reprocesses them. There is no third role; the charter's non-goal
 out user management, and a second boundary nobody has asked for would be one more
 place for a permission bug to hide.
 
-Accounts come from ``REWIND_USERS`` (ADR-0009). Two ways to present them: HTTP Basic on
-the request, for ``curl`` and tests, and a session cookie issued by ``POST /session``
-from the same credentials, for the browser (ADR-0011). The cookie is what lets the UI
+Accounts come from ``REWIND_USERS`` (ADR-0009) or, when the deployment has them, from
+Supabase Auth (ADR-0012); the two are tried in that order and are otherwise the same
+thing to everything downstream, because both end as a ``Principal`` with one of the two
+roles. Two ways to present them: HTTP Basic on the request, for ``curl`` and tests, and
+a session cookie issued by ``POST /session`` from the same credentials, for the browser
+(ADR-0011). Basic is local accounts only — a Supabase password grant is a round-trip to
+GoTrue, and on the per-request path a video's range requests would sign in hundreds of
+times a minute and meet its rate limit. The cookie is what lets the UI
 have a login page and a sign-out while a ``<video>`` element, which cannot carry a
 header, still fetches footage: the browser sends the cookie on every same-origin
 request. Nothing here reaches the database: the API connects to Postgres as its owner,
@@ -36,6 +41,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
 from packages.database.models import EvidenceAccessLog
+from supabase import AuthError, create_client
 
 log = logging.getLogger(__name__)
 
@@ -51,12 +57,26 @@ class Role(StrEnum):
     INVESTIGATOR = "investigator"
 
 
+class Issuer(StrEnum):
+    """Which set of accounts vouched for a principal.
+
+    Carried in the session token because it decides what revoking means: a local
+    account's session ends when its name leaves ``REWIND_USERS``, which is the only
+    sign-out an operator has, while a Supabase session is revoked in Supabase and
+    cannot be re-checked here without a round-trip on every request.
+    """
+
+    LOCAL = "local"
+    SUPABASE = "supabase"
+
+
 @dataclass(frozen=True)
 class Principal:
     """An authenticated caller: the name the access log records and the role checked."""
 
     name: str
     role: Role
+    issuer: Issuer = Issuer.LOCAL
 
 
 @dataclass(frozen=True)
@@ -115,14 +135,74 @@ def authenticate(name: str, password: str) -> Principal | None:
     return Principal(name=name, role=user.role) if genuine and matches else None
 
 
+#: Where a Supabase account's role is read from. ``app_metadata`` and not
+#: ``user_metadata``: the account holder can write the latter, and self-assigning
+#: ``investigator`` is exactly the footage boundary this module exists to hold.
+SUPABASE_ROLE_KEY = "rewind_role"
+SUPABASE_URL_VAR = "SUPABASE_URL"
+SUPABASE_KEY_VAR = "SUPABASE_ANON_KEY"
+
+
+def supabase_sign_in(name: str, password: str) -> Principal | None:
+    """Check a name and password against Supabase Auth; None for anything but a match.
+
+    None also when the deployment has no Supabase configured, which is how the local
+    compose stack and the test suite run with local accounts alone, and when Supabase
+    is unreachable: a GoTrue outage should leave the login page saying the password was
+    wrong, not returning a 500 that looks like the API itself is down.
+
+    An unset, unknown or malformed role lands on ``analyst``, so a misconfigured
+    account reads derived metadata and never footage — the boundary fails closed.
+    """
+    url, key = os.environ.get(SUPABASE_URL_VAR, ""), os.environ.get(SUPABASE_KEY_VAR, "")
+    if not (url and key):
+        return None
+    try:
+        answer = create_client(url, key).auth.sign_in_with_password(
+            {"email": name, "password": password}
+        )
+    except AuthError:
+        return None
+    except Exception:
+        log.exception("supabase sign-in could not be attempted for %s", name)
+        return None
+    if answer.user is None:
+        return None
+    email = answer.user.email or name
+    if ":" in email:
+        # The session token is colon-delimited, so a colon in the name would let the
+        # holder of one account mint a token naming another with a different role.
+        log.error("refusing supabase account %r: a ':' in the name forges session tokens", email)
+        return None
+    claimed = answer.user.app_metadata.get(SUPABASE_ROLE_KEY)
+    if claimed is not None and claimed not in set(Role):
+        log.warning(
+            "supabase account %s claims unknown role %r; treating as analyst", email, claimed
+        )
+    role = Role(claimed) if claimed in set(Role) else Role.ANALYST
+    return Principal(name=email, role=role, issuer=Issuer.SUPABASE)
+
+
+def sign_in(name: str, password: str) -> Principal | None:
+    """Resolve a name and password against either set of accounts, local first.
+
+    The order is what makes a local account authoritative: an operator who needs to
+    get in when Supabase is unreachable puts a name in ``REWIND_USERS``, and no
+    Supabase account can shadow it.
+    """
+    return authenticate(name, password) or supabase_sign_in(name, password)
+
+
 def issue_session(user: Principal) -> str:
     """Mint a signed, expiring session token for a principal.
 
-    ``name:role:expiry:signature``; names cannot contain ``:`` (the accounts format
-    forbids it), so the token splits unambiguously. HMAC over the first three fields
-    means the token can be checked without storing anything.
+    ``name:role:issuer:expiry:signature``; names cannot contain ``:`` (the accounts
+    format forbids it, and ``supabase_sign_in`` refuses one that does), so the token
+    splits unambiguously. HMAC over the first four fields means the token can be
+    checked without storing anything.
     """
-    payload = f"{user.name}:{user.role.value}:{int(time.time()) + SESSION_TTL_S}"
+    expiry = int(time.time()) + SESSION_TTL_S
+    payload = f"{user.name}:{user.role.value}:{user.issuer.value}:{expiry}"
     signature = hmac.new(_secret(), payload.encode(), hashlib.sha256).hexdigest()
     return f"{payload}:{signature}"
 
@@ -130,18 +210,25 @@ def issue_session(user: Principal) -> str:
 def read_session(token: str) -> Principal | None:
     """Return the principal a token names, or None if it is forged, expired or revoked.
 
-    Revoked means the account no longer exists with that role: removing a name from
-    ``REWIND_USERS`` ends its sessions at the next request, which is the only sign-out
-    an operator has.
+    Revoked means the local account no longer exists with that role: removing a name
+    from ``REWIND_USERS`` ends its sessions at the next request, which is the only
+    sign-out an operator has. A Supabase session cannot be checked that way without a
+    round-trip per request, so it stands on its signature until it expires; revoking
+    one before then means deleting the account in Supabase and waiting out the twelve
+    hours, or rotating ``REWIND_SESSION_SECRET``, which ends every session at once.
     """
     try:
-        name, role, expiry, signature = token.split(":")
-        expected = hmac.new(_secret(), f"{name}:{role}:{expiry}".encode(), hashlib.sha256)
+        name, role, issued_by, expiry, signature = token.split(":")
+        payload = f"{name}:{role}:{issued_by}:{expiry}"
+        expected = hmac.new(_secret(), payload.encode(), hashlib.sha256)
         if not hmac.compare_digest(signature, expected.hexdigest()) or int(expiry) < time.time():
             return None
-        user = configured_users().get(name)
+        issuer, claimed = Issuer(issued_by), Role(role)
     except ValueError:
         return None
+    if issuer is Issuer.SUPABASE:
+        return Principal(name=name, role=claimed, issuer=issuer)
+    user = configured_users().get(name)
     if user is None or user.role.value != role:
         return None
     return Principal(name=name, role=user.role)
