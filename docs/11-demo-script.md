@@ -21,13 +21,10 @@ browser to a 1440-wide window; the case page's three panes need the width. Close
 other tabs on `localhost:5173` — a stale Basic session will skip the sign-in you want
 on camera.
 
-Queue both cases before you start talking; on CPU each takes about ninety seconds
-(`case_02` a little longer), and the inbox filling in while you show System Health is
-part of the story:
+Queue `case_02` before you start talking (on CPU each case takes about ninety seconds)
+so it is ready by scene 8; `case_01` is queued on camera in scene 3:
 
 ```bash
-curl -u investigator:rewind -X POST localhost:5173/api/v1/cases \
-  -H 'Content-Type: application/json' -d '{"dataset_version": "v1", "case_ref": "case_01"}'
 curl -u investigator:rewind -X POST localhost:5173/api/v1/cases \
   -H 'Content-Type: application/json' -d '{"dataset_version": "v1", "case_ref": "case_02"}'
 ```
@@ -51,10 +48,12 @@ worker heartbeat, frames per second and peak memory arriving from the first run,
 evidence coverage and unsupported-claim rate as "not measured" until a report exists.
 *Null means not measured. A zero here would be a claim the system cannot back.*
 
-### 3. The inbox fills (1:30–2:00)
+### 3. Process footage, and the inbox fills (1:30–2:15)
 
-Back to **Cases**. `case_01`'s incident appears: *Robot e-stop after human incursion*,
-severity High. Filters by severity and status. Open it.
+Back to **Cases**. Click **Process footage**, pick `case_01`, queue the run: the *Runs
+in progress* tile shows it queued, then running, and the incident row appears when it
+completes, *Robot e-stop after human incursion*, severity High, without a reload.
+Filters by severity and status. Open it.
 
 ### 4. Synchronized replay (2:00–3:00)
 

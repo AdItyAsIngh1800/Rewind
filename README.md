@@ -51,7 +51,8 @@ docker compose up --build
 
 The first build takes a few minutes. When the log shows `worker` waiting for jobs, open
 **http://localhost:5173** (set `REWIND_WEB_PORT` if that port is taken) and sign in as
-`investigator` / `rewind`. The inbox is empty until a case is processed:
+`investigator` / `rewind`. The inbox is empty until a case is processed: click
+**Process footage**, pick `case_01`, and queue the run. The same thing from a terminal:
 
 ```bash
 curl -u investigator:rewind -X POST localhost:5173/api/v1/cases \
@@ -60,9 +61,10 @@ curl -u investigator:rewind -X POST localhost:5173/api/v1/cases \
 ```
 
 The worker processes the three clips in about 90 seconds on CPU inside Docker (on Apple
-silicon, `make worker` on the host uses MPS and takes about 10 seconds); reload the
-inbox and open the incident. `case_01` to `case_06` are available. `docker compose down -v`
-stops everything and discards the database.
+silicon, `make worker` on the host uses MPS and takes about 10 seconds); the inbox
+shows the run in progress and lists the incident when it completes. `case_01` to
+`case_06` are available. `docker compose down -v` stops everything and discards the
+database.
 
 Everything runs locally: Postgres with pgvector, Redis, the API, the worker and the
 UI ([`ADR-0007`](docs/adr/ADR-0007-local-database-for-the-full-stack.md)). No account
