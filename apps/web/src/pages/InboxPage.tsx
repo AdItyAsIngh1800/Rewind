@@ -1,8 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router";
 import { api } from "@/api/client";
-import { INCIDENT_CLASS_LABEL, SEVERITIES, STATUSES } from "@/api/types";
+import { INCIDENT_CLASS_LABEL, type ProcessingRun, SEVERITIES, STATUSES } from "@/api/types";
+import { ProcessFootage } from "@/components/ProcessFootage";
 import { SeverityMark } from "@/components/SeverityMark";
+import { StatTile } from "@/components/StatTile";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -24,6 +27,8 @@ import { clock } from "@/lib/format";
 
 const ANY = "any";
 
+const inFlight = (r: ProcessingRun) => r.status === "queued" || r.status === "running";
+
 /**
  * Case inbox: every incident the pipeline has opened, filtered by severity and status.
  *
@@ -40,6 +45,25 @@ export function InboxPage() {
     queryKey: ["cases", { severity, status }],
     queryFn: () => api.listCases({ severity, status }),
   });
+  const every = useQuery({ queryKey: ["cases", { limit: 500 }], queryFn: () => api.listCases({ limit: "500" }) });
+  const me = useQuery({ queryKey: ["me"], queryFn: api.me, staleTime: Infinity });
+  // Runs are polled only while one is queued or running; when one finishes, every
+  // cases query is invalidated so new incidents appear without a reload.
+  const client = useQueryClient();
+  const runs = useQuery({
+    queryKey: ["runs"],
+    queryFn: () => api.listRuns(20),
+    refetchInterval: (q) => (q.state.data?.runs.some(inFlight) ? 3000 : false),
+  });
+  const active = runs.data?.runs.filter(inFlight) ?? [];
+  const activeCount = active.length;
+  const wasActive = useRef(0);
+  useEffect(() => {
+    if (activeCount < wasActive.current) void client.invalidateQueries({ queryKey: ["cases"] });
+    wasActive.current = activeCount;
+  }, [activeCount, client]);
+  const all = every.data?.cases ?? [];
+  const filtered = Boolean(severity || status);
 
   function setFilter(key: "severity" | "status", value: string) {
     const next = new URLSearchParams(params);
@@ -55,9 +79,11 @@ export function InboxPage() {
           <h1 className="text-lg font-medium">Cases</h1>
           <p className="text-sm text-text-muted">
             {cases.data ? `${cases.data.total} incident${cases.data.total === 1 ? "" : "s"}` : " "}
+            {filtered && " matching the filters"}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-end gap-2">
+          {me.data?.role === "investigator" && <ProcessFootage />}
           <FilterSelect
             label="Severity"
             value={severity ?? ANY}
@@ -71,6 +97,35 @@ export function InboxPage() {
             onChange={(v) => setFilter("status", v)}
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile
+          label="Open"
+          value={every.data ? String(all.filter((c) => c.status === "new" || c.status === "investigating").length) : null}
+          detail="new or investigating"
+        />
+        <StatTile
+          label="High or critical"
+          value={every.data ? String(all.filter((c) => c.severity === "high" || c.severity === "critical").length) : null}
+          detail="of every incident"
+        />
+        <StatTile
+          label="Dismissed"
+          value={every.data ? String(all.filter((c) => c.status === "dismissed").length) : null}
+          detail="reviewed as false alerts"
+        />
+        <StatTile
+          label="Runs in progress"
+          value={runs.data ? String(activeCount) : null}
+          detail={
+            activeCount ? (
+              <span className="font-mono">{active.map((r) => `${r.run_id} ${r.status}`).join(", ")}</span>
+            ) : (
+              "the worker is idle"
+            )
+          }
+        />
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border">
@@ -101,7 +156,13 @@ export function InboxPage() {
             {cases.data?.cases.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="py-10 text-center text-text-muted">
-                  No incidents match these filters.
+                  {filtered
+                    ? "No incidents match these filters."
+                    : activeCount
+                      ? "A run is in progress; incidents appear here when it completes."
+                      : me.data?.role === "investigator"
+                        ? "No incidents yet. Process footage to open the first case."
+                        : "No incidents yet. An investigator can process footage to open one."}
                 </TableCell>
               </TableRow>
             )}

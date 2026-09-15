@@ -217,6 +217,23 @@ export interface CaseReport {
   hypotheses: Hypothesis[];
 }
 
+/** Footage under the samples root that can be processed, and its most recent run if any. */
+export interface Source {
+  case_ref: string;
+  clips: number;
+  latest_run_id: string | null;
+  latest_run_status: string | null;
+}
+
+/** Acknowledgement of a queued run; `created` false means the same footage and versions already have one. */
+export interface CreateCaseResponse {
+  run_id: string;
+  incident_id: string | null;
+  status: string;
+  created: boolean;
+  dispatched: boolean;
+}
+
 /** Who the API takes the caller to be. Analysts read derived evidence; investigators also watch footage. */
 export interface Me {
   name: string;

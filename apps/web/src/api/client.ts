@@ -2,6 +2,7 @@ import type {
   CaseDetail,
   CaseList,
   CaseReport,
+  CreateCaseResponse,
   EvidenceGraph,
   Health,
   Incident,
@@ -10,6 +11,7 @@ import type {
   Metrics,
   Replay,
   RunList,
+  Source,
   Timeline,
 } from "./types";
 
@@ -58,4 +60,11 @@ export const api = {
   me: () => get<Me>("/me"),
   getMetrics: () => get<Metrics>("/metrics"),
   listRuns: (limit = 50) => get<RunList>("/runs", { limit: String(limit) }),
+  listSources: () => get<Source[]>("/sources"),
+  createCase: (case_ref: string, dataset_version: string) =>
+    request<CreateCaseResponse>("/cases", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ case_ref, dataset_version }),
+    }),
 };
