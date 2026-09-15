@@ -1299,6 +1299,32 @@
         "title": "Report",
         "type": "object"
       },
+      "ReprocessRequest": {
+        "description": "Which versions to re-run a case's footage under.",
+        "properties": {
+          "config_version": {
+            "title": "Config Version",
+            "type": "string"
+          },
+          "dataset_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Defaults to the version the original run recorded",
+            "title": "Dataset Version"
+          }
+        },
+        "required": [
+          "config_version"
+        ],
+        "title": "ReprocessRequest",
+        "type": "object"
+      },
       "RunList": {
         "description": "Processing runs, not yet started first and then most recently started, with the total.",
         "properties": {
@@ -1615,7 +1641,7 @@
     }
   },
   "info": {
-    "description": "Endpoints marked **not yet implemented** return 501 with the correct response shape already defined. The frontend is built against this contract from Week 4; the pipeline fills it in behind.",
+    "description": "Every endpoint of specification \u00a7F, plus a run list and a case-status change for the System Health and review screens. Everything but /health needs an account; footage and every change need an investigator (ADR-0009).",
     "summary": "Evidence-backed AI incident reconstruction engine for multi-camera video",
     "title": "REWIND",
     "version": "0.1.0"
@@ -2062,7 +2088,7 @@
     },
     "/api/v1/cases/{case_id}/reprocess": {
       "post": {
-        "description": "Re-run a case with a different model or config version.\n\nNot yet implemented \u2014 delivered by E2.2.",
+        "description": "Queue the same footage under another config version, as a new run beside the old.\n\nA run is identified by its inputs and versions (E2.2), so the same versions return\nthe existing run with ``created`` false rather than processing twice, and a new\nversion is a new run: the original, its incident and its report stay as issued.\nThe footage comes from what the run recorded (ADR-0006); a run that predates that\nrecord cannot be reprocessed from here and says so.\n\nponytail: the model version is whatever the worker loads; selecting one per run\nneeds the worker to take a checkpoint name, which no request has asked for.",
         "operationId": "reprocess_case_api_v1_cases__case_id__reprocess_post",
         "parameters": [
           {
@@ -2077,14 +2103,22 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReprocessRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Reprocess Case Api V1 Cases  Case Id  Reprocess Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/CreateCaseResponse"
                 }
               }
             },

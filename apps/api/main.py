@@ -68,9 +68,9 @@ app = FastAPI(
     version=API_VERSION,
     summary="Evidence-backed AI incident reconstruction engine for multi-camera video",
     description=(
-        "Endpoints marked **not yet implemented** return 501 with the correct "
-        "response shape already defined. The frontend is built against this contract "
-        "from Week 4; the pipeline fills it in behind."
+        "Every endpoint of specification §F, plus a run list and a case-status change "
+        "for the System Health and review screens. Everything but /health needs an "
+        "account; footage and every change need an investigator (ADR-0009)."
     ),
 )
 
@@ -266,16 +266,6 @@ class CreateCaseResponse(BaseModel):
     #: False when the run exists but no worker was told about it, because the queue
     #: was unreachable. The run is still QUEUED and can be dispatched later.
     dispatched: bool = False
-
-
-NOT_IMPLEMENTED = "Pending — see ROADMAP.md for the phase that delivers this."
-
-
-def _pending(phase: str) -> HTTPException:
-    return HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail=f"{NOT_IMPLEMENTED} Delivered by {phase}.",
-    )
 
 
 @app.post(
@@ -655,10 +645,54 @@ def get_report(case_id: CaseId, session: DbSession, user: AnyUser) -> CaseReport
     return CaseReport(report=report, hypotheses=hypotheses_for_incident(session, case_id))
 
 
-@app.post(f"{PREFIX}/cases/{{case_id}}/reprocess", tags=["cases"])
-def reprocess_case(case_id: CaseId, user: Investigator) -> dict[str, object]:
-    """Re-run a case with a different model or config version.
+class ReprocessRequest(BaseModel):
+    """Which versions to re-run a case's footage under."""
 
-    Not yet implemented — delivered by E2.2.
+    config_version: str
+    dataset_version: str | None = Field(
+        default=None, description="Defaults to the version the original run recorded"
+    )
+
+
+@app.post(
+    f"{PREFIX}/cases/{{case_id}}/reprocess",
+    response_model=CreateCaseResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["cases"],
+)
+async def reprocess_case(
+    case_id: CaseId, body: ReprocessRequest, session: DbSession, user: Investigator
+) -> CreateCaseResponse:
+    """Queue the same footage under another config version, as a new run beside the old.
+
+    A run is identified by its inputs and versions (E2.2), so the same versions return
+    the existing run with ``created`` false rather than processing twice, and a new
+    version is a new run: the original, its incident and its report stay as issued.
+    The footage comes from what the run recorded (ADR-0006); a run that predates that
+    record cannot be reprocessed from here and says so.
+
+    ponytail: the model version is whatever the worker loads; selecting one per run
+    needs the worker to take a checkpoint name, which no request has asked for.
     """
-    raise _pending("E2.2")
+    incident = session.get(Incident, case_id)
+    if incident is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"no case {case_id!r}")
+    run = session.get(ProcessingRun, incident.run_id)
+    clips = sorted(pathlib.Path(uri) for uri in (run.media_uris if run else {}).values())
+    if run is None or not clips or not all(c.is_file() for c in clips):
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"case {case_id!r}'s run recorded no footage that still exists; "
+            "submit the case again with POST /cases",
+        )
+    new_run, created = create_run(
+        session,
+        input_paths=clips,
+        dataset_version=body.dataset_version or run.dataset_version,
+        config_version=body.config_version,
+    )
+    session.commit()
+    dispatched = await enqueue_run(new_run.run_id, clips[0].parent.name) if created else True
+    return CreateCaseResponse(
+        run_id=new_run.run_id, status=new_run.status, created=created, dispatched=dispatched
+    )

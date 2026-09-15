@@ -1,8 +1,7 @@
 """API contract tests.
 
-These assert the *shape* of the API, not its behaviour — most endpoints are 501
-until their phase lands. The point is that the contract the frontend is built
-against in Week 4 cannot drift without a test failing.
+These assert the *shape* of the API, not its behaviour. The point is that the contract
+the frontend was built against in Week 4 cannot drift without a test failing.
 """
 
 from __future__ import annotations
@@ -33,12 +32,6 @@ def _no_database() -> object:
 
 app.dependency_overrides[get_session] = _no_database
 
-#: Endpoints still awaiting their phase. `POST /cases` left this list in E2.2, the
-#: timeline in E4.3 and the replay in E8.2.
-PENDING_ENDPOINTS = [
-    ("post", f"{PREFIX}/cases/abc/reprocess"),
-]
-
 
 def test_health_reports_the_frozen_schema_version() -> None:
     """Assert that health reports the frozen schema version."""
@@ -61,18 +54,6 @@ def test_metrics_declares_the_specification_metric_set() -> None:
         "unsupported_claim_rate",
     }
     assert required <= set(declared)
-
-
-@pytest.mark.parametrize(("method", "path"), PENDING_ENDPOINTS)
-def test_unimplemented_endpoints_return_501_not_404(method: str, path: str) -> None:
-    """Return 501 rather than 404 for endpoints whose phase has not landed.
-
-    501 means "this exists and is coming"; 404 would mean the contract is wrong. The
-    frontend treats 501 as "use the mock" and 404 as "you have the path wrong".
-    """
-    r = getattr(client, method)(path)
-    assert r.status_code == 501, f"{method.upper()} {path} returned {r.status_code}"
-    assert "ROADMAP" in r.json()["detail"]
 
 
 def test_create_case_validates_its_request_body() -> None:
@@ -165,7 +146,7 @@ def test_the_boundary_is_footage_and_changes() -> None:
         analyst.get(f"{PREFIX}/cases/x/media/CAM_A"),
         analyst.post(f"{PREFIX}/cases", json={}),
         analyst.patch(f"{PREFIX}/cases/x", json={"status": "resolved"}),
-        analyst.post(f"{PREFIX}/cases/x/reprocess"),
+        analyst.post(f"{PREFIX}/cases/x/reprocess", json={"config_version": "v0.2.0"}),
     ]
     assert [r.status_code for r in refused] == [403] * 4
     assert "investigator" in refused[0].json()["detail"]

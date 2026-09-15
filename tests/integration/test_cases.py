@@ -313,6 +313,43 @@ def test_replay_streams_recorded_footage_and_refuses_anything_else(
 
 @needs_db
 @pytest.mark.usefixtures("cases")
+def test_reprocessing_queues_the_same_footage_as_a_new_run_beside_the_old(
+    client: TestClient, session: Session, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A new config version is a new run; the same one is the existing run; no footage is a 409."""
+    clip = tmp_path / "case_x" / "CAM_A.mp4"
+    clip.parent.mkdir()
+    clip.write_bytes(b"\0" * 64)
+    sent: list[tuple[str, str]] = []
+
+    async def record(run_id: str, case_ref: str) -> bool:
+        sent.append((run_id, case_ref))
+        return True
+
+    monkeypatch.setattr(main, "enqueue_run", record)
+    run = session.get(ProcessingRun, RUN)
+    assert run is not None
+
+    assert (
+        client.post(f"{PREFIX}/cases/{ESTOP}/reprocess", json={"config_version": "v2"}).status_code
+        == 409
+    ), "the seeded run recorded no media"
+    run.media_uris = {"CAM_A": str(clip)}
+    session.flush()
+
+    first = client.post(f"{PREFIX}/cases/{ESTOP}/reprocess", json={"config_version": "v2"}).json()
+    assert first["created"] and first["dispatched"] and first["run_id"] != RUN
+    again = client.post(f"{PREFIX}/cases/{ESTOP}/reprocess", json={"config_version": "v2"}).json()
+    assert again["run_id"] == first["run_id"] and not again["created"]
+    assert sent == [(first["run_id"], "case_x")]
+    new_run = session.get(ProcessingRun, first["run_id"])
+    assert new_run is not None
+    assert (new_run.dataset_version, new_run.config_version) == (run.dataset_version, "v2")
+    assert session.get(ProcessingRun, RUN) is run, "the original run is untouched"
+
+
+@needs_db
+@pytest.mark.usefixtures("cases")
 def test_footage_is_the_analysts_boundary_and_every_read_is_logged(
     client: TestClient,
     session: Session,
