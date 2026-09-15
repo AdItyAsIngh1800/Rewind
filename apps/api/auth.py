@@ -8,24 +8,30 @@ through review, reprocesses them. There is no third role; the charter's non-goal
 out user management, and a second boundary nobody has asked for would be one more
 place for a permission bug to hide.
 
-Identity is HTTP Basic with users from ``REWIND_USERS`` (ADR-0009). The browser keeps
-the credentials and resends them on every same-origin request, which is what lets a
-``<video>`` element fetch footage with no token scheme in the URL. Nothing here reaches
-the database: the API connects to Postgres as its owner, so Row Level Security never
-saw these requests, and the check has to live in the process that serves them.
+Accounts come from ``REWIND_USERS`` (ADR-0009). Two ways to present them: HTTP Basic on
+the request, for ``curl`` and tests, and a session cookie issued by ``POST /session``
+from the same credentials, for the browser (ADR-0011). The cookie is what lets the UI
+have a login page and a sign-out while a ``<video>`` element, which cannot carry a
+header, still fetches footage: the browser sends the cookie on every same-origin
+request. Nothing here reaches the database: the API connects to Postgres as its owner,
+so Row Level Security never saw these requests, and the check has to live in the
+process that serves them.
 """
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 import os
 import secrets
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 
@@ -82,26 +88,85 @@ def configured_users(spec: str | None = None) -> dict[str, User]:
     return users
 
 
-_basic = HTTPBasic(realm="REWIND")
+_basic = HTTPBasic(realm="REWIND", auto_error=False)
 
 #: Compared against when the name is unknown, so a wrong name and a wrong password take
 #: the same time and a probe cannot enumerate accounts from the response latency.
 _DECOY = User(password="no such user", role=Role.ANALYST)
 
+SESSION_COOKIE = "rewind_session"
+SESSION_TTL_S = 12 * 60 * 60
+SECRET_VAR = "REWIND_SESSION_SECRET"
+#: Signs sessions when no secret is configured: sessions then end when the process
+#: does, and two API replicas would not honour each other's. Set the variable for both.
+_PROCESS_SECRET = secrets.token_bytes(32)
 
-def current_user(credentials: Annotated[HTTPBasicCredentials, Depends(_basic)]) -> Principal:
-    """Resolve the request's credentials to a principal, or challenge with 401."""
+
+def _secret() -> bytes:
+    return os.environ.get(SECRET_VAR, "").encode() or _PROCESS_SECRET
+
+
+def authenticate(name: str, password: str) -> Principal | None:
+    """Check a name and password against the accounts; None for anything but a match."""
     users = configured_users()
-    user = users.get(credentials.username, _DECOY)
-    genuine = credentials.username in users
-    matches = secrets.compare_digest(credentials.password.encode(), user.password.encode())
-    if not (genuine and matches):
+    user = users.get(name, _DECOY)
+    genuine = name in users
+    matches = secrets.compare_digest(password.encode(), user.password.encode())
+    return Principal(name=name, role=user.role) if genuine and matches else None
+
+
+def issue_session(user: Principal) -> str:
+    """Mint a signed, expiring session token for a principal.
+
+    ``name:role:expiry:signature``; names cannot contain ``:`` (the accounts format
+    forbids it), so the token splits unambiguously. HMAC over the first three fields
+    means the token can be checked without storing anything.
+    """
+    payload = f"{user.name}:{user.role.value}:{int(time.time()) + SESSION_TTL_S}"
+    signature = hmac.new(_secret(), payload.encode(), hashlib.sha256).hexdigest()
+    return f"{payload}:{signature}"
+
+
+def read_session(token: str) -> Principal | None:
+    """Return the principal a token names, or None if it is forged, expired or revoked.
+
+    Revoked means the account no longer exists with that role: removing a name from
+    ``REWIND_USERS`` ends its sessions at the next request, which is the only sign-out
+    an operator has.
+    """
+    try:
+        name, role, expiry, signature = token.split(":")
+        expected = hmac.new(_secret(), f"{name}:{role}:{expiry}".encode(), hashlib.sha256)
+        if not hmac.compare_digest(signature, expected.hexdigest()) or int(expiry) < time.time():
+            return None
+        user = configured_users().get(name)
+    except ValueError:
+        return None
+    if user is None or user.role.value != role:
+        return None
+    return Principal(name=name, role=user.role)
+
+
+def current_user(
+    credentials: Annotated[HTTPBasicCredentials | None, Depends(_basic)],
+    session: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None,
+) -> Principal:
+    """Resolve the request's session cookie or Basic credentials to a principal, or 401.
+
+    The 401 carries no ``WWW-Authenticate`` challenge on purpose: with one, the browser
+    would open its own password dialog over the UI's login page. ``curl -u`` sends
+    Basic without being challenged.
+    """
+    principal = read_session(session) if session else None
+    if principal is None and credentials is not None:
+        principal = authenticate(credentials.username, credentials.password)
+    if principal is None:
+        users = configured_users()
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             "sign in with a REWIND account" if users else f"no accounts: set {USERS_VAR}",
-            headers={"WWW-Authenticate": 'Basic realm="REWIND"'},
         )
-    return Principal(name=credentials.username, role=user.role)
+    return principal
 
 
 def current_investigator(user: Annotated[Principal, Depends(current_user)]) -> Principal:

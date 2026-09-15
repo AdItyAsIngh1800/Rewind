@@ -11,6 +11,7 @@ more useful than one that does not exist.
 
 from __future__ import annotations
 
+import logging
 import pathlib
 import time
 from collections.abc import Awaitable, Callable
@@ -23,7 +24,15 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from apps.api.auth import AnyUser, Investigator, log_evidence_access
+from apps.api.auth import (
+    SESSION_COOKIE,
+    SESSION_TTL_S,
+    AnyUser,
+    Investigator,
+    authenticate,
+    issue_session,
+    log_evidence_access,
+)
 from apps.api.queue import enqueue_run, queue_stats
 from apps.api.request_stats import requests as request_window
 from packages.database.models import Camera, Incident, ProcessingRun
@@ -57,6 +66,8 @@ from services.reporting import report_for_incident
 #: Where rendered case media lives. A case reference resolves to a directory here
 #: rather than to arbitrary caller-supplied paths, so the API cannot be pointed at
 #: files outside the dataset.
+log = logging.getLogger(__name__)
+
 SAMPLES = pathlib.Path("data/samples")
 
 API_VERSION = "0.1.0"
@@ -178,6 +189,45 @@ class Me(BaseModel):
 
     name: str
     role: str
+
+
+class Credentials(BaseModel):
+    """What the login page sends."""
+
+    name: str
+    password: str
+
+
+@app.post(f"{PREFIX}/session", response_model=Me, tags=["operations"])
+def open_session(body: Credentials, response: Response) -> Me:
+    """Sign the browser in: check the account and set the session cookie (ADR-0011).
+
+    ``HttpOnly`` so a script on the page cannot read it, ``SameSite=Lax`` so a
+    cross-site page cannot ride it; the UI's origin is expected to be TLS anywhere but
+    a laptop (`docs/10-security-and-privacy.md`), which is where the cookie's
+    confidentiality comes from, the same as Basic's.
+    """
+    user = authenticate(body.name, body.password)
+    if user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "wrong name or password")
+    response.set_cookie(
+        SESSION_COOKIE,
+        issue_session(user),
+        max_age=SESSION_TTL_S,
+        httponly=True,
+        samesite="lax",
+        path=PREFIX,
+    )
+    log.info("session opened for %s (%s)", user.name, user.role.value)
+    return Me(name=user.name, role=user.role.value)
+
+
+@app.delete(f"{PREFIX}/session", status_code=status.HTTP_204_NO_CONTENT, tags=["operations"])
+def close_session(response: Response) -> Response:
+    """Sign out: clear the cookie. The token itself stays valid until it expires."""
+    response.delete_cookie(SESSION_COOKIE, path=PREFIX)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 
 @app.get(f"{PREFIX}/me", response_model=Me, tags=["operations"])

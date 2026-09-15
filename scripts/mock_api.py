@@ -77,6 +77,17 @@ def health() -> dict[str, object]:
     }
 
 
+@app.post(f"{PREFIX}/session", tags=["operations"])
+def open_session() -> dict[str, str]:
+    """Accept any credentials; the mock has no accounts."""
+    return {"name": "mock", "role": "investigator"}
+
+
+@app.delete(f"{PREFIX}/session", status_code=204, tags=["operations"])
+def close_session() -> None:
+    """Nothing to clear."""
+
+
 @app.get(f"{PREFIX}/me", tags=["operations"])
 def me() -> dict[str, str]:
     """Sign everyone in as an investigator; the mock has no accounts to check."""

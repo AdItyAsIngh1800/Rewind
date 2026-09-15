@@ -236,6 +236,25 @@
         "title": "CreateCaseResponse",
         "type": "object"
       },
+      "Credentials": {
+        "description": "What the login page sends.",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "password": {
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "password"
+        ],
+        "title": "Credentials",
+        "type": "object"
+      },
       "EntityClass": {
         "description": "The four entity classes frozen in the charter. Not five.",
         "enum": [
@@ -1739,6 +1758,22 @@
               "title": "Limit",
               "type": "integer"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
+            }
           }
         ],
         "responses": {
@@ -1776,6 +1811,24 @@
       "post": {
         "description": "Create a processing run for a case, or return the run that already covers it.\n\nIdempotent by design. Submitting the same case, dataset and config twice returns\nthe first run rather than starting a second, which is what makes a redelivered\nmessage safe to handle.\n\nAfter the run is recorded a job is enqueued for the worker. Dispatch is\nbest-effort: if the queue is down the run still exists as QUEUED and the response\nsays so, rather than the request failing after the run was already written.",
         "operationId": "create_case_api_v1_cases_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1834,6 +1887,22 @@
               "title": "Case Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
+            }
           }
         ],
         "responses": {
@@ -1881,6 +1950,22 @@
               "description": "Case (incident) identifier",
               "title": "Case Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
             }
           }
         ],
@@ -1942,6 +2027,22 @@
               "title": "Case Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
+            }
           }
         ],
         "responses": {
@@ -2001,6 +2102,22 @@
               "title": "Camera Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
+            }
           }
         ],
         "responses": {
@@ -2043,6 +2160,22 @@
               "description": "Case (incident) identifier",
               "title": "Case Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
             }
           }
         ],
@@ -2094,6 +2227,22 @@
               "title": "Case Id",
               "type": "string"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
+            }
           }
         ],
         "responses": {
@@ -2143,6 +2292,22 @@
               "description": "Case (incident) identifier",
               "title": "Case Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
             }
           }
         ],
@@ -2240,6 +2405,22 @@
               "description": "Window end, seconds",
               "title": "End S"
             }
+          },
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
+            }
           }
         ],
         "responses": {
@@ -2301,6 +2482,24 @@
       "get": {
         "description": "Return the caller's name and role, so the UI can show who is signed in.\n\nAlso how the UI learns whether to offer footage at all: an analyst gets a pane\nsaying footage is restricted rather than a broken player, since a ``<video>``\nelement cannot read the 403 it would otherwise receive.",
         "operationId": "me_api_v1_me_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -2311,6 +2510,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
@@ -2328,6 +2537,24 @@
       "get": {
         "description": "Return operational metrics: the queue from Redis, the rest from stored pipeline output.",
         "operationId": "metrics_api_v1_metrics_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -2338,6 +2565,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [
@@ -2366,6 +2603,22 @@
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
             }
           }
         ],
@@ -2402,10 +2655,83 @@
         ]
       }
     },
+    "/api/v1/session": {
+      "delete": {
+        "description": "Sign out: clear the cookie. The token itself stays valid until it expires.",
+        "operationId": "close_session_api_v1_session_delete",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Close Session",
+        "tags": [
+          "operations"
+        ]
+      },
+      "post": {
+        "description": "Sign the browser in: check the account and set the session cookie (ADR-0011).\n\n``HttpOnly`` so a script on the page cannot read it, ``SameSite=Lax`` so a\ncross-site page cannot ride it; the UI's origin is expected to be TLS anywhere but\na laptop (`docs/10-security-and-privacy.md`), which is where the cookie's\nconfidentiality comes from, the same as Basic's.",
+        "operationId": "open_session_api_v1_session_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Credentials"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Open Session",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
     "/api/v1/sources": {
       "get": {
         "description": "List the footage that can be processed, so the inbox can offer it by name.\n\nNot in specification \u00a7F, whose verification script (roadmap Part 6) nevertheless\nstarts with \"create a case, entirely through the browser\". A run knows its footage\nby the paths it recorded (ADR-0006), which is how each source finds its latest run.\n\nponytail: scans every run's media paths; index the case directory on the run if the\nrun table ever grows past a few thousand rows.",
         "operationId": "list_sources_api_v1_sources_get",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "rewind_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rewind Session"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -2420,6 +2746,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [

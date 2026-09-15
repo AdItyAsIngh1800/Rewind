@@ -117,6 +117,7 @@ def test_openapi_covers_every_specification_endpoint() -> None:
         f"{PREFIX}/cases/{{case_id}}/reprocess",
         f"{PREFIX}/health",
         f"{PREFIX}/me",
+        f"{PREFIX}/session",
         f"{PREFIX}/metrics",
         f"{PREFIX}/runs",
         f"{PREFIX}/sources",
@@ -135,7 +136,7 @@ def test_every_endpoint_but_health_needs_an_account() -> None:
     for path in (f"{PREFIX}/me", f"{PREFIX}/metrics", f"{PREFIX}/runs", f"{PREFIX}/cases/x"):
         r = anonymous.get(path)
         assert r.status_code == 401, path
-        assert r.headers["www-authenticate"].startswith("Basic")
+        assert "www-authenticate" not in r.headers, "no browser dialog over the login page"
 
 
 def test_the_boundary_is_footage_and_changes() -> None:
@@ -151,3 +152,20 @@ def test_the_boundary_is_footage_and_changes() -> None:
     ]
     assert [r.status_code for r in refused] == [403] * 4
     assert "investigator" in refused[0].json()["detail"]
+
+
+def test_the_login_page_signs_in_with_a_cookie_and_signs_out() -> None:
+    """Assert a session cookie carries the same identity as Basic, and clearing it ends access."""
+    browser = TestClient(app)
+    assert (
+        browser.post(f"{PREFIX}/session", json={"name": "analyst", "password": "wrong"}).status_code
+        == 401
+    )
+    r = browser.post(f"{PREFIX}/session", json={"name": "analyst", "password": "secret"})
+    assert r.status_code == 200 and r.json() == {"name": "analyst", "role": "analyst"}
+    cookie = r.headers["set-cookie"]
+    assert "rewind_session=" in cookie and "HttpOnly" in cookie and "SameSite=lax" in cookie
+    assert browser.get(f"{PREFIX}/me").json()["role"] == "analyst", "the cookie authorises"
+    assert browser.get(f"{PREFIX}/cases/x/media/CAM_A").status_code == 403, "and carries the role"
+    assert browser.delete(f"{PREFIX}/session").status_code == 204
+    assert browser.get(f"{PREFIX}/me").status_code == 401
