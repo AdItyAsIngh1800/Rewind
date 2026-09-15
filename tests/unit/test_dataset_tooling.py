@@ -227,4 +227,6 @@ def test_golden_cases_are_held_out() -> None:
     """
     golden = {case for case, split in SPLITS.items() if split == "golden"}
     assert golden == {"case_02", "case_06"}
-    assert sum(1 for s in SPLITS.values() if s == "tune") == 4
+    # Five tune cases since case_07 (EXP-0013). What is asserted is the golden pair,
+    # not the count beside it: cases may be added, never promoted into the pair.
+    assert sum(1 for s in SPLITS.values() if s == "tune") == len(SPLITS) - 2

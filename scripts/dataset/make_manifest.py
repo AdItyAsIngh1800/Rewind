@@ -37,6 +37,8 @@ SPLITS: dict[str, str] = {
     "case_04": "tune",
     "case_05": "tune",
     "case_06": "golden",
+    # Added after the golden run (EXP-0013); a tune case, never golden.
+    "case_07": "tune",
 }
 
 #: Provenance for the whole dataset. Simulated footage has no third-party licence and
@@ -62,7 +64,9 @@ def describe_case(directory: pathlib.Path) -> dict[str, Any]:
     """Describe one case directory: its files, their hashes and its split."""
     files = []
     for path in sorted(directory.rglob("*")):
-        if not path.is_file():
+        # macOS leaves AppleDouble `._` files beside the real ones on some copies; a
+        # manifest that records one makes every other clone fail verification.
+        if not path.is_file() or path.name.startswith("."):
             continue
         files.append(
             {

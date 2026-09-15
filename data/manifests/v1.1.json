@@ -1,0 +1,366 @@
+{
+  "case_count": 7,
+  "cases": [
+    {
+      "case": "case_01",
+      "file_count": 8,
+      "files": [
+        {
+          "bytes": 1763842,
+          "path": "case_01/CAM_A.mp4",
+          "sha256": "32e25d2628eb457123ba2944a4e447a7d73501ba6331df25289b6522daa431e0"
+        },
+        {
+          "bytes": 1793482,
+          "path": "case_01/CAM_B.mp4",
+          "sha256": "6cdd41ee855a3947d1fb83828d4f5ff71532d49ddbcbfe37eca6e5330e840a3c"
+        },
+        {
+          "bytes": 2078758,
+          "path": "case_01/CAM_C.mp4",
+          "sha256": "5bd93f2888ef7d36b45bb2f090ec3ddd59190d01610aecaf4d23325866f92b3a"
+        },
+        {
+          "bytes": 119,
+          "path": "case_01/cause_gt.json",
+          "sha256": "2e3de6639942307c4c2f9b198a889fc10e679905085a00d8ecb6c5963aabb42f"
+        },
+        {
+          "bytes": 3119,
+          "path": "case_01/events_gt.json",
+          "sha256": "4300a72cbb18c6e60c6097b1c58b075fd28931714e162ff08e435a84cebdc807"
+        },
+        {
+          "bytes": 52,
+          "path": "case_01/gaps_gt.json",
+          "sha256": "7779368692c48a5a13bbcf0e43d6d31523f43621a43e138668812fc51fd4103c"
+        },
+        {
+          "bytes": 135,
+          "path": "case_01/identities_gt.json",
+          "sha256": "0c86b889bdd46f2adfa36d2d6ed6f3daf9ef5ce4c5b8bcf1e89ccdcb4f190da7"
+        },
+        {
+          "bytes": 921213,
+          "path": "case_01/observations_gt.json",
+          "sha256": "b43dc33b410d60248888da22e0ac9a9b111ff4387b73d3d5e606bb59a2454125"
+        }
+      ],
+      "split": "tune",
+      "total_bytes": 6560720
+    },
+    {
+      "case": "case_02",
+      "file_count": 8,
+      "files": [
+        {
+          "bytes": 1798962,
+          "path": "case_02/CAM_A.mp4",
+          "sha256": "06a8a7cca2efd6df13ff7dc37eb51bcfad942f7be6f5f9fcb6045d00652ab65d"
+        },
+        {
+          "bytes": 1752052,
+          "path": "case_02/CAM_B.mp4",
+          "sha256": "12194ebca22090444e51ee71b64d41eae7df69a4c3301c95fcd6661b23493f52"
+        },
+        {
+          "bytes": 2023207,
+          "path": "case_02/CAM_C.mp4",
+          "sha256": "bc80e43020ea45ada8b85d87901810b68e0090327b5799906be146513ce7c462"
+        },
+        {
+          "bytes": 151,
+          "path": "case_02/cause_gt.json",
+          "sha256": "10d28c2a70e241cc0a5b34b8ab2b52b409348d5ba9e4b1c873fd5e91025390d9"
+        },
+        {
+          "bytes": 3416,
+          "path": "case_02/events_gt.json",
+          "sha256": "4ce23b3885e8566cfd339ea6e98fd8afb6ed958de0972c326cbdf73b5b2dcc55"
+        },
+        {
+          "bytes": 173,
+          "path": "case_02/gaps_gt.json",
+          "sha256": "5e82c3c50762a4ad8a27cb5bbb50432c67ba9d249fa85384ba8fde085f816c30"
+        },
+        {
+          "bytes": 201,
+          "path": "case_02/identities_gt.json",
+          "sha256": "321e58a37c091fa087737fab347a213a7ccf463047f6abd014cfe001d3395da8"
+        },
+        {
+          "bytes": 824633,
+          "path": "case_02/observations_gt.json",
+          "sha256": "9d590e815dda9a660aa2370940a041e7b4ce5b4622f8a6e5b74cd9e9f32cd76d"
+        }
+      ],
+      "split": "golden",
+      "total_bytes": 6402795
+    },
+    {
+      "case": "case_03",
+      "file_count": 8,
+      "files": [
+        {
+          "bytes": 1798003,
+          "path": "case_03/CAM_A.mp4",
+          "sha256": "4f1963e10b84ada9c8a0e30e02d2b21544e2ccca5b9808a5d85b3f46bfa140ee"
+        },
+        {
+          "bytes": 1850075,
+          "path": "case_03/CAM_B.mp4",
+          "sha256": "93ad5b74fe5a5ff8b18f75ab2e469e35d052c963355a4445ce985a46eb25b812"
+        },
+        {
+          "bytes": 2032797,
+          "path": "case_03/CAM_C.mp4",
+          "sha256": "30d0803a1b42f9c385b3d6d224477a6b0240cf67e50cd5d9b3f6dfe5bf0b0586"
+        },
+        {
+          "bytes": 127,
+          "path": "case_03/cause_gt.json",
+          "sha256": "35ea65002c286cb03d848c2e4040dbadbc085d4eac7c0eece1007ab3d1480717"
+        },
+        {
+          "bytes": 2813,
+          "path": "case_03/events_gt.json",
+          "sha256": "20ba06691dc658ebdf08905fa864262281f76165b575c548add98ccebf7a4069"
+        },
+        {
+          "bytes": 3,
+          "path": "case_03/gaps_gt.json",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        },
+        {
+          "bytes": 201,
+          "path": "case_03/identities_gt.json",
+          "sha256": "63425be6edcecbaa64b087fe00deea3cf23eb4c12ddda41fc6927a740ca7d3db"
+        },
+        {
+          "bytes": 1097187,
+          "path": "case_03/observations_gt.json",
+          "sha256": "114d97aa61caf3f361adeda06fd95d6b5c5c8cea5de754a55aa43bb25a347aff"
+        }
+      ],
+      "split": "tune",
+      "total_bytes": 6781206
+    },
+    {
+      "case": "case_04",
+      "file_count": 8,
+      "files": [
+        {
+          "bytes": 1785140,
+          "path": "case_04/CAM_A.mp4",
+          "sha256": "1a8fc055516d86592b78801ba6b4934f9d9545462d41327810d23f3320f5229f"
+        },
+        {
+          "bytes": 1817094,
+          "path": "case_04/CAM_B.mp4",
+          "sha256": "1152ed9ec8cb442b8365f27e21fac67a07c73fdc02547aa8a63abf9f5416d32c"
+        },
+        {
+          "bytes": 2066227,
+          "path": "case_04/CAM_C.mp4",
+          "sha256": "5b7d44aa60328f477aa94f7425ea7508ce4e216c324d90ee729494d86e522221"
+        },
+        {
+          "bytes": 114,
+          "path": "case_04/cause_gt.json",
+          "sha256": "c9ff539b21583079d3dc9d554a91f88b358109f6d52196ce962ae71abd2fb4d8"
+        },
+        {
+          "bytes": 5149,
+          "path": "case_04/events_gt.json",
+          "sha256": "79d696db16d899a2e00b867335291ca985ef9f43d59dd3803c0429e0e7cd9c7a"
+        },
+        {
+          "bytes": 138,
+          "path": "case_04/gaps_gt.json",
+          "sha256": "cec139201d255661f0d5906d0a563580cf751750dc0460cfffe749f3eed28351"
+        },
+        {
+          "bytes": 135,
+          "path": "case_04/identities_gt.json",
+          "sha256": "1f8a265cfc7315e8923e33ed26c340274b2880036a8dc3afe0842e8e807bca67"
+        },
+        {
+          "bytes": 607470,
+          "path": "case_04/observations_gt.json",
+          "sha256": "6ca91f7f3a1ae739723c7ef2c855c6efc9fdd50a6e74f9315430bbeae012951a"
+        }
+      ],
+      "split": "tune",
+      "total_bytes": 6281467
+    },
+    {
+      "case": "case_05",
+      "file_count": 8,
+      "files": [
+        {
+          "bytes": 1758631,
+          "path": "case_05/CAM_A.mp4",
+          "sha256": "5995d4f2d9045cbcb7f16a2b27de0adc9aadffb29a30b4aa9675cf6f2c40baf0"
+        },
+        {
+          "bytes": 1784380,
+          "path": "case_05/CAM_B.mp4",
+          "sha256": "59ab536ebdeac5ca33cb90657df13c8800ccca95255822a4988fdf667bc712d3"
+        },
+        {
+          "bytes": 2027949,
+          "path": "case_05/CAM_C.mp4",
+          "sha256": "8c683ec592c25b22510ab6424758175383ede8db75dd931d3de8d329d448fa45"
+        },
+        {
+          "bytes": 46,
+          "path": "case_05/cause_gt.json",
+          "sha256": "7ceb0dec2592ad63807e6419ec4d521957eb2ce396fb27d85bf0f97980fbb14e"
+        },
+        {
+          "bytes": 1820,
+          "path": "case_05/events_gt.json",
+          "sha256": "1bca886b7562d43cbffdcdb3237c60e149a4496beed2a211e47e7dad1a70d0e7"
+        },
+        {
+          "bytes": 88,
+          "path": "case_05/gaps_gt.json",
+          "sha256": "e56bb4bb88254dd2a0b3b775fffd43e0eefd6aaf79feef1ad5f2db2e9efa346d"
+        },
+        {
+          "bytes": 135,
+          "path": "case_05/identities_gt.json",
+          "sha256": "0c86b889bdd46f2adfa36d2d6ed6f3daf9ef5ce4c5b8bcf1e89ccdcb4f190da7"
+        },
+        {
+          "bytes": 635735,
+          "path": "case_05/observations_gt.json",
+          "sha256": "0ec9d3d2c1b34e2f614a5501f1164fc21fdafbeb99cd8417a9017663f8b3db4e"
+        }
+      ],
+      "split": "tune",
+      "total_bytes": 6208784
+    },
+    {
+      "case": "case_06",
+      "file_count": 8,
+      "files": [
+        {
+          "bytes": 1822618,
+          "path": "case_06/CAM_A.mp4",
+          "sha256": "4c6f40e9ab5d98736a95c16061c4caedc34843c81925d051e56c1907f004f3f3"
+        },
+        {
+          "bytes": 1842353,
+          "path": "case_06/CAM_B.mp4",
+          "sha256": "cabe60716e550e0ef0deaf58f40378b188dfe22224cdadb6511d2bcc3b992343"
+        },
+        {
+          "bytes": 2091947,
+          "path": "case_06/CAM_C.mp4",
+          "sha256": "6a71c84c2151b1d645403339249fbdd12195a08ed499a6db9db1ea5064131d71"
+        },
+        {
+          "bytes": 110,
+          "path": "case_06/cause_gt.json",
+          "sha256": "e114e53d0ac9c234294485859126067cbaf9081a5a14b00191ea1dade50e49be"
+        },
+        {
+          "bytes": 6069,
+          "path": "case_06/events_gt.json",
+          "sha256": "f5c12c504bd7a798bc7719f7c3369ded15ebfb2442c1a0313b56424fbfdc52b7"
+        },
+        {
+          "bytes": 138,
+          "path": "case_06/gaps_gt.json",
+          "sha256": "6a60a2d065c1c586fd37eb9689ee6a798e27f5b446f9a47188f065e041d60a82"
+        },
+        {
+          "bytes": 201,
+          "path": "case_06/identities_gt.json",
+          "sha256": "677d2fbad117664c9b904c9321d6f7f3ebc307d35c73b78f0fd98927dec0d339"
+        },
+        {
+          "bytes": 893396,
+          "path": "case_06/observations_gt.json",
+          "sha256": "379f7642adf4756aeed4936587c703e95b61b26b7a1694a092fa42181aedd8ba"
+        }
+      ],
+      "split": "golden",
+      "total_bytes": 6656832
+    },
+    {
+      "case": "case_07",
+      "file_count": 8,
+      "files": [
+        {
+          "bytes": 1790342,
+          "path": "case_07/CAM_A.mp4",
+          "sha256": "edfafeaf4db802b6a5715473db9162122c82847293ac7ee001dfad67cebd2cfd"
+        },
+        {
+          "bytes": 1787809,
+          "path": "case_07/CAM_B.mp4",
+          "sha256": "841f10ae5a6c243248da040003b26f4dcfb3d2172db5f7bea6e0b194a0c9ea97"
+        },
+        {
+          "bytes": 2067315,
+          "path": "case_07/CAM_C.mp4",
+          "sha256": "e918701af1b3a6d1bfb2a04696cc63ec9fd12e6c72df92ab82da9bc0abb8eb33"
+        },
+        {
+          "bytes": 114,
+          "path": "case_07/cause_gt.json",
+          "sha256": "bd758f322938cbdcbf32f5a8f54b0875dd5bbe335cf165b9ade1d13d3c628027"
+        },
+        {
+          "bytes": 4239,
+          "path": "case_07/events_gt.json",
+          "sha256": "eb27b94179e11385893ae10a95db46faab6df4637d9a525b8775e1315de5f498"
+        },
+        {
+          "bytes": 102,
+          "path": "case_07/gaps_gt.json",
+          "sha256": "fc8069b5a79eda6ff69477e39c8b43e41a6ff097c2a08e87f0b1fa40e7cf11ba"
+        },
+        {
+          "bytes": 135,
+          "path": "case_07/identities_gt.json",
+          "sha256": "c41f01d7c43ca4a79c8ccd44d19c55366f527494db2b53d4ecfbde5d1bf5976c"
+        },
+        {
+          "bytes": 776319,
+          "path": "case_07/observations_gt.json",
+          "sha256": "8cd7ebdb61fd58a8396057fac3127bd8e00cac0ccee5779e20b2a19ff4384384"
+        }
+      ],
+      "split": "tune",
+      "total_bytes": 6426375
+    }
+  ],
+  "dataset_version": "v1.1",
+  "generated_at": "2026-09-15T15:40:56.198001+00:00",
+  "provenance": {
+    "consent_required": "no",
+    "contains_real_people": "no",
+    "licence": "CC0-1.0 (original work, no third-party footage)",
+    "source": "Simulated in Blender from docs/dataset/scene-spec.md"
+  },
+  "scene_spec": "docs/dataset/scene-spec.md",
+  "split_policy": {
+    "golden": [
+      "case_02",
+      "case_06"
+    ],
+    "rule": "No golden-case frame may appear in any training or validation split. Asserted on case ids, never checked by eye.",
+    "tune": [
+      "case_01",
+      "case_03",
+      "case_04",
+      "case_05",
+      "case_07"
+    ]
+  },
+  "total_bytes": 45318179,
+  "warnings": []
+}
