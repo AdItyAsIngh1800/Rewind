@@ -8,7 +8,7 @@ putting the system in front of anyone but yourself.
 | No face recognition | Charter §4 non-goal. The detector classifies four object classes; no model here embeds or matches faces, and the report says so on every copy. |
 | Only legally usable video | The dataset is entirely simulated (`docs/dataset/`, risk R11). Any real footage is the operator's responsibility to have the right to process. |
 | Raw video separated from derived metadata | §1 below: the `analyst` role never receives a frame. |
-| Role-based access before multi-user deployment | §1: two roles, a login page on a session cookie or HTTP Basic, `ADR-0009`, `ADR-0011`. |
+| Role-based access before multi-user deployment | §1: two roles, a login page on a session cookie or HTTP Basic, accounts from `REWIND_USERS` or Supabase Auth; `ADR-0009`, `ADR-0011`, `ADR-0012`. |
 | Access to sensitive evidence logged | §2: an append-only audit table and a structured log event. |
 | Retention and deletion rules | §3. |
 | Not an autonomous adjudicator | README "Responsible use", and the closing sentence of every report's limitations. |
@@ -43,6 +43,27 @@ reachable by anyone else. The API refuses to start with no accounts configured.
 twelve hours; **Sign out** in the header clears it. The same accounts work as HTTP
 Basic for `curl` and scripts (`-u name:password`). Removing an account from
 `REWIND_USERS`, or changing its role, ends its sessions at the next request.
+
+**Supabase accounts.** Where `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set, a
+Supabase Auth account signs in at the same form with its email (`ADR-0012`).
+`REWIND_USERS` is tried first, so a local account is the way in when Supabase is
+unreachable and cannot be shadowed. The role is read from the account's
+`app_metadata.rewind_role` in Supabase — server-set, never the account holder's own
+`user_metadata` — and anything but `investigator` is an `analyst`, so a misconfigured
+account reads derived metadata and never footage:
+
+```sql
+-- in Supabase: grant an account the footage side of the boundary
+update auth.users
+   set raw_app_meta_data = raw_app_meta_data || '{"rewind_role":"investigator"}'
+ where email = 'ivo@example.com';
+```
+
+Supabase sign-in is the login page only, never HTTP Basic: a password grant is a
+round-trip to GoTrue, and on the per-request path each `<video>` range request would
+make one. A Supabase session is not ended by `REWIND_USERS`, which never held the
+name — delete the account in Supabase to stop the next sign-in, and rotate
+`REWIND_SESSION_SECRET` to end every outstanding session at once.
 `REWIND_SESSION_SECRET` signs the cookies; leave it unset for one API process (a
 restart then signs everyone out), set it when running more than one.
 
