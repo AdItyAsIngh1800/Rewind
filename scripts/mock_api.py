@@ -77,6 +77,12 @@ def health() -> dict[str, object]:
     }
 
 
+@app.get(f"{PREFIX}/me", tags=["operations"])
+def me() -> dict[str, str]:
+    """Sign everyone in as an investigator; the mock has no accounts to check."""
+    return {"name": "mock", "role": "investigator"}
+
+
 @app.get(f"{PREFIX}/metrics", tags=["operations"])
 def metrics() -> dict[str, object]:
     """Return plausible metrics so the System Health screen has shape.

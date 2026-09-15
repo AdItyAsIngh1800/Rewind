@@ -27,6 +27,7 @@ from apps.api.main import app
 from packages.database.models import Camera, ProcessingRun
 from packages.database.session import get_session
 from packages.schemas import RunStatus
+from tests.accounts import INVESTIGATOR
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
@@ -76,7 +77,7 @@ def client(session: Session) -> Iterator[TestClient]:
     previous = app.dependency_overrides.get(get_session)
     app.dependency_overrides[get_session] = lambda: session
     try:
-        yield TestClient(app)
+        yield TestClient(app, headers=INVESTIGATOR)
     finally:
         if previous is None:
             app.dependency_overrides.pop(get_session, None)

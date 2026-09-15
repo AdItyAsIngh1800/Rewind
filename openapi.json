@@ -713,6 +713,25 @@
         "title": "LinkDecision",
         "type": "string"
       },
+      "Me": {
+        "description": "Who the API takes the caller to be.",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "role"
+        ],
+        "title": "Me",
+        "type": "object"
+      },
       "Metrics": {
         "description": "The metric set from specification \u00a7N, measured wherever the system can measure it.\n\n``None`` means not measured, never zero. A zero queue or a zero unsupported-claim\nrate reads as \"idle and healthy\", a claim the API could not back. Queue and worker\nvalues are ``None`` while Redis is unreachable or no worker has reported; throughput\nand memory while no completed run has recorded them (ADR-0008); API latency and\nerrors while this process has served nothing in the last five minutes. The\nID-switch rate is always ``None``: it needs ground truth.",
         "properties": {
@@ -1587,6 +1606,12 @@
         "title": "ValidationError",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "HTTPBasic": {
+        "scheme": "basic",
+        "type": "http"
+      }
     }
   },
   "info": {
@@ -1669,6 +1694,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "List Cases",
         "tags": [
           "cases"
@@ -1709,6 +1739,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "Create Case",
         "tags": [
           "cases"
@@ -1754,13 +1789,18 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "Get Case",
         "tags": [
           "cases"
         ]
       },
       "patch": {
-        "description": "Move a case through review: investigating, resolved, or dismissed as a false alert.\n\nOnly the status changes. The window, the evidence graph and the report are evidence\nand stay as issued; a dismissal is the investigator's judgement recorded beside them,\nnot an edit to them. Unauthenticated, like every endpoint, until E10.3 adds the role\nboundary.",
+        "description": "Move a case through review: investigating, resolved, or dismissed as a false alert.\n\nOnly the status changes. The window, the evidence graph and the report are evidence\nand stay as issued; a dismissal is the investigator's judgement recorded beside them,\nnot an edit to them. Investigators only: a dismissal changes what the inbox shows.",
         "operationId": "update_case_status_api_v1_cases__case_id__patch",
         "parameters": [
           {
@@ -1807,6 +1847,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "Update Case Status",
         "tags": [
           "cases"
@@ -1852,6 +1897,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "Get Evidence",
         "tags": [
           "cases"
@@ -1860,7 +1910,7 @@
     },
     "/api/v1/cases/{case_id}/media/{camera_id}": {
       "get": {
-        "description": "Stream one camera's clip for a case, with range support so the browser can seek.\n\nThe one route raw footage leaves by (ADR-0006). The path comes from the run's record,\nnever from the request, and must resolve inside the samples root: a recorded path\nanywhere else is refused, as is one whose file is gone. Both are a 404 so a probe\nlearns nothing about the filesystem. E10.3 adds the role check and the evidence\naccess log here, and nowhere else has to change.",
+        "description": "Stream one camera's clip for a case, with range support so the browser can seek.\n\nThe one route raw footage leaves by (ADR-0006). The path comes from the run's record,\nnever from the request, and must resolve inside the samples root: a recorded path\nanywhere else is refused, as is one whose file is gone. Both are a 404 so a probe\nlearns nothing about the filesystem. Investigators only, and every read is logged\n(spec \u00a7M): this is the raw-video side of the role boundary.",
         "operationId": "get_media_api_v1_cases__case_id__media__camera_id__get",
         "parameters": [
           {
@@ -1899,6 +1949,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "Get Media",
         "tags": [
           "cases"
@@ -1944,6 +1999,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "Get Replay",
         "tags": [
           "cases"
@@ -1989,6 +2049,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "Get Report",
         "tags": [
           "cases"
@@ -2036,6 +2101,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "Reprocess Case",
         "tags": [
           "cases"
@@ -2117,6 +2187,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "Get Timeline",
         "tags": [
           "cases"
@@ -2145,6 +2220,33 @@
         ]
       }
     },
+    "/api/v1/me": {
+      "get": {
+        "description": "Return the caller's name and role, so the UI can show who is signed in.\n\nAlso how the UI learns whether to offer footage at all: an analyst gets a pane\nsaying footage is restricted rather than a broken player, since a ``<video>``\nelement cannot read the 403 it would otherwise receive.",
+        "operationId": "me_api_v1_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
+        "summary": "Me",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
     "/api/v1/metrics": {
       "get": {
         "description": "Return operational metrics: the queue from Redis, the rest from stored pipeline output.",
@@ -2161,6 +2263,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "Metrics",
         "tags": [
           "operations"
@@ -2207,6 +2314,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBasic": []
+          }
+        ],
         "summary": "List Runs",
         "tags": [
           "operations"

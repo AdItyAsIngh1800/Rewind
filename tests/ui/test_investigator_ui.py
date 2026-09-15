@@ -7,7 +7,7 @@ skip unless both are up and ``agent-browser`` is installed; CI has neither the v
 the servers.
 
     make api; make web          # or any UI serving C01 at REWIND_UI_URL
-    make ui-check
+    make ui-check               # signs in as REWIND_UI_USER / REWIND_UI_PASSWORD
 
 Expected seek times are computed from the API with the UI's own rule (``refTime`` in
 ``apps/web/src/lib/evidence.ts``): an event's stamp, a node's stamp or the start of its
@@ -17,6 +17,7 @@ hard-coded the times would pass against a UI and API that agreed on the wrong an
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 import shutil
@@ -33,11 +34,16 @@ UI = os.environ.get("REWIND_UI_URL", "http://localhost:5199")
 API = os.environ.get("REWIND_API_URL", "http://localhost:8000/api/v1")
 CASE = os.environ.get("REWIND_UI_CASE", "INC-RUN-case_01-01")
 SESSION = "rewind-ui-check"
+#: An investigator: the checks scrub footage, which the analyst role cannot see.
+USER = os.environ.get("REWIND_UI_USER", "investigator")
+PASSWORD = os.environ.get("REWIND_UI_PASSWORD", "rewind")
 
 
 def _get(path: str) -> Any:
-    """Fetch one API resource as JSON."""
-    with urllib.request.urlopen(f"{API}{path}", timeout=5) as response:
+    """Fetch one API resource as JSON, signed in as the investigator."""
+    token = base64.b64encode(f"{USER}:{PASSWORD}".encode()).decode()
+    request = urllib.request.Request(f"{API}{path}", headers={"Authorization": f"Basic {token}"})
+    with urllib.request.urlopen(request, timeout=5) as response:
         return json.load(response)
 
 
@@ -114,7 +120,8 @@ class Case:
 
 @pytest.fixture(scope="module")
 def case() -> Iterator[Case]:
-    """Load the case data once, and close the browser session after the module."""
+    """Load the case data once, sign the browser in, and close its session after the module."""
+    ab("set", "credentials", USER, PASSWORD)
     yield Case()
     subprocess.run(
         ["agent-browser", "--session", SESSION, "close"], capture_output=True, check=False

@@ -29,6 +29,16 @@ def test_json_format_renders_level_logger_timestamp_and_the_formatted_message(
     assert second["level"] == "error" and "ValueError: boom" in second["exception"]
 
 
+def test_json_format_carries_extra_fields_as_keys(capsys: pytest.CaptureFixture[str]) -> None:
+    """The evidence access log's user and case must be filterable, not buried in the text."""
+    configure_logging(fmt="json")
+    logging.getLogger("rewind.test").info(
+        "evidence access", extra={"user": "ana", "case_id": "INC-1"}
+    )
+    line = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert (line["user"], line["case_id"]) == ("ana", "INC-1")
+
+
 def test_json_format_takes_over_a_server_that_installed_its_own_handler(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

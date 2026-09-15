@@ -7,12 +7,13 @@ from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from apps.api import main
 from apps.api.main import PREFIX
 from apps.api.request_stats import requests as request_window
-from packages.database.models import Camera, ProcessingRun
+from packages.database.models import Camera, EvidenceAccessLog, ProcessingRun
 from packages.database.models import Incident as IncidentRow
 from packages.schemas import (
     SCHEMA_VERSION,
@@ -30,6 +31,7 @@ from services.incidents import incident_to_contract, write_incidents
 from services.reasoning.hypotheses import rank_hypotheses
 from services.reasoning.persistence import write_hypotheses
 from services.reporting import generate_report, write_report
+from tests.accounts import ANALYST
 from tests.integration.conftest import needs_db
 
 RUN = "run-cases-test"
@@ -307,3 +309,48 @@ def test_replay_streams_recorded_footage_and_refuses_anything_else(
     assert part.status_code == 206 and part.content == clip.read_bytes()[:100]
     assert client.get(f"{PREFIX}/cases/{ESTOP}/media/CAM_B").status_code == 404, "outside samples"
     assert client.get(f"{PREFIX}/cases/{ESTOP}/media/CAM_Z").status_code == 404, "not recorded"
+
+
+@needs_db
+@pytest.mark.usefixtures("cases")
+def test_footage_is_the_analysts_boundary_and_every_read_is_logged(
+    client: TestClient,
+    session: Session,
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Assert an analyst reads the report and graph but not the clip, and each read is logged.
+
+    The log is what spec §M asks for: who read which evidence. It names the account and
+    the camera, so a review of the stream can answer "who watched CAM_A of this case".
+    """
+    clip = tmp_path / "case_x" / "CAM_A.mp4"
+    clip.parent.mkdir()
+    clip.write_bytes(b"\0" * 64)
+    monkeypatch.setattr(main, "SAMPLES", tmp_path)
+    run = session.get(ProcessingRun, RUN)
+    assert run is not None
+    run.media_uris = {"CAM_A": str(clip)}
+    session.flush()
+    _issue_report(session)
+
+    with caplog.at_level("INFO", logger="apps.api.auth"):
+        assert client.get(f"{PREFIX}/cases/{ESTOP}/report", headers=ANALYST).status_code == 200
+        assert client.get(f"{PREFIX}/cases/{ESTOP}/evidence", headers=ANALYST).status_code == 200
+        assert client.get(f"{PREFIX}/cases/{ESTOP}/media/CAM_A", headers=ANALYST).status_code == 403
+        assert client.get(f"{PREFIX}/cases/{ESTOP}/media/CAM_A").status_code == 200
+    access = [r for r in caplog.records if getattr(r, "action", None) == "evidence.access"]
+    assert [(r.user, r.resource) for r in access] == [  # type: ignore[attr-defined]
+        ("analyst", "report"),
+        ("analyst", "evidence"),
+        ("investigator", "footage"),
+    ]
+    assert access[-1].camera_id == "CAM_A"  # type: ignore[attr-defined]
+    assert f"read footage of case {ESTOP} camera_id=CAM_A" in access[-1].getMessage()
+    rows = session.scalars(select(EvidenceAccessLog).order_by(EvidenceAccessLog.accessed_at)).all()
+    assert [(r.actor, r.resource_type, r.resource_ref) for r in rows] == [
+        ("analyst", "report", ESTOP),
+        ("analyst", "evidence", ESTOP),
+        ("investigator", "footage", "CAM_A"),
+    ], "the audit table, not only the log, has every read"

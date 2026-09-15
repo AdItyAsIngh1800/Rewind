@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from apps.api.auth import AnyUser, Investigator, log_evidence_access
 from apps.api.queue import enqueue_run, queue_stats
 from apps.api.request_stats import requests as request_window
 from packages.database.models import Camera, Incident, ProcessingRun
@@ -172,8 +173,26 @@ class Metrics(BaseModel):
     unsupported_claim_rate: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
+class Me(BaseModel):
+    """Who the API takes the caller to be."""
+
+    name: str
+    role: str
+
+
+@app.get(f"{PREFIX}/me", response_model=Me, tags=["operations"])
+def me(user: AnyUser) -> Me:
+    """Return the caller's name and role, so the UI can show who is signed in.
+
+    Also how the UI learns whether to offer footage at all: an analyst gets a pane
+    saying footage is restricted rather than a broken player, since a ``<video>``
+    element cannot read the 403 it would otherwise receive.
+    """
+    return Me(name=user.name, role=user.role.value)
+
+
 @app.get(f"{PREFIX}/metrics", response_model=Metrics, tags=["operations"])
-async def metrics(session: DbSession) -> Metrics:
+async def metrics(session: DbSession, user: AnyUser) -> Metrics:
     """Return operational metrics: the queue from Redis, the rest from stored pipeline output."""
     stored = stored_metrics(session)
     queue = await queue_stats()
@@ -203,7 +222,9 @@ class RunList(BaseModel):
 
 
 @app.get(f"{PREFIX}/runs", response_model=RunList, tags=["operations"])
-def list_runs(session: DbSession, limit: Annotated[int, Query(ge=1, le=500)] = 50) -> RunList:
+def list_runs(
+    session: DbSession, user: AnyUser, limit: Annotated[int, Query(ge=1, le=500)] = 50
+) -> RunList:
     """List processing runs for the System Health screen.
 
     Not in specification §F. The System Health screen in §G shows latency and failures,
@@ -263,7 +284,9 @@ def _pending(phase: str) -> HTTPException:
     status_code=status.HTTP_202_ACCEPTED,
     tags=["cases"],
 )
-async def create_case(body: CreateCaseRequest, session: DbSession) -> CreateCaseResponse:
+async def create_case(
+    body: CreateCaseRequest, session: DbSession, user: Investigator
+) -> CreateCaseResponse:
     """Create a processing run for a case, or return the run that already covers it.
 
     Idempotent by design. Submitting the same case, dataset and config twice returns
@@ -314,6 +337,7 @@ class CaseList(BaseModel):
 @app.get(f"{PREFIX}/cases", response_model=CaseList, tags=["cases"])
 def list_cases(
     session: DbSession,
+    user: AnyUser,
     severity: Severity | None = None,
     status_filter: Annotated[IncidentStatus | None, Query(alias="status")] = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
@@ -336,13 +360,14 @@ class StatusChange(BaseModel):
 
 
 @app.patch(f"{PREFIX}/cases/{{case_id}}", response_model=IncidentContract, tags=["cases"])
-def update_case_status(case_id: CaseId, body: StatusChange, session: DbSession) -> IncidentContract:
+def update_case_status(
+    case_id: CaseId, body: StatusChange, session: DbSession, user: Investigator
+) -> IncidentContract:
     """Move a case through review: investigating, resolved, or dismissed as a false alert.
 
     Only the status changes. The window, the evidence graph and the report are evidence
     and stay as issued; a dismissal is the investigator's judgement recorded beside them,
-    not an edit to them. Unauthenticated, like every endpoint, until E10.3 adds the role
-    boundary.
+    not an edit to them. Investigators only: a dismissal changes what the inbox shows.
     """
     incident = session.get(Incident, case_id)
     if incident is None:
@@ -382,7 +407,7 @@ class CaseDetail(BaseModel):
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}", response_model=CaseDetail, tags=["cases"])
-def get_case(case_id: CaseId, session: DbSession) -> CaseDetail:
+def get_case(case_id: CaseId, session: DbSession, user: AnyUser) -> CaseDetail:
     """Return one case: the incident with its rewind window, its run, and the cameras.
 
     Cameras are every registered camera. The frozen ``ProcessingRun`` does not record
@@ -451,6 +476,7 @@ def _run_for_case(session: Session, case_id: str) -> tuple[str, Incident | None]
 def get_timeline(
     case_id: CaseId,
     session: DbSession,
+    user: AnyUser,
     start_s: Annotated[float | None, Query(description="Window start, seconds")] = None,
     end_s: Annotated[float | None, Query(description="Window end, seconds")] = None,
 ) -> Timeline:
@@ -490,7 +516,7 @@ class EvidenceGraphResponse(BaseModel):
 @app.get(
     f"{PREFIX}/cases/{{case_id}}/evidence", response_model=EvidenceGraphResponse, tags=["cases"]
 )
-def get_evidence(case_id: CaseId, session: DbSession) -> EvidenceGraphResponse:
+def get_evidence(case_id: CaseId, session: DbSession, user: AnyUser) -> EvidenceGraphResponse:
     """Return a case's evidence graph, with provenance on every node and edge.
 
     Built once, when the run that opened the incident finished (E7.1), and served as
@@ -499,6 +525,7 @@ def get_evidence(case_id: CaseId, session: DbSession) -> EvidenceGraphResponse:
     if session.get(Incident, case_id) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"no case {case_id!r}")
     graph = graph_for_incident(session, case_id)
+    log_evidence_access(session, user, "evidence", case_id)
     return EvidenceGraphResponse(nodes=graph.nodes, edges=graph.edges)
 
 
@@ -527,7 +554,7 @@ class Replay(BaseModel):
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}/replay", response_model=Replay, tags=["cases"])
-def get_replay(case_id: CaseId, session: DbSession) -> Replay:
+def get_replay(case_id: CaseId, session: DbSession, user: AnyUser) -> Replay:
     """Return synchronized replay metadata: the window, the trigger and a pane per camera.
 
     Offsets are carried per camera rather than applied: mapping the shared clock to each
@@ -574,14 +601,16 @@ def get_replay(case_id: CaseId, session: DbSession) -> Replay:
     response_class=FileResponse,
     tags=["cases"],
 )
-def get_media(case_id: CaseId, camera_id: str, session: DbSession) -> FileResponse:
+def get_media(
+    case_id: CaseId, camera_id: str, session: DbSession, user: Investigator
+) -> FileResponse:
     """Stream one camera's clip for a case, with range support so the browser can seek.
 
     The one route raw footage leaves by (ADR-0006). The path comes from the run's record,
     never from the request, and must resolve inside the samples root: a recorded path
     anywhere else is refused, as is one whose file is gone. Both are a 404 so a probe
-    learns nothing about the filesystem. E10.3 adds the role check and the evidence
-    access log here, and nowhere else has to change.
+    learns nothing about the filesystem. Investigators only, and every read is logged
+    (spec §M): this is the raw-video side of the role boundary.
     """
     incident = session.get(Incident, case_id)
     run = session.get(ProcessingRun, incident.run_id) if incident is not None else None
@@ -596,6 +625,7 @@ def get_media(case_id: CaseId, camera_id: str, session: DbSession) -> FileRespon
             status.HTTP_404_NOT_FOUND,
             f"footage for {camera_id!r} in case {case_id!r} is unavailable",
         )
+    log_evidence_access(session, user, "footage", case_id, camera_id=camera_id)
     return FileResponse(path, media_type="video/mp4")
 
 
@@ -607,7 +637,7 @@ class CaseReport(BaseModel):
 
 
 @app.get(f"{PREFIX}/cases/{{case_id}}/report", response_model=CaseReport, tags=["cases"])
-def get_report(case_id: CaseId, session: DbSession) -> CaseReport:
+def get_report(case_id: CaseId, session: DbSession, user: AnyUser) -> CaseReport:
     """Return a case's evidence-grounded report, with the hypotheses it ranks.
 
     Generated once, when the run that opened the incident finished (E7.4), and served
@@ -621,11 +651,12 @@ def get_report(case_id: CaseId, session: DbSession) -> CaseReport:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND, f"case {case_id!r} has no report; reprocess its run"
         )
+    log_evidence_access(session, user, "report", case_id)
     return CaseReport(report=report, hypotheses=hypotheses_for_incident(session, case_id))
 
 
 @app.post(f"{PREFIX}/cases/{{case_id}}/reprocess", tags=["cases"])
-def reprocess_case(case_id: CaseId) -> dict[str, object]:
+def reprocess_case(case_id: CaseId, user: Investigator) -> dict[str, object]:
     """Re-run a case with a different model or config version.
 
     Not yet implemented — delivered by E2.2.

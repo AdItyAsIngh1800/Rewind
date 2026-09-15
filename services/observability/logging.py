@@ -37,6 +37,9 @@ def json_formatter() -> logging.Formatter:
             structlog.processors.TimeStamper(fmt="iso", utc=True),
             structlog.stdlib.add_log_level,
             structlog.stdlib.add_logger_name,
+            # ``extra={...}`` on a stdlib call becomes keys: the evidence access log's
+            # user, role and case are what an aggregator filters on (E10.3).
+            structlog.stdlib.ExtraAdder(),
         ],
         processors=[
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,

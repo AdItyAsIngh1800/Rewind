@@ -16,8 +16,9 @@ from apps.api import main
 from apps.api.main import PREFIX, app
 from packages.database.session import get_session
 from packages.schemas import SCHEMA_VERSION
+from tests.accounts import ANALYST, INVESTIGATOR
 
-client = TestClient(app)
+client = TestClient(app, headers=INVESTIGATOR)
 
 
 def _no_database() -> object:
@@ -134,7 +135,37 @@ def test_openapi_covers_every_specification_endpoint() -> None:
         f"{PREFIX}/cases/{{case_id}}/media/{{camera_id}}",
         f"{PREFIX}/cases/{{case_id}}/reprocess",
         f"{PREFIX}/health",
+        f"{PREFIX}/me",
         f"{PREFIX}/metrics",
         f"{PREFIX}/runs",
     }
     assert expected == set(spec["paths"])
+
+
+def test_every_endpoint_but_health_needs_an_account() -> None:
+    """Assert an unsigned request is challenged, and liveness alone is open.
+
+    Health stays open because the compose healthcheck and a load balancer call it with
+    no credentials; it reveals the contract version and nothing about any case.
+    """
+    anonymous = TestClient(app)
+    assert anonymous.get(f"{PREFIX}/health").status_code == 200
+    for path in (f"{PREFIX}/me", f"{PREFIX}/metrics", f"{PREFIX}/runs", f"{PREFIX}/cases/x"):
+        r = anonymous.get(path)
+        assert r.status_code == 401, path
+        assert r.headers["www-authenticate"].startswith("Basic")
+
+
+def test_the_boundary_is_footage_and_changes() -> None:
+    """Assert an analyst is told who they are, and refused footage and every change."""
+    analyst = TestClient(app, headers=ANALYST)
+    assert analyst.get(f"{PREFIX}/me").json() == {"name": "analyst", "role": "analyst"}
+    assert client.get(f"{PREFIX}/me").json()["role"] == "investigator"
+    refused = [
+        analyst.get(f"{PREFIX}/cases/x/media/CAM_A"),
+        analyst.post(f"{PREFIX}/cases", json={}),
+        analyst.patch(f"{PREFIX}/cases/x", json={"status": "resolved"}),
+        analyst.post(f"{PREFIX}/cases/x/reprocess"),
+    ]
+    assert [r.status_code for r in refused] == [403] * 4
+    assert "investigator" in refused[0].json()["detail"]

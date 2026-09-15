@@ -34,7 +34,10 @@ worker:  ## Run the perception worker (needs redis: make up)
 worker-burst:  ## Process whatever is queued, then exit
 	uv run python -m apps.worker --burst
 
-api:  ## Run the API with reload
+# Demo accounts for development; the compose stack ships the same two (E10.3).
+export REWIND_USERS ?= investigator:rewind:investigator,analyst:rewind:analyst
+
+api:  ## Run the API with reload, signed in with the demo accounts unless REWIND_USERS is set
 	uv run python -m apps.api --reload --port 8000
 
 web:  ## Run the investigator UI dev server (proxies /api to :8000 — run make mock or make api)
