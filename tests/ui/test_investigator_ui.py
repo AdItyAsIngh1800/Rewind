@@ -7,7 +7,7 @@ skip unless both are up and ``agent-browser`` is installed; CI has neither the v
 the servers.
 
     make api; make web          # or any UI serving C01 at REWIND_UI_URL
-    make ui-check               # signs in as REWIND_UI_USER / REWIND_UI_PASSWORD
+    make ui-check               # signs in as REWIND_UI_USER / REWIND_UI_PASSWORD via the login page
 
 Expected seek times are computed from the API with the UI's own rule (``refTime`` in
 ``apps/web/src/lib/evidence.ts``): an event's stamp, a node's stamp or the start of its
@@ -122,11 +122,23 @@ class Case:
 @pytest.fixture(scope="module")
 def case() -> Iterator[Case]:
     """Load the case data once, sign the browser in, and close its session after the module."""
-    ab("set", "credentials", USER, PASSWORD)
+    sign_in()
     yield Case()
     subprocess.run(
         ["agent-browser", "--session", SESSION, "close"], capture_output=True, check=False
     )
+
+
+def sign_in() -> None:
+    """Sign in through the login page, the way a person does (ADR-0011)."""
+    ab("open", f"{UI}/")
+    ab("wait", "--fn", "!!document.querySelector('#login') || !!document.querySelector('header')")
+    if js("!!document.querySelector('header')"):
+        return
+    ab("fill", "input[name=name]", USER)
+    ab("fill", "input[name=password]", PASSWORD)
+    ab("press", "Enter")
+    ab("wait", "--fn", "!!document.querySelector('header')")
 
 
 def open_case(view: str = "report") -> None:
