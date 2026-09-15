@@ -47,7 +47,10 @@ CLASS_ORDER: list[EntityClass] = [
 #: class in motion but no incident, so a detector that only learned "the thing near
 #: the intersection at 13 s" scores badly here rather than looking good on a case
 #: it has effectively memorised.
-TRAIN_CASES = ["case_01", "case_03", "case_04"]
+#: case_07 (2026-09-15) is case_04 with the forklift in F02's navy, parked cut by CAM_B's
+#: frame edge: the second colour and the truncated view EXP-0011 found the tune data
+#: lacked. Added after the golden run; every checkpoint trained on it is post-golden.
+TRAIN_CASES = ["case_01", "case_03", "case_04", "case_07"]
 VAL_CASES = ["case_05"]
 
 #: Consecutive frames at 10 FPS are near-duplicates. Every fifth frame gives a
