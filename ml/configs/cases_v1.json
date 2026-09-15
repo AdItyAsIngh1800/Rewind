@@ -1,6 +1,6 @@
 {
   "_comment": [
-    "Actor scripts for the six rendered cases, transcribed from",
+    "Actor scripts for the seven rendered cases (case_07 added 2026-09-15), transcribed from",
     "docs/dataset/scene-spec.md section 6. Positions are world metres; entities move",
     "by linear interpolation between waypoints, which is enough for 10 FPS at walking",
     "speed and keeps the ground truth exactly reproducible.",
@@ -569,6 +569,83 @@
         }
       ],
       "cause_gt": "F02 pushed PL3 fully into Z2 at 24.0 s"
+    },
+    {
+      "id": "case_07",
+      "name": "BLOCKED_ZONE_NAVY",
+      "incident_class": "zone_blocked_unattended_object",
+      "split": "tune",
+      "summary": "case_04 with the forklift in F02's navy: it leaves the pallet in the keep-clear zone and parks where case_02's forklift stands, cut by CAM_B's frame edge. Added after EXP-0011 so the tune data shows a second forklift colour and a truncated forklift (postmortem PM-0001).",
+      "actors": [
+        {
+          "entity_id": "F02",
+          "class": "forklift",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 3.0,
+              "y": 0.5
+            },
+            {
+              "t": 6.0,
+              "x": 11.0,
+              "y": 0.5
+            },
+            {
+              "t": 9.0,
+              "x": 12.0,
+              "y": 4.0
+            },
+            {
+              "t": 14.0,
+              "x": 12.0,
+              "y": 8.0
+            },
+            {
+              "t": 20.0,
+              "x": 18.3,
+              "y": 9.5
+            },
+            {
+              "t": 45.0,
+              "x": 18.3,
+              "y": 9.5
+            }
+          ]
+        },
+        {
+          "entity_id": "PL3",
+          "class": "pallet",
+          "waypoints": [
+            {
+              "t": 0.0,
+              "x": 3.0,
+              "y": 0.5
+            },
+            {
+              "t": 6.0,
+              "x": 11.0,
+              "y": 0.5
+            },
+            {
+              "t": 9.0,
+              "x": 12.0,
+              "y": 4.0
+            },
+            {
+              "t": 14.0,
+              "x": 12.0,
+              "y": 8.0
+            },
+            {
+              "t": 45.0,
+              "x": 12.0,
+              "y": 8.0
+            }
+          ]
+        }
+      ],
+      "cause_gt": "F02 placed PL3 in Z2 at 14.0 s and left it"
     }
   ]
 }

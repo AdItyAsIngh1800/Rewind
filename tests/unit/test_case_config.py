@@ -160,10 +160,14 @@ def test_every_committed_case_is_geometrically_valid() -> None:
     assert validate(SCENE, CASES) == {}
 
 
-def test_all_six_cases_are_defined() -> None:
-    """Assert the charter's six cases are present with their splits."""
+def test_the_charter_cases_are_defined_and_the_golden_pair_is_unchanged() -> None:
+    """Assert the charter's six cases and the post-golden case_07 are present with their splits.
+
+    case_07 (2026-09-15) is a tune case added after EXP-0010; the golden pair must stay
+    exactly the two cases sealed at E1.3, whatever is added beside them.
+    """
     ids = {c["id"] for c in CASES["cases"]}
-    assert ids == {f"case_0{n}" for n in range(1, 7)}
+    assert ids == {f"case_0{n}" for n in range(1, 8)}
     golden = {c["id"] for c in CASES["cases"] if c["split"] == "golden"}
     assert golden == {"case_02", "case_06"}
 
