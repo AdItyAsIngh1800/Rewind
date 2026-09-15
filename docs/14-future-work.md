@@ -5,9 +5,13 @@ it, so the list is a plan rather than a wish. Nothing here is started.
 
 ## 1. Owed — the debts the ledger still carries
 
+*Closed 2026-09-15 (EXP-0013): the E1 re-render, the F1 retrain, and the postmortem's
+verification date. `case_07` plus `yolo11n-rewind-v3` are in.*
+
 | Item | Why | Size |
 |---|---|---|
-| **E1 re-render: a tune case with the second forklift colour**, retrain, measure beside EXP-0010 | F1. The one perception failure whose fix is known and is a dataset change, not a model change. Verifies the postmortem's root cause. | Render ~1 h, train 15 min, evaluation script exists |
+| **Tracker settings for F8 and F9**, tuned on `case_07` | The two behaviours EXP-0013 surfaced: a track carrying two entities in turn (invisible to the ID-switch metric) and a pushed pallet flipping between two tracks (4 switches against a floor of 2). `case_07` is a tune case containing both views | Half a day, plus a golden re-measure |
+| **A harness measure for a track that carries two entities** | F8 has no number: `count_id_switches` counts an entity changing track, never a track changing entity. Until it does, a tracker fix cannot be scored | Half a day |
 | **Tracked-perfect harness mode** — perfect boxes through the real tracker | Separates tracking loss from detection loss on the golden pair; EXP-0011 owed it when F5 was found by the e2e test and not the harness | Half a day |
 | **Mentor walkthrough** of C01 with `docs/gates/gate-4-5-walkthrough.md` | The only human validation the plan scheduled; findings are post-golden | One session |
 | **Reproducibility test by a stranger** from the README alone | Gate 6 was passed by the author twice; the roadmap asks for someone else | One afternoon of theirs |
@@ -34,11 +38,12 @@ it, so the list is a plan rather than a wish. Nothing here is started.
 
 ## 3. Things the build revealed that the plan did not ask for
 
-- **Fragment-aware identity.** The held-out false links join a fragment of a real
-  forklift, seen alone at the frame edge, to that forklift on other cameras. The metric
-  counts them, correctly. The layer needs a way to say "this track is part of an
-  entity I already know" rather than "this is a new entity"; the graph's `occludes`
-  edge is the natural home.
+- **Fragment-aware identity.** The held-out false links joined a fragment of a real
+  forklift, seen alone at the frame edge, to that forklift on other cameras. v3's
+  cleaner boxes removed those links (EXP-0013), but not the gap they exposed: the layer
+  still has no way to say "this track is part of an entity I already know" rather than
+  "this is a new entity". F8, where one track carries two forklifts in turn, is the
+  same gap seen from the tracker. The graph's `occludes` edge is the natural home.
 - **A visibility floor for detection targets, separate from the ground-truth floor.**
   Ground truth emits boxes from 15 % visibility for gap precision; detection recall
   should be scored from a higher floor, with the band between reported as *unseen*,
@@ -49,8 +54,6 @@ it, so the list is a plan rather than a wish. Nothing here is started.
 - **A dead-letter queue.** `/metrics` reports retries and failures from the worker's
   heartbeat; a run that fails three times is FAILED with a reason, but nothing lists
   the jobs arq gave up on. Small, and the System Health screen has the tile for it.
-- **Sign-out.** HTTP Basic has none short of closing the browser. A cookie session
-  behind the same dependency would give one without changing the role boundary.
 
 ## 4. Not planned
 

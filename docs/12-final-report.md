@@ -74,7 +74,7 @@ emit an uncited or over-stated claim; that is what "structural" means here.
 `docs/03-architecture.md` has the diagrams. In one paragraph: a FastAPI process,
 one arq worker, Postgres with pgvector, Redis, and a React UI behind nginx, in Docker
 Compose. A run — footage plus dataset, config and model versions, identified by their
-hash — is the unit of work. The worker runs ingestion, detection (`yolo11n-rewind-v1`),
+hash — is the unit of work. The worker runs ingestion, detection (`yolo11n-rewind-v3`),
 tracking (ByteTrack per camera), event extraction, cross-camera association, incident
 triggers, graph construction, ranking and report generation in order, committing after
 each stage; every stage after perception reads the previous one's rows. Every version
@@ -92,7 +92,8 @@ the report — seeks every camera to its moment. Evidence state is encoded on th
 channels (colour, stroke pattern, label), contrast-checked, so unknown is
 distinguishable from confirmed in greyscale.
 
-Security (`docs/10-security-and-privacy.md`, `ADR-0009`): HTTP Basic with two roles;
+Security (`docs/10-security-and-privacy.md`, `ADR-0009`, `ADR-0011`): a login page on a
+session cookie, or HTTP Basic for scripts, with two roles;
 analysts read every derived artefact and never a frame; investigators also stream
 footage and make changes. Every read of footage, graph or report is an audit row and a
 structured log event. Every report ends with the responsible-use statement.
@@ -198,12 +199,18 @@ says so (`docs/audit/final-audit.md`).
 
 ## 7. Limitations
 
-- **Perception does not generalise beyond what three cases taught.** F1 and F2 above.
-  The fix is a dataset one — a tune case with the second forklift colour — owed as a
-  re-render, with the retrain to be measured beside EXP-0010.
-- **Cross-camera identity fails its floor on unseen data** (0.25 against 0.05), even
-  though the links it makes join a real entity to itself. The metric is right to count
-  them; the layer needs a notion of "fragment of a known entity" it does not have.
+- **Perception generalises only as far as the tune cases' appearances reach.** F1 was
+  closed after the fact: one added tune case with the missing forklift colour, and the
+  same recipe, found it (0.930 recall against 0.259) while keeping everything v1 held
+  (EXP-0013, `yolo11n-rewind-v3`, promoted). F2 stands: a person at a fifth of their
+  silhouette is not detected, and EXP-0013 confirmed that is a visibility limit rather
+  than a training gap. The lesson is the postmortem's, not the fix's: a split chosen
+  for incident coverage and never checked for appearance coverage.
+- **Cross-camera identity's held-out floor failure** (0.25 against 0.05) came from
+  linking a fragment of a real forklift to that forklift; under v3 those links are gone
+  and the rate is 0.00, but the layer still has no notion of "part of an entity I
+  already know", which is also what F8 is. Cross-camera recall remains low (0.16–0.35),
+  and refusing is the intended behaviour when it cannot be sure.
 - **Simulated footage.** Untextured primitives, perfect lighting, no motion blur. The
   public-footage realism check (roadmap stretch 1) was not reached; nothing here
   claims transfer to real video.
@@ -229,7 +236,7 @@ keeping.
 |---|---|
 | Source | the repository; `README.md` is the entry point |
 | Architecture and data flow | `docs/03-architecture.md` |
-| Dataset provenance | `docs/dataset/scene-spec.md`, `data/manifests/v1.json`, release `data-v1` |
+| Dataset provenance | `docs/dataset/scene-spec.md`, `data/manifests/v1.1.json` (and `v1.json`, the golden run's), releases `data-v1.1` and `data-v1` |
 | Experiments and model cards | `docs/experiments/`, `artifacts/model-cards/` |
 | Evaluation report with baselines | `artifacts/benchmark-reports/final.md` |
 | Failure catalogue | `docs/failures/README.md` |

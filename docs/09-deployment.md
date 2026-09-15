@@ -176,7 +176,9 @@ Unchanged by the hardware decision — see `ADR-0001`.
 | `web` | Vite dev server / nginx serving the static build | nginx proxies `/api`, so the browser talks to one origin in both |
 
 Footage and weights are mounted read-only into the containers after `make fetch-data`,
-which downloads the `data-v1` release asset and checks it against the dataset manifest.
+which downloads the `data-v1.1` release asset (seven rendered cases and the promoted
+detector weights) and checks it against the dataset manifest. `data-v1` stays published
+so EXP-0010's golden run can be reproduced against the data it used.
 
 ### Query latency against the specification's 500 ms target
 

@@ -36,6 +36,7 @@ could have noticed, because nothing before E9.1 was allowed to look.
 | 2026-09-14 19:18 | Golden run. F1: F02 never detected. F2: P01 detected in 4 of 297 boxes. F4: a duplicate box on a half-visible forklift seeds a track that gets linked. |
 | 2026-09-14 20:00–23:00 | EXP-0011: F3–F7 fixed on pipeline properties and tune data; F1 retrained with full-hue jitter (`v2`), finds F02, loses `case_02`'s frame-cut forklift; not promoted. F2 accepted. |
 | 2026-09-15 | Gate 7 recorded as PASS on its criterion, FAIL on the floors. This postmortem. |
+| 2026-09-15 (EXP-0013) | `case_07` rendered and added to the tune set; `yolo11n-rewind-v3` at default augmentation finds F02 **and** keeps the frame-cut forklift; promoted. Two tracker behaviours surface behind it (F8, F9). |
 
 ## Root cause
 
@@ -83,9 +84,9 @@ moment it could no longer be fixed without contaminating the result.
 
 | Action | Owner | Due |
 |---|---|---|
-| Re-render one tune case with a second forklift colour (E1 re-render, owed since EXP-0011), retrain, measure beside EXP-0010 | Owner | Before any claim that F1 is fixed |
+| Re-render one tune case with a second forklift colour (E1 re-render, owed since EXP-0011), retrain, measure beside EXP-0010 | Owner | **Done 2026-09-15**: `case_07`, `yolo11n-rewind-v3`, EXP-0013 |
 | Tracked-perfect harness mode (perfect boxes through the real tracker) to separate tracking loss from detection loss | Owner | Next evaluation pass |
-| State the ground-truth visibility floor and its consequence in the model card | Done | `ml/models/yolo11n-rewind-v1/limitations.md` |
+| State the ground-truth visibility floor and its consequence in the model card | Done | `ml/models/yolo11n-rewind-v1/limitations.md`, and v3's |
 
 ## Preventive actions
 
@@ -93,8 +94,24 @@ moment it could no longer be fixed without contaminating the result.
   golden cases' scene specs without rendering or viewing them. Roadmap amendment.
 - A Gate 1 line: "what the tune set cannot have taught", written from that table.
 
-## Verification date
+## Verification
 
-When the E1 re-render's retrain is measured on the golden pair beside EXP-0010. If
-person recall stays near 0.065 with F02 found, F2 is confirmed as a visibility limit
-and not a training gap; if it moves, this postmortem was too kind to the threshold.
+**Verified 2026-09-15 (EXP-0013).** The test set here was: does F02 get found without
+losing `case_02`'s frame-cut forklift, and does person recall move?
+
+- **Root cause confirmed.** One tune case with the second colour and a truncated view,
+  trained at *default* augmentation, finds F02 at 0.930 recall (0.259 before) and keeps
+  the frame-cut forklift at 0.996 (the colour-blind `v2` had dropped it to 0.466). The
+  failure was the split's appearance coverage, exactly as traced, and not the recipe.
+- **F2 confirmed as a visibility limit, not a training gap.** Person recall on
+  `case_02` stayed at 0.062 against 0.065, with everything else improved. This
+  postmortem was not too kind to the 15 % threshold.
+- **A consequence the postmortem did not predict.** Seeing F02 exposed two tracker
+  behaviours that a detector blind to it had hidden: a pallet track flipping four times
+  while being pushed (F9, a measured regression against the switch floor) and two
+  forklifts sharing one track, which the ID-switch metric structurally cannot see (F8).
+  Both are in the catalogue; the second is the more interesting, because it says the
+  harness has a blind spot, not only the tracker.
+
+The preventive actions above stand: the appearance-coverage table would have caught
+the colour, and a track-carries-two-entities measure would have caught F8.

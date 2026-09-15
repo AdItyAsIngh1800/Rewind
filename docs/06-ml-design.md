@@ -19,24 +19,30 @@ cases.
 
 ## 2. Detector
 
-`yolo11n-rewind-v1`: YOLO11n, pretrained initialisation, 20 epochs, 860 s on MPS, on
-`case_01`, `03`, `04`; validated on `case_05`, the negative case; `case_02` and
-`case_06` never seen before E9.1. Ground truth is ray-cast from the Blender scene
+**`yolo11n-rewind-v3` is the promoted checkpoint** (EXP-0013, 2026-09-15): YOLO11n,
+pretrained initialisation, 20 epochs, default augmentation, on `case_01`, `03`, `04`
+and `case_07`, validated on `case_05`. `yolo11n-rewind-v1` is the same recipe without
+`case_07` and is the checkpoint of record for EXP-0010's held-out numbers; `case_02`
+and `case_06` were never seen by either before E9.1. Ground truth is ray-cast from the Blender scene
 under the visible-box convention (`docs/dataset/scene-spec.md`).
 
-| | Tune (EXP-0003) | Held-out (EXP-0010) |
-|---|---|---|
-| mAP50 | 0.987 | — |
-| Robot recall / precision | — | 0.991 / 0.998 |
-| Person recall / precision | — | 0.065 / 0.875 (F2: ground truth counts the person from 15 % visibility; a fifth of a silhouette behind a vehicle is not found) |
-| Forklift recall, case_06 | — | 0.259 (F1: the second forklift's colour is absent from the tune set) |
-| Pallet recall / precision | 0.999 / 1.000 | 0.971 / 0.986 |
+| | v1 tune (EXP-0003) | v1 held-out (EXP-0010) | v3 golden, post-golden (EXP-0013) |
+|---|---|---|---|
+| mAP50, validation | 0.987 | — | 0.995 |
+| Robot recall / precision | — | 0.991 / 0.998 | 0.992 / 0.998 |
+| Person recall / precision | — | 0.065 / 0.875 | 0.062 / 0.870 (F2: ground truth counts the person from 15 % visibility; a fifth of a silhouette behind a vehicle is not found) |
+| Forklift recall, case_06 | — | 0.259 (F1) | **0.930** |
+| Forklift recall, case_02 | — | 0.980 | 0.996 |
+| Pallet recall / precision | 0.999 / 1.000 | 0.971 / 0.986 | 0.981 / 0.984 |
 
-The model card, with limitations per checkpoint, is
-`artifacts/model-cards/yolo11n-rewind-v1.md`. A `v2` trained with colour-blind
-augmentation (EXP-0011, F1) finds the second forklift but loses `case_02`'s frame-cut
-forklift and was **not promoted**; the honest fix is a dataset one (a tune case with
-that colour), owed as an E1 re-render.
+Model cards, with limitations per checkpoint:
+`artifacts/model-cards/yolo11n-rewind-v3.md` and `…-v1.md`. The route here matters. A
+`v2` trained with colour-blind augmentation (EXP-0011, F1) found the second forklift
+but lost `case_02`'s frame-cut forklift, and was **not promoted**: its failure pattern
+said the fix was data, not augmentation. `case_07` — `case_04`'s script with the
+forklift in the second colour, parked cut by a frame edge — proved that, and v3 gets
+both (EXP-0013). Seeing the second forklift then exposed two tracker behaviours it had
+hidden (F8, F9).
 
 Hardware: Apple M4, MPS, batch 8; 160–170 FPS through perception, 1.1 GB accelerator
 memory (EXP-0012). The CPU container image runs the same weights at 12–16 FPS.
@@ -45,7 +51,10 @@ memory (EXP-0012). The CPU container image runs the same weights at 12–16 FPS.
 
 ByteTrack per camera, as bundled with Ultralytics, at 10 FPS. Tuned on perfect boxes
 first (EXP-0002), then on real detections (EXP-0004): ID switches ≤ 2 per camera per
-case on tune, 2 then 1 on held-out. Long-gap identity is not the tracker's job here:
+case on tune, 2 then 1 on held-out with v1, and 4 on `case_06` with v3 — a pallet
+track flipping while a forklift pushes it, a regression the detector's improvement
+uncovered rather than caused (F9). A track that carries *two* entities in turn (F8) is
+not counted by this metric at all; measuring it is the next tracking experiment. Long-gap identity is not the tracker's job here:
 after seconds unseen the Kalman prediction has drifted, so re-identification across a
 gap is left to the cross-camera layer, which can refuse.
 
@@ -90,6 +99,9 @@ and no threshold was tuned on a golden figure. The failure catalogue with frames
 - **A tracked-perfect harness mode** (perfect detections through the real tracker):
   owed since EXP-0011; it would separate tracking loss from detection loss on the
   golden pair.
+- **A measure for a track that carries two entities** (F8), which the ID-switch
+  definition cannot express, and the tracker settings that would fix it, tuned on
+  `case_07`.
 
 ## Related
 

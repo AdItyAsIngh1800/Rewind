@@ -45,7 +45,7 @@ and the [GitHub CLI](https://cli.github.com) signed in with access to this repos
 gh auth login          # once; the repository and its data asset are private
 gh repo clone AdItyAsIngh1800/Rewind
 cd Rewind
-make fetch-data        # 38 MB, every file checked against data/manifests/v1.json
+make fetch-data        # 42 MB, every file checked against data/manifests/v1.1.json
 docker compose up --build
 ```
 
